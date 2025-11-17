@@ -36,22 +36,23 @@ export default function BulkAnalysis() {
     try {
       const baseUrl = new URL(sourceUrl).origin;
       
+      const pageContent = await fetch(`https://r.jina.ai/${sourceUrl}`).then(res => res.text());
+      
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `I need you to extract EVERY SINGLE newsletter/article link from this webpage: ${sourceUrl}
+        prompt: `Extract EVERY SINGLE newsletter link from this webpage content.
 
-Look for:
-- Any section called "Past Briefings", "Archives", "Previous Newsletters", or similar
-- All newsletter/article links throughout the entire page
-- Make sure to find ALL of them, not just the first few
+I'm looking for a section called "Past Briefings" or similar that contains a list of newsletters.
 
-For EACH newsletter found, extract:
-- title: the exact title of the newsletter
-- url: the complete clickable URL (if it's a relative URL like /newsletter/something, convert it to absolute by prepending ${baseUrl})
-- date: the publication date if shown (convert to YYYY-MM-DD format)
-- preview: any preview text or description if available
+For EACH newsletter link you find, extract:
+- title: the exact title text
+- url: the full URL (if relative like /newsletter/something, convert to: ${baseUrl}/newsletter/something)
+- date: the date shown (convert to YYYY-MM-DD format if possible)
+- preview: any description text
 
-IMPORTANT: I expect there to be many newsletters on this page (likely 20-50+). Make sure you extract ALL of them, not just a sample.`,
-        add_context_from_internet: true,
+IMPORTANT: Extract ALL newsletters from the list, not just a sample. I expect 20-50+ newsletters.
+
+Webpage content:
+${pageContent}`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -80,7 +81,7 @@ IMPORTANT: I expect there to be many newsletters on this page (likely 20-50+). M
         setNewsletters(processedNewsletters);
         setSelectedNewsletters(new Set(processedNewsletters.map((_, idx) => idx)));
       } else {
-        setError("No newsletters found on this page. The page might require JavaScript or have a different structure.");
+        setError("No newsletters found on this page. Try a different URL.");
       }
     } catch (err) {
       setError("Error crawling the source. Please try again.");
