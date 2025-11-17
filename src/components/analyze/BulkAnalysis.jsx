@@ -39,17 +39,20 @@ export default function BulkAnalysis() {
       const pageContent = await fetch(`https://r.jina.ai/${sourceUrl}`).then(res => res.text());
       
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Extract EVERY SINGLE newsletter link from this webpage content.
+        prompt: `You are analyzing webpage content to extract newsletter links. This page contains a "Past Briefings" section with many newsletter links (likely 30-60 links total).
 
-I'm looking for a section called "Past Briefings" or similar that contains a list of newsletters.
+Your task: Extract EVERY SINGLE newsletter link from the content below. Look especially for:
+- Links to MailChimp newsletters (us11.campaign-archive.com or similar)
+- Any section labeled "Past Briefings" or newsletter archives
+- Each link typically has a title and date
 
-For EACH newsletter link you find, extract:
-- title: the exact title text
-- url: the full URL (if relative like /newsletter/something, convert to: ${baseUrl}/newsletter/something)
-- date: the date shown (convert to YYYY-MM-DD format if possible)
-- preview: any description text
+For EACH newsletter you find, return:
+- title: The newsletter title/subject
+- url: The complete URL (if it starts with / add ${baseUrl} before it)
+- date: The publication date in YYYY-MM-DD format if shown
+- preview: Any preview or description text
 
-IMPORTANT: Extract ALL newsletters from the list, not just a sample. I expect 20-50+ newsletters.
+CRITICAL: I need ALL newsletters, not a sample. If you see 50 links, extract all 50.
 
 Webpage content:
 ${pageContent}`,
