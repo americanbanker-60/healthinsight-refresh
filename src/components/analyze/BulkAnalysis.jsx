@@ -36,26 +36,22 @@ export default function BulkAnalysis() {
     try {
       const baseUrl = new URL(sourceUrl).origin;
       
-      const pageContent = await fetch(`https://r.jina.ai/${sourceUrl}`).then(res => res.text());
-      
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Extract all newsletter entries from the "Past Briefings" section of this webpage.
+        prompt: `Go to ${sourceUrl} and extract ALL newsletter links from the "Past Briefings" section.
 
-Each entry has:
-- A date (format: MM/DD/YYYY)
-- A link (URL starting with http://eepurl.com/)
-- A title (the text of the link)
+Each newsletter entry has:
+- A date (MM/DD/YYYY format)
+- A clickable link with a title
+- The links go to eepurl.com (MailChimp)
 
-For EACH entry, return:
-- title: Extract the link text (everything between [ ] in markdown)
-- url: The actual URL (http://eepurl.com/...)
-- date: Convert the date to YYYY-MM-DD format
-- preview: Leave empty
+Extract EVERY SINGLE newsletter you find and return:
+- title: The newsletter title/headline
+- url: The full URL (should be http://eepurl.com/...)
+- date: The publication date in YYYY-MM-DD format
+- preview: Can be empty
 
-CRITICAL: Extract ALL entries you find. There should be 50-80+ entries total.
-
-Webpage content:
-${pageContent}`,
+IMPORTANT: There are 50-80+ newsletters on this page. Extract ALL of them, not just a few.`,
+        add_context_from_internet: true,
         response_json_schema: {
           type: "object",
           properties: {
