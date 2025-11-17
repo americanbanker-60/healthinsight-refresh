@@ -31,16 +31,8 @@ export default function AnalyzeNewsletter() {
     setAnalysisResult(null);
 
     try {
-      const content = await fetch(url).then(res => res.text()).catch(() => null);
-      
-      if (!content) {
-        setError("Unable to fetch content from this URL. Please check the URL and try again.");
-        setIsAnalyzing(false);
-        return;
-      }
-
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this healthcare newsletter and extract structured insights. Focus on:
+        prompt: `Analyze this healthcare newsletter from ${url} and extract structured insights. Focus on:
 1. Key takeaways and main points
 2. Major themes and topics
 3. M&A activities (mergers, acquisitions, deals)
@@ -49,8 +41,8 @@ export default function AnalyzeNewsletter() {
 6. Overall market sentiment
 7. Executive summary
 
-Newsletter content:
-${content}`,
+Extract detailed information about the healthcare industry developments mentioned in this newsletter.`,
+        add_context_from_internet: true,
         response_json_schema: {
           type: "object",
           properties: {
@@ -101,6 +93,7 @@ ${content}`,
       setAnalysisResult({ ...result, source_url: url });
     } catch (err) {
       setError("Error analyzing newsletter. Please try again.");
+      console.error(err);
     }
     
     setIsAnalyzing(false);

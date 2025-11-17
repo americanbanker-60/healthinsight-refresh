@@ -34,26 +34,19 @@ export default function BulkAnalysis() {
     setSelectedNewsletters(new Set());
 
     try {
-      const content = await fetch(sourceUrl).then(res => res.text()).catch(() => null);
-      
-      if (!content) {
-        setError("Unable to fetch content from this URL. Please check the URL and try again.");
-        setIsCrawling(false);
-        return;
-      }
-
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `Analyze this webpage and extract all healthcare newsletter links/posts.
 For each newsletter found, extract:
 - title: the title of the newsletter/post
-- url: the full URL to the newsletter
-- date: publication date if available
+- url: the full URL to the newsletter (make sure it's a complete URL, not relative)
+- date: publication date if available (in YYYY-MM-DD format if possible)
 - preview: a brief description or preview text
 
 Only include healthcare-related newsletter articles, blog posts, or similar content.
+Make sure to convert any relative URLs to absolute URLs using the base domain.
 
-Webpage content:
-${content}`,
+If the URL is relative (starts with / or doesn't have http), prepend it with the base URL: ${new URL(sourceUrl).origin}`,
+        add_context_from_internet: true,
         response_json_schema: {
           type: "object",
           properties: {
@@ -82,6 +75,7 @@ ${content}`,
       }
     } catch (err) {
       setError("Error crawling the source. Please try again.");
+      console.error(err);
     }
     
     setIsCrawling(false);
@@ -109,11 +103,8 @@ ${content}`,
       const newsletter = selected[i];
       
       try {
-        const content = await fetch(newsletter.url).then(res => res.text()).catch(() => null);
-        
-        if (content) {
-          const analysis = await base44.integrations.Core.InvokeLLM({
-            prompt: `Analyze this healthcare newsletter and extract structured insights. Focus on:
+        const analysis = await base44.integrations.Core.InvokeLLM({
+          prompt: `Analyze this healthcare newsletter from ${newsletter.url} and extract structured insights. Focus on:
 1. Key takeaways and main points
 2. Major themes and topics
 3. M&A activities (mergers, acquisitions, deals)
@@ -122,61 +113,61 @@ ${content}`,
 6. Overall market sentiment
 7. Executive summary
 
-Newsletter content:
-${content}`,
-            response_json_schema: {
-              type: "object",
-              properties: {
-                title: { type: "string" },
-                publication_date: { type: "string" },
-                key_takeaways: { type: "array", items: { type: "string" } },
-                themes: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      theme: { type: "string" },
-                      description: { type: "string" }
-                    }
+Extract detailed information about the healthcare industry developments mentioned in this newsletter.`,
+          add_context_from_internet: true,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              publication_date: { type: "string" },
+              key_takeaways: { type: "array", items: { type: "string" } },
+              themes: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    theme: { type: "string" },
+                    description: { type: "string" }
                   }
-                },
-                ma_activities: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      acquirer: { type: "string" },
-                      target: { type: "string" },
-                      deal_value: { type: "string" },
-                      description: { type: "string" }
-                    }
+                }
+              },
+              ma_activities: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    acquirer: { type: "string" },
+                    target: { type: "string" },
+                    deal_value: { type: "string" },
+                    description: { type: "string" }
                   }
-                },
-                funding_rounds: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      company: { type: "string" },
-                      amount: { type: "string" },
-                      round_type: { type: "string" },
-                      description: { type: "string" }
-                    }
+                }
+              },
+              funding_rounds: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    company: { type: "string" },
+                    amount: { type: "string" },
+                    round_type: { type: "string" },
+                    description: { type: "string" }
                   }
-                },
-                key_players: { type: "array", items: { type: "string" } },
-                summary: { type: "string" },
-                sentiment: { type: "string", enum: ["positive", "neutral", "negative", "mixed"] }
-              }
+                }
+              },
+              key_players: { type: "array", items: { type: "string" } },
+              summary: { type: "string" },
+              sentiment: { type: "string", enum: ["positive", "neutral", "negative", "mixed"] }
             }
-          });
+          }
+        });
 
-          await base44.entities.Newsletter.create({
-            ...analysis,
-            source_url: newsletter.url,
-            title: analysis.title || newsletter.title
-          });
-        }
+        await base44.entities.Newsletter.create({
+          ...analysis,
+          source_url: newsletter.url,
+          title: analysis.title || newsletter.title,
+          publication_date: analysis.publication_date || newsletter.date
+        });
       } catch (err) {
         console.error(`Error processing ${newsletter.title}:`, err);
       }
@@ -200,7 +191,7 @@ ${content}`,
 
       <div>
         <Input
-          placeholder="https://example.com/newsletters-archive"
+          placeholder="https://elion.health/newsletter"
           value={sourceUrl}
           onChange={(e) => setSourceUrl(e.target.value)}
           className="h-14 text-lg border-slate-300 focus:border-blue-500"
