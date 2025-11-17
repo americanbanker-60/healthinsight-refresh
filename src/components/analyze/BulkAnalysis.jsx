@@ -34,18 +34,23 @@ export default function BulkAnalysis() {
     setSelectedNewsletters(new Set());
 
     try {
+      const baseUrl = new URL(sourceUrl).origin;
+      
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this webpage and extract all healthcare newsletter links/posts.
-For each newsletter found, extract:
-- title: the title of the newsletter/post
-- url: the full URL to the newsletter (make sure it's a complete URL, not relative)
-- date: publication date if available (in YYYY-MM-DD format if possible)
-- preview: a brief description or preview text
+        prompt: `I need you to extract EVERY SINGLE newsletter/article link from this webpage: ${sourceUrl}
 
-Only include healthcare-related newsletter articles, blog posts, or similar content.
-Make sure to convert any relative URLs to absolute URLs using the base domain.
+Look for:
+- Any section called "Past Briefings", "Archives", "Previous Newsletters", or similar
+- All newsletter/article links throughout the entire page
+- Make sure to find ALL of them, not just the first few
 
-If the URL is relative (starts with / or doesn't have http), prepend it with the base URL: ${new URL(sourceUrl).origin}`,
+For EACH newsletter found, extract:
+- title: the exact title of the newsletter
+- url: the complete clickable URL (if it's a relative URL like /newsletter/something, convert it to absolute by prepending ${baseUrl})
+- date: the publication date if shown (convert to YYYY-MM-DD format)
+- preview: any preview text or description if available
+
+IMPORTANT: I expect there to be many newsletters on this page (likely 20-50+). Make sure you extract ALL of them, not just a sample.`,
         add_context_from_internet: true,
         response_json_schema: {
           type: "object",
@@ -67,11 +72,15 @@ If the URL is relative (starts with / or doesn't have http), prepend it with the
       });
 
       if (result.newsletters && result.newsletters.length > 0) {
-        setNewsletters(result.newsletters);
-        // Select all by default
-        setSelectedNewsletters(new Set(result.newsletters.map((_, idx) => idx)));
+        const processedNewsletters = result.newsletters.map(n => ({
+          ...n,
+          url: n.url.startsWith('http') ? n.url : `${baseUrl}${n.url.startsWith('/') ? '' : '/'}${n.url}`
+        }));
+        
+        setNewsletters(processedNewsletters);
+        setSelectedNewsletters(new Set(processedNewsletters.map((_, idx) => idx)));
       } else {
-        setError("No newsletters found on this page. Try a different URL.");
+        setError("No newsletters found on this page. The page might require JavaScript or have a different structure.");
       }
     } catch (err) {
       setError("Error crawling the source. Please try again.");
