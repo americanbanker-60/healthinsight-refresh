@@ -34,55 +34,50 @@ export default function BulkAnalysis() {
     setSelectedNewsletters(new Set());
 
     try {
-      const baseUrl = new URL(sourceUrl).origin;
-      
       // Fetch page content using Jina reader
       const pageContent = await fetch(`https://r.jina.ai/${sourceUrl}`).then(res => res.text());
       
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Extract ALL newsletter entries from the "Past Briefings" section below.
-
-The content is in markdown format. Each entry has:
-- A date line (MM/DD/YYYY)
-- A markdown link on the next line: [Title](http://eepurl.com/...)
-
-Parse EVERY entry and return:
-- title: The link text (extract from [Title])
-- url: The URL (extract from (URL))
-- date: Convert MM/DD/YYYY to YYYY-MM-DD
-- preview: Empty string
-
-Extract ALL 90+ newsletters from this content:
-
-${pageContent}`,
-        add_context_from_internet: false,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            newsletters: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  url: { type: "string" },
-                  date: { type: "string" },
-                  preview: { type: "string" }
-                }
-              }
-            }
+      // Extract all Mailchimp links programmatically
+      const extractedNewsletters = [];
+      
+      // Split content into lines
+      const lines = pageContent.split('\n');
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Look for date pattern (MM/DD/YYYY)
+        const dateMatch = line.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        
+        if (dateMatch && i + 1 < lines.length) {
+          const nextLine = lines[i + 1].trim();
+          
+          // Look for markdown link with eepurl.com or any URL
+          const linkMatch = nextLine.match(/\[([^\]]+)\]\(([^)]+)\)/);
+          
+          if (linkMatch) {
+            const title = linkMatch[1];
+            const url = linkMatch[2];
+            
+            // Convert date to YYYY-MM-DD
+            const month = dateMatch[1].padStart(2, '0');
+            const day = dateMatch[2].padStart(2, '0');
+            const year = dateMatch[3];
+            const formattedDate = `${year}-${month}-${day}`;
+            
+            extractedNewsletters.push({
+              title,
+              url,
+              date: formattedDate,
+              preview: ""
+            });
           }
         }
-      });
+      }
 
-      if (result.newsletters && result.newsletters.length > 0) {
-        const processedNewsletters = result.newsletters.map(n => ({
-          ...n,
-          url: n.url.startsWith('http') ? n.url : `${baseUrl}${n.url.startsWith('/') ? '' : '/'}${n.url}`
-        }));
-        
-        setNewsletters(processedNewsletters);
-        setSelectedNewsletters(new Set(processedNewsletters.map((_, idx) => idx)));
+      if (extractedNewsletters.length > 0) {
+        setNewsletters(extractedNewsletters);
+        setSelectedNewsletters(new Set(extractedNewsletters.map((_, idx) => idx)));
       } else {
         setError("No newsletters found on this page. Try a different URL.");
       }
