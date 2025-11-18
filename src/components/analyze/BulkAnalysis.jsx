@@ -37,53 +37,61 @@ export default function BulkAnalysis() {
       // Fetch page content using Jina reader
       const pageContent = await fetch(`https://r.jina.ai/${sourceUrl}`).then(res => res.text());
       
-      // Extract all newsletter links using multiple pattern strategies
+      // Extract all newsletter links
       const extractedNewsletters = [];
       const seenUrls = new Set();
       
-      // Strategy 1: Date + Title + Link (original pattern)
-      // Format: MM/DD/YYYY\n\n[Title](http://...)
-      const pattern1 = /(\d{1,2}\/\d{1,2}\/\d{4})\s*\n+\s*\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
-      let match;
-      while ((match = pattern1.exec(pageContent)) !== null) {
-        const dateStr = match[1];
-        const title = match[2].replace(/\\/g, '');
-        const url = match[3];
+      // Split content into lines for processing
+      const lines = pageContent.split('\n');
+      
+      // Look for date + title + link pattern
+      for (let i = 0; i < lines.length - 1; i++) {
+        const currentLine = lines[i].trim();
+        const nextLine = lines[i + 1].trim();
         
-        if (!seenUrls.has(url)) {
-          seenUrls.add(url);
-          const dateParts = dateStr.split('/');
-          const month = dateParts[0].padStart(2, '0');
-          const day = dateParts[1].padStart(2, '0');
-          const year = dateParts[2];
-          const formattedDate = `${year}-${month}-${day}`;
+        // Check if current line is a date (MM/DD/YYYY or MM/DD/YY or YYYY)
+        const dateMatch = currentLine.match(/^(\d{1,2}\/\d{1,2}\/\d{2,4})$/);
+        
+        // Check if next line contains a markdown link
+        const linkMatch = nextLine.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/);
+        
+        if (dateMatch && linkMatch) {
+          const dateStr = dateMatch[1];
+          const title = linkMatch[1].replace(/\\/g, '').trim();
+          const url = linkMatch[2];
           
-          extractedNewsletters.push({ title, url, date: formattedDate, preview: "" });
+          if (!seenUrls.has(url) && title.length > 3) {
+            seenUrls.add(url);
+            
+            // Parse and format date
+            const dateParts = dateStr.split('/');
+            const month = dateParts[0].padStart(2, '0');
+            const day = dateParts[1].padStart(2, '0');
+            let year = dateParts[2];
+            
+            // Handle 2-digit years
+            if (year.length === 2) {
+              year = '20' + year;
+            }
+            
+            const formattedDate = `${year}-${month}-${day}`;
+            extractedNewsletters.push({ title, url, date: formattedDate, preview: "" });
+          }
         }
       }
       
-      // Strategy 2: Any markdown link that looks like a newsletter
-      // Captures links to common newsletter platforms
-      const pattern2 = /\[([^\]]+)\]\((https?:\/\/(?:eepurl\.com|mailchi\.mp|us\d+\.campaign-archive\.com|substack\.com|[^)]+\/newsletter|[^)]+\/briefing)[^)]*)\)/gi;
-      while ((match = pattern2.exec(pageContent)) !== null) {
-        const title = match[1].replace(/\\/g, '').trim();
-        const url = match[2];
-        
-        if (!seenUrls.has(url) && title.length > 5) {
-          seenUrls.add(url);
-          extractedNewsletters.push({ title, url, date: "", preview: "" });
-        }
-      }
-      
-      // Strategy 3: Look for any links with newsletter-related keywords in the title
-      const pattern3 = /\[([^\]]*(?:newsletter|briefing|edition|issue|weekly|monthly|digest)[^\]]*)\]\((https?:\/\/[^)]+)\)/gi;
-      while ((match = pattern3.exec(pageContent)) !== null) {
-        const title = match[1].replace(/\\/g, '').trim();
-        const url = match[2];
-        
-        if (!seenUrls.has(url) && title.length > 5) {
-          seenUrls.add(url);
-          extractedNewsletters.push({ title, url, date: "", preview: "" });
+      // Fallback: find all newsletter platform links if no dated entries found
+      if (extractedNewsletters.length === 0) {
+        const linkPattern = /\[([^\]]+)\]\((https?:\/\/(?:eepurl\.com|mailchi\.mp|us\d+\.campaign-archive\.com)[^)]+)\)/gi;
+        let match;
+        while ((match = linkPattern.exec(pageContent)) !== null) {
+          const title = match[1].replace(/\\/g, '').trim();
+          const url = match[2];
+          
+          if (!seenUrls.has(url) && title.length > 5) {
+            seenUrls.add(url);
+            extractedNewsletters.push({ title, url, date: "", preview: "" });
+          }
         }
       }
 
