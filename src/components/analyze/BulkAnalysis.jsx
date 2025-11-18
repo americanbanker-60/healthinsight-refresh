@@ -450,7 +450,8 @@ Extract structured insights:
           ...analysis,
           source_url: newsletter.url || "Manual Entry",
           title: analysis.title || newsletter.title,
-          publication_date: analysis.publication_date || newsletter.date
+          publication_date: analysis.publication_date || newsletter.date,
+          source_name: sourceName || undefined
         });
       } catch (err) {
         console.error(`Error processing ${newsletter.title}:`, err);
@@ -461,7 +462,11 @@ Extract structured insights:
     }
 
     setIsProcessing(false);
-    navigate(createPageUrl("Dashboard"));
+    if (onComplete) {
+      onComplete();
+    } else {
+      navigate(createPageUrl("Dashboard"));
+    }
   };
 
   return (
