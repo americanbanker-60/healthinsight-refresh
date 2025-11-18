@@ -13,7 +13,7 @@ import { Loader2, Search, CheckCircle2, AlertCircle, ExternalLink, FileText } fr
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
-export default function BulkAnalysis() {
+export default function BulkAnalysis({ sourceName, onComplete }) {
   const navigate = useNavigate();
   const [indexUrl, setIndexUrl] = useState("");
   const [manualUrls, setManualUrls] = useState("");

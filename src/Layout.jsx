@@ -1,7 +1,9 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Brain, LayoutDashboard, Plus, TrendingUp, Settings } from "lucide-react";
+import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, Newspaper } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sidebar,
   SidebarContent,
@@ -17,16 +19,11 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-const navigationItems = [
+const staticNavigationItems = [
   {
     title: "Dashboard",
     url: createPageUrl("Dashboard"),
     icon: LayoutDashboard,
-  },
-  {
-    title: "Analyze Newsletter",
-    url: createPageUrl("AnalyzeNewsletter"),
-    icon: Plus,
   },
   {
     title: "Settings",
@@ -37,6 +34,12 @@ const navigationItems = [
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
+  
+  const { data: sources = [] } = useQuery({
+    queryKey: ['sources'],
+    queryFn: () => base44.entities.Source.list("name"),
+    initialData: [],
+  });
 
   return (
     <SidebarProvider>
@@ -69,7 +72,7 @@ export default function Layout({ children, currentPageName }) {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navigationItems.map((item) => (
+                  {staticNavigationItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild 
@@ -80,6 +83,31 @@ export default function Layout({ children, currentPageName }) {
                         <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
                           <item.icon className="w-4 h-4" />
                           <span className="font-medium">{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="mt-4">
+              <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-3">
+                Sources
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {sources.map((source) => (
+                    <SidebarMenuItem key={source.id}>
+                      <SidebarMenuButton 
+                        asChild 
+                        className={`hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl mb-1 ${
+                          location.pathname === createPageUrl("SourcePage") && location.search.includes(source.name) ? 'bg-blue-50 text-blue-700 shadow-sm' : ''
+                        }`}
+                      >
+                        <Link to={createPageUrl("SourcePage") + "?name=" + encodeURIComponent(source.name)} className="flex items-center gap-3 px-4 py-3">
+                          <Newspaper className="w-4 h-4" />
+                          <span className="font-medium">{source.name}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

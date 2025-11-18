@@ -218,6 +218,9 @@ export default function Dashboard() {
         <div>
           <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Healthcare Intelligence</h1>
           <p className="text-slate-600 text-lg">Track market movements, M&A activity, and emerging trends</p>
+          <Badge variant="outline" className="mt-2 text-xs">
+            Showing all sources
+          </Badge>
           {userConfig.investment_focus && userConfig.investment_focus.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {userConfig.investment_focus.map(focus => (
@@ -228,20 +231,12 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        <div className="flex gap-2">
-          <Link to={createPageUrl("DashboardSettings")}>
-            <Button variant="outline" className="shadow-sm">
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
-            </Button>
-          </Link>
-          <Link to={createPageUrl("AnalyzeNewsletter")}>
-            <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40">
-              <Plus className="w-5 h-5 mr-2" />
-              Analyze Newsletter
-            </Button>
-          </Link>
-        </div>
+        <Link to={createPageUrl("DashboardSettings")}>
+          <Button variant="outline" className="shadow-sm">
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </Button>
+        </Link>
       </div>
 
       <StatsOverview 
