@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Brain, LayoutDashboard, Plus, TrendingUp } from "lucide-react";
+import { Brain, LayoutDashboard, Plus, TrendingUp, Settings } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +27,11 @@ const navigationItems = [
     title: "Analyze Newsletter",
     url: createPageUrl("AnalyzeNewsletter"),
     icon: Plus,
+  },
+  {
+    title: "Settings",
+    url: createPageUrl("DashboardSettings"),
+    icon: TrendingUp,
   },
 ];
 

@@ -20,7 +20,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Filter, X, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 
-export default function AdvancedFilters({ newsletters, onFiltersChange }) {
+export default function AdvancedFilters({ newsletters, onFiltersChange, defaultExpanded = false }) {
   const [filters, setFilters] = useState({
     startDate: null,
     endDate: null,
@@ -32,7 +32,7 @@ export default function AdvancedFilters({ newsletters, onFiltersChange }) {
     sentiment: "all"
   });
 
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(defaultExpanded);
 
   // Extract unique key players from all newsletters
   const allKeyPlayers = [...new Set(

@@ -1,15 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tantml:react-query";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import NewsletterCard from "../components/dashboard/NewsletterCard";
+import NewsletterCardCompact from "../components/dashboard/NewsletterCardCompact";
+import NewsletterCardMinimal from "../components/dashboard/NewsletterCardMinimal";
 import StatsOverview from "../components/dashboard/StatsOverview";
 import AdvancedFilters from "../components/dashboard/AdvancedFilters";
+import TrendChart from "../components/dashboard/TrendChart";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
   const [filters, setFilters] = useState({
@@ -22,6 +26,8 @@ export default function Dashboard() {
     fundingStage: "all",
     sentiment: "all"
   });
+  const [userConfig, setUserConfig] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: newsletters, isLoading } = useQuery({
     queryKey: ['newsletters'],
@@ -29,7 +35,63 @@ export default function Dashboard() {
     initialData: [],
   });
 
-  const filteredNewsletters = newsletters.filter(newsletter => {
+  useEffect(() => {
+    loadUserConfig();
+  }, []);
+
+  const loadUserConfig = async () => {
+    try {
+      const user = await base44.auth.me();
+      const config = user.dashboard_config || {
+        visible_stats: ["newsletters", "ma_deals", "funding", "themes"],
+        investment_focus: [],
+        show_charts: true,
+        newsletter_display: "full",
+        filters_expanded: false
+      };
+      setUserConfig(config);
+      setShowFilters(config.filters_expanded);
+    } catch (err) {
+      setUserConfig({
+        visible_stats: ["newsletters", "ma_deals", "funding", "themes"],
+        investment_focus: [],
+        show_charts: true,
+        newsletter_display: "full",
+        filters_expanded: false
+      });
+    }
+  };
+
+  // Filter by investment focus
+  const focusFilteredNewsletters = React.useMemo(() => {
+    if (!userConfig?.investment_focus || userConfig.investment_focus.length === 0) {
+      return newsletters;
+    }
+
+    return newsletters.map(newsletter => {
+      let relevanceScore = 0;
+      const matchedFocusAreas = [];
+
+      userConfig.investment_focus.forEach(focus => {
+        const focusLower = focus.toLowerCase();
+        
+        if (newsletter.title?.toLowerCase().includes(focusLower)) relevanceScore += 3;
+        if (newsletter.summary?.toLowerCase().includes(focusLower)) relevanceScore += 2;
+        if (newsletter.key_takeaways?.some(t => t.toLowerCase().includes(focusLower))) relevanceScore += 2;
+        if (newsletter.themes?.some(t => 
+          t.theme?.toLowerCase().includes(focusLower) || 
+          t.description?.toLowerCase().includes(focusLower)
+        )) {
+          relevanceScore += 2;
+          matchedFocusAreas.push(focus);
+        }
+      });
+
+      return { ...newsletter, relevanceScore, matchedFocusAreas };
+    }).sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+  }, [newsletters, userConfig]);
+
+  const filteredNewsletters = focusFilteredNewsletters.filter(newsletter => {
     // Keywords search - across title, summary, takeaways, themes
     if (filters.keywords) {
       const keyword = filters.keywords.toLowerCase();
@@ -123,29 +185,73 @@ export default function Dashboard() {
     return true;
   });
 
+  const NewsletterComponent = {
+    full: NewsletterCard,
+    compact: NewsletterCardCompact,
+    minimal: NewsletterCardMinimal
+  }[userConfig?.newsletter_display || "full"];
+
+  if (!userConfig) {
+    return (
+      <div className="p-10 max-w-7xl mx-auto">
+        <Skeleton className="h-12 w-1/3 mb-8" />
+        <div className="grid gap-6">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-64" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-10 max-w-7xl mx-auto w-full overflow-x-hidden">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Healthcare Intelligence</h1>
           <p className="text-slate-600 text-lg">Track market movements, M&A activity, and emerging trends</p>
+          {userConfig.investment_focus && userConfig.investment_focus.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {userConfig.investment_focus.map(focus => (
+                <Badge key={focus} variant="outline" className="text-xs">
+                  {focus}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
-        <Link to={createPageUrl("AnalyzeNewsletter")}>
-          <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40">
-            <Plus className="w-5 h-5 mr-2" />
-            Analyze Newsletter
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link to={createPageUrl("DashboardSettings")}>
+            <Button variant="outline" className="shadow-sm">
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </Button>
+          </Link>
+          <Link to={createPageUrl("AnalyzeNewsletter")}>
+            <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40">
+              <Plus className="w-5 h-5 mr-2" />
+              Analyze Newsletter
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      <StatsOverview newsletters={newsletters} isLoading={isLoading} />
+      <StatsOverview 
+        newsletters={newsletters} 
+        isLoading={isLoading}
+        visibleStats={userConfig.visible_stats}
+      />
+
+      {userConfig.show_charts && newsletters.length > 0 && (
+        <TrendChart newsletters={newsletters} />
+      )}
 
       <AdvancedFilters 
         newsletters={newsletters} 
         onFiltersChange={setFilters}
+        defaultExpanded={showFilters}
       />
 
-      <div className="grid gap-6">
+      <div className={userConfig.newsletter_display === "minimal" ? "space-y-2" : "grid gap-6"}>
         <AnimatePresence mode="wait">
           {isLoading ? (
             Array(3).fill(0).map((_, i) => (
@@ -178,7 +284,18 @@ export default function Dashboard() {
             </motion.div>
           ) : (
             filteredNewsletters.map((newsletter, index) => (
-              <NewsletterCard key={newsletter.id} newsletter={newsletter} index={index} />
+              <div key={newsletter.id}>
+                <NewsletterComponent newsletter={newsletter} index={index} />
+                {newsletter.matchedFocusAreas && newsletter.matchedFocusAreas.length > 0 && (
+                  <div className="flex gap-1 mt-2 ml-2">
+                    {newsletter.matchedFocusAreas.map(focus => (
+                      <Badge key={focus} className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
+                        {focus}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))
           )}
         </AnimatePresence>

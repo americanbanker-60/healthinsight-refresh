@@ -4,7 +4,7 @@ import { FileText, TrendingUp, Briefcase, DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 
-export default function StatsOverview({ newsletters, isLoading }) {
+export default function StatsOverview({ newsletters, isLoading, visibleStats = ["newsletters", "ma_deals", "funding", "themes"] }) {
   const totalNewsletters = newsletters.length;
   const totalMADeals = newsletters.reduce((sum, n) => sum + (n.ma_activities?.length || 0), 0);
   const totalFunding = newsletters.reduce((sum, n) => sum + (n.funding_rounds?.length || 0), 0);
