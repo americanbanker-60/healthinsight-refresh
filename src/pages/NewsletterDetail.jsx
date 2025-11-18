@@ -42,7 +42,7 @@ export default function NewsletterDetail() {
 
   if (isLoading) {
     return (
-      <div className="p-6 md:p-10 max-w-6xl mx-auto">
+      <div className="p-4 md:p-10 max-w-6xl mx-auto w-full overflow-x-hidden">
         <Skeleton className="h-8 w-48 mb-8" />
         <Skeleton className="h-12 w-3/4 mb-4" />
         <Skeleton className="h-24 w-full mb-8" />

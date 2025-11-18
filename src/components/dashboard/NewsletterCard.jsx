@@ -30,11 +30,13 @@ export default function NewsletterCard({ newsletter, index }) {
                 {newsletter.title}
               </CardTitle>
               <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <Calendar className="w-4 h-4" />
-                  {newsletter.publication_date 
-                    ? format(new Date(newsletter.publication_date), "MMM d, yyyy")
-                    : format(new Date(newsletter.created_date), "MMM d, yyyy")}
+                  <span className="whitespace-nowrap">
+                    {newsletter.publication_date 
+                      ? format(new Date(newsletter.publication_date), "MMM d, yyyy")
+                      : format(new Date(newsletter.created_date), "MMM d, yyyy")}
+                  </span>
                 </div>
                 {newsletter.sentiment && (
                   <Badge className={`${sentimentColors[newsletter.sentiment]} border font-medium`}>
@@ -59,7 +61,7 @@ export default function NewsletterCard({ newsletter, index }) {
             <p className="text-slate-700 mb-4 line-clamp-2">{newsletter.summary}</p>
           )}
           
-          <div className="flex flex-wrap gap-4 mb-4">
+          <div className="flex flex-wrap gap-3 mb-4">
             {newsletter.key_takeaways && newsletter.key_takeaways.length > 0 && (
               <div className="flex items-center gap-2 text-sm">
                 <TrendingUp className="w-4 h-4 text-blue-600" />
