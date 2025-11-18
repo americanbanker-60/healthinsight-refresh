@@ -31,7 +31,7 @@ const navigationItems = [
   {
     title: "Settings",
     url: createPageUrl("DashboardSettings"),
-    icon: TrendingUp,
+    icon: Settings,
   },
 ];
 
