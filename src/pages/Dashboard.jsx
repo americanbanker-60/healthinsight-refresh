@@ -126,9 +126,18 @@ export default function Dashboard() {
 
     // Date range filter
     if (filters.startDate || filters.endDate) {
-      const pubDate = newsletter.publication_date 
-        ? new Date(newsletter.publication_date)
-        : new Date(newsletter.created_date);
+      let pubDate;
+      if (newsletter.publication_date) {
+        pubDate = new Date(newsletter.publication_date);
+        if (isNaN(pubDate.getTime())) pubDate = null;
+      }
+      
+      if (!pubDate && newsletter.created_date) {
+        pubDate = new Date(newsletter.created_date);
+        if (isNaN(pubDate.getTime())) pubDate = null;
+      }
+      
+      if (!pubDate) return false;
       
       if (filters.startDate && pubDate < filters.startDate) return false;
       if (filters.endDate && pubDate > filters.endDate) return false;

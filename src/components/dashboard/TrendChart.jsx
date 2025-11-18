@@ -20,9 +20,27 @@ export default function TrendChart({ newsletters }) {
     }
 
     newsletters.forEach(newsletter => {
-      const date = newsletter.publication_date 
-        ? parseISO(newsletter.publication_date)
-        : new Date(newsletter.created_date);
+      let date;
+      if (newsletter.publication_date) {
+        try {
+          date = parseISO(newsletter.publication_date);
+          if (isNaN(date.getTime())) date = null;
+        } catch {
+          date = null;
+        }
+      }
+      
+      if (!date && newsletter.created_date) {
+        try {
+          date = new Date(newsletter.created_date);
+          if (isNaN(date.getTime())) date = null;
+        } catch {
+          date = null;
+        }
+      }
+      
+      if (!date) return;
+      
       const key = format(startOfMonth(date), 'MMM yyyy');
       
       if (months[key]) {
