@@ -103,13 +103,16 @@ export default function BulkAnalysis() {
       try {
         const analysis = await base44.integrations.Core.InvokeLLM({
           prompt: `Analyze this healthcare newsletter from ${newsletter.url} and extract structured insights. Focus on:
-1. Key takeaways and main points
-2. Major themes and topics
-3. M&A activities (mergers, acquisitions, deals)
-4. Funding rounds and investments
-5. Key players (companies, organizations)
-6. Overall market sentiment
-7. Executive summary
+1. TLDR (2-3 sentence summary)
+2. Key statistics and figures mentioned
+3. Recommended actions for healthcare executives
+4. Key takeaways and main points
+5. Major themes and topics
+6. M&A activities (mergers, acquisitions, deals)
+7. Funding rounds and investments
+8. Key players (companies, organizations)
+9. Overall market sentiment
+10. Executive summary
 
 Extract detailed information about the healthcare industry developments mentioned in this newsletter.`,
           add_context_from_internet: true,
@@ -118,6 +121,18 @@ Extract detailed information about the healthcare industry developments mentione
             properties: {
               title: { type: "string" },
               publication_date: { type: "string" },
+              tldr: { type: "string" },
+              key_statistics: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    figure: { type: "string" },
+                    context: { type: "string" }
+                  }
+                }
+              },
+              recommended_actions: { type: "array", items: { type: "string" } },
               key_takeaways: { type: "array", items: { type: "string" } },
               themes: {
                 type: "array",

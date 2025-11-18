@@ -34,45 +34,63 @@ export default function AnalyzeNewsletter() {
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `You are a seasoned healthcare investment banking and private equity analyst with deep expertise in healthcare M&A, venture capital, and market dynamics.
 
-    Analyze this healthcare newsletter from ${url} with the sophistication expected at a top-tier investment firm. For each insight, provide ACTIONABLE investment intelligence:
+      Analyze this healthcare newsletter from ${url} with the sophistication expected at a top-tier investment firm. For each insight, provide ACTIONABLE investment intelligence:
 
-    **KEY TAKEAWAYS** - Extract 5-7 insights that matter to investors:
-    - What are the strategic implications for healthcare investors?
-    - What market shifts or inflection points are occurring?
-    - What competitive dynamics are emerging?
-    - What regulatory or reimbursement trends should investors monitor?
+      **TLDR** - Provide a sharp 2-3 sentence summary capturing the most critical information an executive needs to know.
 
-    **THEMES** - Identify 3-5 major themes with DEEP context:
-    - For each theme, research current market conditions and explain WHY this matters NOW
-    - What are the investment opportunities or risks this theme creates?
-    - Which sectors/subsectors are most affected?
-    - What is the 12-24 month outlook?
+      **KEY STATISTICS** - Extract all important numbers, metrics, and data points mentioned (deal values, growth rates, market sizes, patient volumes, cost savings, etc.). For each stat, provide the figure and brief context.
 
-    **M&A ACTIVITIES** - Analyze deals with strategic context:
-    - Strategic rationale: Why did this deal happen? (scale, tech acquisition, vertical integration, etc.)
-    - Valuation multiples if available (revenue, EBITDA)
-    - How does this compare to recent comparable transactions?
-    - What does this signal about sector consolidation or strategic priorities?
+      **KEY TAKEAWAYS** - Extract 5-7 insights that matter to investors:
+      - What are the strategic implications for healthcare investors?
+      - What market shifts or inflection points are occurring?
+      - What competitive dynamics are emerging?
+      - What regulatory or reimbursement trends should investors monitor?
 
-    **FUNDING ROUNDS** - Extract venture insights:
-    - What does this funding signal about investor confidence in this space?
-    - Who are the lead investors and what's their thesis?
-    - How does the valuation compare to sector benchmarks?
-    - What milestones or catalysts justified this round?
+      **RECOMMENDED ACTIONS** - Based on the newsletter content, suggest 3-5 concrete next steps healthcare executives should consider (e.g., "Evaluate AI scribing vendors for Q1 rollout", "Monitor CMS reimbursement changes for telehealth", "Assess competitive positioning against new entrant X").
 
-    **KEY PLAYERS** - Identify companies making strategic moves
+      **THEMES** - Identify 3-5 major themes with DEEP context:
+      - For each theme, research current market conditions and explain WHY this matters NOW
+      - What are the investment opportunities or risks this theme creates?
+      - Which sectors/subsectors are most affected?
+      - What is the 12-24 month outlook?
 
-    **SENTIMENT** - Assess overall market tone for healthcare investors
+      **M&A ACTIVITIES** - Analyze deals with strategic context:
+      - Strategic rationale: Why did this deal happen? (scale, tech acquisition, vertical integration, etc.)
+      - Valuation multiples if available (revenue, EBITDA)
+      - How does this compare to recent comparable transactions?
+      - What does this signal about sector consolidation or strategic priorities?
 
-    **SUMMARY** - Write a 2-3 paragraph executive summary suitable for an investment committee memo, highlighting the most critical developments and their investment implications.
+      **FUNDING ROUNDS** - Extract venture insights:
+      - What does this funding signal about investor confidence in this space?
+      - Who are the lead investors and what's their thesis?
+      - How does the valuation compare to sector benchmarks?
+      - What milestones or catalysts justified this round?
 
-    Use internet research to provide current market context, comparable transactions, sector trends, and validate insights.`,
+      **KEY PLAYERS** - Identify companies making strategic moves
+
+      **SENTIMENT** - Assess overall market tone for healthcare investors
+
+      **SUMMARY** - Write a 2-3 paragraph executive summary suitable for an investment committee memo, highlighting the most critical developments and their investment implications.
+
+      Use internet research to provide current market context, comparable transactions, sector trends, and validate insights.`,
         add_context_from_internet: true,
         response_json_schema: {
           type: "object",
           properties: {
             title: { type: "string" },
             publication_date: { type: "string" },
+            tldr: { type: "string" },
+            key_statistics: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  figure: { type: "string" },
+                  context: { type: "string" }
+                }
+              }
+            },
+            recommended_actions: { type: "array", items: { type: "string" } },
             key_takeaways: { type: "array", items: { type: "string" } },
             themes: {
               type: "array",

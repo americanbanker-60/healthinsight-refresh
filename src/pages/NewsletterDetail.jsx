@@ -7,15 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
-  ArrowLeft, 
-  ExternalLink, 
-  Calendar, 
-  TrendingUp, 
-  Lightbulb,
-  Briefcase,
-  DollarSign,
-  Building2
-} from "lucide-react";
+        ArrowLeft, 
+        ExternalLink, 
+        Calendar, 
+        TrendingUp, 
+        Lightbulb,
+        Briefcase,
+        DollarSign,
+        Building2,
+        BarChart3,
+        CheckSquare
+      } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -99,8 +101,15 @@ export default function NewsletterDetail() {
           </a>
         </div>
 
+        {newsletter.tldr && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 mt-6">
+            <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide">TL;DR</h3>
+            <p className="text-slate-800 font-medium leading-relaxed">{newsletter.tldr}</p>
+          </div>
+        )}
+
         {newsletter.summary && (
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mt-6">
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mt-4">
             <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
               <Lightbulb className="w-5 h-5 text-blue-600" />
               Executive Summary
@@ -109,6 +118,50 @@ export default function NewsletterDetail() {
           </div>
         )}
       </div>
+
+      {newsletter.key_statistics && newsletter.key_statistics.length > 0 && (
+        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 mb-6">
+          <CardHeader className="border-b border-slate-200/60">
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-indigo-600" />
+              Key Statistics
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid md:grid-cols-2 gap-4">
+              {newsletter.key_statistics.map((stat, index) => (
+                <div key={index} className="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
+                  <div className="text-2xl font-bold text-indigo-900 mb-1">{stat.figure}</div>
+                  <p className="text-sm text-slate-700">{stat.context}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {newsletter.recommended_actions && newsletter.recommended_actions.length > 0 && (
+        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 mb-6">
+          <CardHeader className="border-b border-slate-200/60">
+            <CardTitle className="flex items-center gap-2">
+              <CheckSquare className="w-5 h-5 text-amber-600" />
+              Recommended Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <ul className="space-y-3">
+              {newsletter.recommended_actions.map((action, index) => (
+                <li key={index} className="flex gap-3 items-start">
+                  <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5 font-semibold text-sm">
+                    {index + 1}
+                  </div>
+                  <span className="text-slate-700 flex-1">{action}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
         {newsletter.key_takeaways && newsletter.key_takeaways.length > 0 && (

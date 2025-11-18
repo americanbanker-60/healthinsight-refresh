@@ -57,10 +57,12 @@ export default function NewsletterCard({ newsletter, index }) {
           </div>
         </CardHeader>
         <CardContent className="pt-4">
-          {newsletter.summary && (
-            <p className="text-slate-700 mb-4 line-clamp-2">{newsletter.summary}</p>
+          {newsletter.tldr && (
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4">
+              <p className="text-sm text-slate-700 font-medium">{newsletter.tldr}</p>
+            </div>
           )}
-          
+
           <div className="flex flex-wrap gap-3 mb-4">
             {newsletter.key_takeaways && newsletter.key_takeaways.length > 0 && (
               <div className="flex items-center gap-2 text-sm">
