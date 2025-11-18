@@ -104,6 +104,13 @@ export default function BulkAnalysis() {
     return cleaned;
   };
 
+  const generatePreview = (content) => {
+    // Extract first 2-3 sentences from content
+    const sentences = content.match(/[^.!?]+[.!?]+/g) || [];
+    const preview = sentences.slice(0, 3).join(' ').trim();
+    return preview.length > 200 ? preview.substring(0, 200) + '...' : preview;
+  };
+
   const extractLinksFromHTML = (html, baseUrl) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
@@ -179,12 +186,23 @@ export default function BulkAnalysis() {
         const html = await response.text();
         const extracted = extractLinksFromHTML(html, indexUrl);
         
-        extracted.forEach(item => {
+        // Fetch preview for each newsletter
+        for (const item of extracted.slice(0, 20)) {
           if (!seenUrls.has(item.url)) {
             seenUrls.add(item.url);
-            allNewsletters.push(item);
+            
+            // Try to fetch and generate preview
+            try {
+              const nlResponse = await fetch(item.url);
+              const nlHtml = await nlResponse.text();
+              const cleanContent = extractMainContent(nlHtml);
+              const preview = generatePreview(cleanContent);
+              allNewsletters.push({ ...item, preview });
+            } catch (err) {
+              allNewsletters.push(item);
+            }
           }
-        });
+        }
       }
 
       // STEP 1B: Process manual URLs
@@ -194,17 +212,32 @@ export default function BulkAnalysis() {
           .map(u => u.trim())
           .filter(u => u && u.startsWith('http'));
         
-        urls.forEach((url, idx) => {
+        for (const [idx, url] of urls.entries()) {
           if (!seenUrls.has(url)) {
             seenUrls.add(url);
-            allNewsletters.push({
-              title: `Newsletter ${idx + 1}`,
-              url: url,
-              date: '',
-              preview: ''
-            });
+            
+            // Try to fetch and generate preview
+            try {
+              const response = await fetch(url);
+              const html = await response.text();
+              const cleanContent = extractMainContent(html);
+              const preview = generatePreview(cleanContent);
+              
+              // Try to extract title from first line or heading
+              const lines = cleanContent.split('\n').filter(l => l.trim());
+              const title = lines[0]?.substring(0, 100) || `Newsletter ${idx + 1}`;
+              
+              allNewsletters.push({ title, url, date: '', preview });
+            } catch (err) {
+              allNewsletters.push({
+                title: `Newsletter ${idx + 1}`,
+                url: url,
+                date: '',
+                preview: ''
+              });
+            }
           }
-        });
+        }
       }
 
       // STEP 1C: Process raw content
@@ -233,11 +266,14 @@ export default function BulkAnalysis() {
           date = `${year}-${month}-${day}`;
         }
 
+        // Generate preview from cleaned content
+        const preview = generatePreview(cleaned);
+
         allNewsletters.push({
           title: title,
           url: null,
           date: date,
-          preview: cleaned.substring(0, 200),
+          preview: preview,
           rawContent: cleaned
         });
         }
@@ -579,7 +615,7 @@ Extract structured insights:
                         <p className="text-xs text-slate-500 mb-1">{newsletter.date}</p>
                       )}
                       {newsletter.preview && (
-                        <p className="text-sm text-slate-600 line-clamp-2">{newsletter.preview}</p>
+                        <p className="text-sm text-slate-600 leading-relaxed mt-2">{newsletter.preview}</p>
                       )}
                     </div>
                   </div>
