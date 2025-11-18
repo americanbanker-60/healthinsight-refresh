@@ -27,6 +27,83 @@ export default function BulkAnalysis() {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processedCount, setProcessedCount] = useState(0);
 
+  const extractMainContent = (html) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    // Remove unwanted elements
+    const selectorsToRemove = [
+      'header', 'nav', 'footer', 
+      '.header', '.nav', '.navigation', '.footer',
+      '.cookie', '.banner', '.sidebar', 
+      '[role="banner"]', '[role="navigation"]', '[role="complementary"]',
+      'script', 'style', 'iframe', 'form'
+    ];
+    
+    selectorsToRemove.forEach(selector => {
+      doc.querySelectorAll(selector).forEach(el => el.remove());
+    });
+    
+    // Try to find main content area
+    let mainContent = 
+      doc.querySelector('article') ||
+      doc.querySelector('main') ||
+      doc.querySelector('[role="main"]') ||
+      doc.querySelector('.content') ||
+      doc.querySelector('.article') ||
+      doc.querySelector('.post') ||
+      doc.querySelector('#content') ||
+      doc.body;
+    
+    if (!mainContent) return '';
+    
+    // Get text and clean it
+    let text = mainContent.textContent || '';
+    
+    // Remove excessive whitespace
+    text = text.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+    
+    return text;
+  };
+
+  const cleanPastedContent = (content) => {
+    // Remove common unsubscribe footers
+    const unsubscribePatterns = [
+      /unsubscribe.*?$/im,
+      /click here to unsubscribe.*$/im,
+      /manage.*?preferences.*$/im,
+      /update.*?email preferences.*$/im,
+      /you.*?receiving.*?email.*$/im,
+      /^\s*---+\s*$/gm,
+      /view.*?in.*?browser.*$/im,
+      /sent with.*?$/im,
+      /powered by.*?$/im
+    ];
+    
+    let cleaned = content;
+    unsubscribePatterns.forEach(pattern => {
+      cleaned = cleaned.replace(pattern, '');
+    });
+    
+    // Remove repetitive footers (text that appears at the end and repeats common phrases)
+    const lines = cleaned.split('\n');
+    const lastLines = lines.slice(-10);
+    
+    if (lastLines.some(line => 
+      line.toLowerCase().includes('privacy') ||
+      line.toLowerCase().includes('terms') ||
+      line.toLowerCase().includes('copyright') ||
+      line.toLowerCase().includes('all rights reserved')
+    )) {
+      cleaned = lines.slice(0, -10).join('\n');
+    }
+    
+    // Clean excessive whitespace
+    cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+    
+    return cleaned;
+  };
+
   const extractLinksFromHTML = (html, baseUrl) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
@@ -134,33 +211,36 @@ export default function BulkAnalysis() {
       if (inputMethod === "raw" && rawContent.trim()) {
         // Split by clear delimiters (multiple newlines, headings, dates)
         const sections = rawContent.split(/\n\n\n+|\n={3,}|\n-{3,}/);
-        
+
         sections.forEach((section, idx) => {
-          const trimmed = section.trim();
-          if (trimmed.length > 100) { // Minimum content length
-            const lines = trimmed.split('\n');
-            const title = lines[0].substring(0, 100) || `Pasted Newsletter ${idx + 1}`;
-            
-            // Try to extract date
-            let date = '';
-            const dateMatch = trimmed.match(/\d{1,2}\/\d{1,2}\/\d{2,4}/);
-            if (dateMatch) {
-              const dateParts = dateMatch[0].split('/');
-              const month = dateParts[0].padStart(2, '0');
-              const day = dateParts[1].padStart(2, '0');
-              let year = dateParts[2];
-              if (year.length === 2) year = '20' + year;
-              date = `${year}-${month}-${day}`;
-            }
-            
-            allNewsletters.push({
-              title: title,
-              url: null,
-              date: date,
-              preview: trimmed.substring(0, 200),
-              rawContent: trimmed
-            });
-          }
+        const trimmed = section.trim();
+        if (trimmed.length > 100) { // Minimum content length
+        // Clean the pasted content first
+        const cleaned = cleanPastedContent(trimmed);
+
+        const lines = cleaned.split('\n');
+        const title = lines[0].substring(0, 100) || `Pasted Newsletter ${idx + 1}`;
+
+        // Try to extract date
+        let date = '';
+        const dateMatch = cleaned.match(/\d{1,2}\/\d{1,2}\/\d{2,4}/);
+        if (dateMatch) {
+          const dateParts = dateMatch[0].split('/');
+          const month = dateParts[0].padStart(2, '0');
+          const day = dateParts[1].padStart(2, '0');
+          let year = dateParts[2];
+          if (year.length === 2) year = '20' + year;
+          date = `${year}-${month}-${day}`;
+        }
+
+        allNewsletters.push({
+          title: title,
+          url: null,
+          date: date,
+          preview: cleaned.substring(0, 200),
+          rawContent: cleaned
+        });
+        }
         });
       }
 
@@ -211,9 +291,23 @@ export default function BulkAnalysis() {
       try {
         let contentSource;
         if (newsletter.rawContent) {
-          contentSource = `Raw newsletter content: ${newsletter.rawContent}`;
+          const cleaned = cleanPastedContent(newsletter.rawContent);
+          contentSource = `Newsletter content:\n\n${cleaned}`;
         } else {
-          contentSource = `Newsletter URL: ${newsletter.url}`;
+          // Fetch and extract clean content from URL
+          try {
+            const response = await fetch(newsletter.url);
+            const html = await response.text();
+            const cleanContent = extractMainContent(html);
+            
+            if (cleanContent && cleanContent.length > 200) {
+              contentSource = `Newsletter content:\n\n${cleanContent}`;
+            } else {
+              contentSource = `Newsletter URL: ${newsletter.url}`;
+            }
+          } catch (fetchErr) {
+            contentSource = `Newsletter URL: ${newsletter.url}`;
+          }
         }
 
         const analysis = await base44.integrations.Core.InvokeLLM({
@@ -222,6 +316,8 @@ export default function BulkAnalysis() {
 Analyze this healthcare newsletter and extract ACTIONABLE investment intelligence:
 
 ${contentSource}
+
+${!contentSource.includes('Newsletter URL:') ? 'The content above has been extracted and cleaned from the newsletter.' : ''}
 
 Extract structured insights:
 
@@ -260,7 +356,7 @@ Extract structured insights:
 **SENTIMENT** - Overall market tone
 
 **SUMMARY** - 2-3 paragraph executive summary for investment committee`,
-          add_context_from_internet: newsletter.url ? true : false,
+          add_context_from_internet: contentSource.includes('Newsletter URL:') ? true : false,
           response_json_schema: {
             type: "object",
             properties: {
