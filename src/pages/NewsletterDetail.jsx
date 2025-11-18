@@ -82,7 +82,11 @@ export default function NewsletterDetail() {
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                {newsletter.publication_date ? format(new Date(newsletter.publication_date), "MMM d, yyyy") : "Date not available"}
+                {newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime()) 
+                  ? format(new Date(newsletter.publication_date), "MMM d, yyyy") 
+                  : newsletter.created_date && !isNaN(new Date(newsletter.created_date).getTime())
+                  ? format(new Date(newsletter.created_date), "MMM d, yyyy")
+                  : "Date not available"}
               </div>
               {newsletter.sentiment && (
                 <Badge className={`${sentimentColors[newsletter.sentiment]} border font-medium`}>
