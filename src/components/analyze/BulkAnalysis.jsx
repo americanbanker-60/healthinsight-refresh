@@ -40,9 +40,9 @@ export default function BulkAnalysis() {
       // Extract all newsletter links using regex pattern matching
       const extractedNewsletters = [];
       
-      // Pattern to match date followed by title and eepurl link
-      // Format: MM/DD/YYYY\n\n[Title](http://eepurl.com/...)
-      const pattern = /(\d{1,2}\/\d{1,2}\/\d{4})\s*\n+\s*\[([^\]]+)\]\((http:\/\/eepurl\.com\/[^)]+)\)/g;
+      // Pattern to match date followed by title and link (eepurl or other domains)
+      // Format: MM/DD/YYYY\n\n[Title](http://...)
+      const pattern = /(\d{1,2}\/\d{1,2}\/\d{4})\s*\n+\s*\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
       
       let match;
       while ((match = pattern.exec(pageContent)) !== null) {
