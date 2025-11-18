@@ -37,42 +37,64 @@ export default function BulkAnalysis() {
       // Fetch page content using Jina reader
       const pageContent = await fetch(`https://r.jina.ai/${sourceUrl}`).then(res => res.text());
       
-      // Extract all newsletter links using regex pattern matching
+      // Extract all newsletter links using multiple pattern strategies
       const extractedNewsletters = [];
+      const seenUrls = new Set();
       
-      // Pattern to match date followed by title and link (eepurl or other domains)
+      // Strategy 1: Date + Title + Link (original pattern)
       // Format: MM/DD/YYYY\n\n[Title](http://...)
-      const pattern = /(\d{1,2}\/\d{1,2}\/\d{4})\s*\n+\s*\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
-      
+      const pattern1 = /(\d{1,2}\/\d{1,2}\/\d{4})\s*\n+\s*\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
       let match;
-      while ((match = pattern.exec(pageContent)) !== null) {
+      while ((match = pattern1.exec(pageContent)) !== null) {
         const dateStr = match[1];
-        const title = match[2].replace(/\\/g, ''); // Remove escaped characters
+        const title = match[2].replace(/\\/g, '');
         const url = match[3];
         
-        // Parse and format date (MM/DD/YYYY -> YYYY-MM-DD)
-        const dateParts = dateStr.split('/');
-        const month = dateParts[0].padStart(2, '0');
-        const day = dateParts[1].padStart(2, '0');
-        const year = dateParts[2];
-        const formattedDate = `${year}-${month}-${day}`;
+        if (!seenUrls.has(url)) {
+          seenUrls.add(url);
+          const dateParts = dateStr.split('/');
+          const month = dateParts[0].padStart(2, '0');
+          const day = dateParts[1].padStart(2, '0');
+          const year = dateParts[2];
+          const formattedDate = `${year}-${month}-${day}`;
+          
+          extractedNewsletters.push({ title, url, date: formattedDate, preview: "" });
+        }
+      }
+      
+      // Strategy 2: Any markdown link that looks like a newsletter
+      // Captures links to common newsletter platforms
+      const pattern2 = /\[([^\]]+)\]\((https?:\/\/(?:eepurl\.com|mailchi\.mp|us\d+\.campaign-archive\.com|substack\.com|[^)]+\/newsletter|[^)]+\/briefing)[^)]*)\)/gi;
+      while ((match = pattern2.exec(pageContent)) !== null) {
+        const title = match[1].replace(/\\/g, '').trim();
+        const url = match[2];
         
-        extractedNewsletters.push({
-          title,
-          url,
-          date: formattedDate,
-          preview: ""
-        });
+        if (!seenUrls.has(url) && title.length > 5) {
+          seenUrls.add(url);
+          extractedNewsletters.push({ title, url, date: "", preview: "" });
+        }
+      }
+      
+      // Strategy 3: Look for any links with newsletter-related keywords in the title
+      const pattern3 = /\[([^\]]*(?:newsletter|briefing|edition|issue|weekly|monthly|digest)[^\]]*)\]\((https?:\/\/[^)]+)\)/gi;
+      while ((match = pattern3.exec(pageContent)) !== null) {
+        const title = match[1].replace(/\\/g, '').trim();
+        const url = match[2];
+        
+        if (!seenUrls.has(url) && title.length > 5) {
+          seenUrls.add(url);
+          extractedNewsletters.push({ title, url, date: "", preview: "" });
+        }
       }
 
       if (extractedNewsletters.length > 0) {
         setNewsletters(extractedNewsletters);
         setSelectedNewsletters(new Set(extractedNewsletters.map((_, idx) => idx)));
       } else {
-        setError("No newsletters found on this page. Try a different URL.");
+        setError("No newsletters found on this page. Try a different URL or use single newsletter analysis.");
       }
     } catch (err) {
-      setError("Error crawling the source. Please try again.");
+      setError("Error crawling the source. Please check the URL and try again.");
       console.error(err);
     }
     
