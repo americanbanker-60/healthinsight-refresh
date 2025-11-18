@@ -18,8 +18,7 @@ export default function BulkAnalysis() {
   const [indexUrl, setIndexUrl] = useState("");
   const [manualUrls, setManualUrls] = useState("");
   const [rawContent, setRawContent] = useState("");
-  const [inputMode, setInputMode] = useState("index");
-  
+  const [inputMethod, setInputMethod] = useState("index");
   const [isCrawling, setIsCrawling] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
@@ -28,114 +27,160 @@ export default function BulkAnalysis() {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processedCount, setProcessedCount] = useState(0);
 
-  const discoverNewsletters = async () => {
+  const extractLinksFromHTML = (html, baseUrl) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const links = [];
+    const seenUrls = new Set();
+    
+    const base = new URL(baseUrl);
+    const baseDomain = base.hostname;
+    
+    doc.querySelectorAll('a[href]').forEach(anchor => {
+      let href = anchor.getAttribute('href');
+      if (!href) return;
+      
+      try {
+        // Convert relative URLs to absolute
+        const absoluteUrl = new URL(href, baseUrl);
+        
+        // Only keep links from same domain
+        if (absoluteUrl.hostname !== baseDomain) return;
+        
+        // Look for newsletter patterns
+        const path = absoluteUrl.pathname.toLowerCase();
+        if (path.includes('/newsletter') || 
+            path.includes('/blog') || 
+            path.includes('/post') ||
+            path.includes('/issue')) {
+          
+          const url = absoluteUrl.href;
+          if (!seenUrls.has(url)) {
+            seenUrls.add(url);
+            
+            // Extract title from link text
+            const title = anchor.textContent.trim() || 'Untitled Newsletter';
+            
+            // Try to find date nearby
+            let date = '';
+            const datePattern = /\d{1,2}\/\d{1,2}\/\d{2,4}/;
+            const nearbyText = anchor.parentElement?.textContent || '';
+            const dateMatch = nearbyText.match(datePattern);
+            if (dateMatch) {
+              const dateParts = dateMatch[0].split('/');
+              const month = dateParts[0].padStart(2, '0');
+              const day = dateParts[1].padStart(2, '0');
+              let year = dateParts[2];
+              if (year.length === 2) year = '20' + year;
+              date = `${year}-${month}-${day}`;
+            }
+            
+            links.push({ title, url, date, preview: '' });
+          }
+        }
+      } catch (e) {
+        // Skip invalid URLs
+      }
+    });
+    
+    return links;
+  };
+
+  const collectNewsletters = async () => {
     setIsCrawling(true);
     setError(null);
     setNewsletters([]);
     setSelectedNewsletters(new Set());
 
-    const discoveredItems = [];
-    const seenUrls = new Set();
-
     try {
-      // Method 1: Index URL discovery
-      if (inputMode === "index" && indexUrl.trim()) {
-        const html = await fetch(indexUrl).then(res => res.text());
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
+      const allNewsletters = [];
+      const seenUrls = new Set();
+
+      // STEP 1A: Process index URL
+      if (inputMethod === "index" && indexUrl.trim()) {
+        const response = await fetch(indexUrl);
+        const html = await response.text();
+        const extracted = extractLinksFromHTML(html, indexUrl);
         
-        // Extract all links from the page
-        const links = Array.from(doc.querySelectorAll('a[href]'));
-        const baseUrl = new URL(indexUrl);
-        
-        for (const link of links) {
-          let href = link.getAttribute('href');
-          if (!href) continue;
-          
-          // Convert relative URLs to absolute
-          try {
-            const fullUrl = new URL(href, indexUrl);
-            
-            // Only keep links from same domain
-            if (fullUrl.hostname !== baseUrl.hostname) continue;
-            
-            // Look for newsletter patterns
-            const path = fullUrl.pathname.toLowerCase();
-            if (!path.includes('newsletter') && !path.includes('briefing') && 
-                !fullUrl.hostname.includes('eepurl') && !fullUrl.hostname.includes('mailchi')) {
-              continue;
-            }
-            
-            const urlStr = fullUrl.toString();
-            if (seenUrls.has(urlStr)) continue;
-            seenUrls.add(urlStr);
-            
-            // Try to extract date and title
-            const linkText = link.textContent.trim();
-            const prevText = link.previousSibling?.textContent || '';
-            const dateMatch = (prevText + linkText).match(/(\d{1,2}\/\d{1,2}\/\d{2,4})/);
-            
-            discoveredItems.push({
-              title: linkText || 'Untitled Newsletter',
-              url: urlStr,
-              date: dateMatch ? dateMatch[1] : '',
-              source: 'index'
-            });
-          } catch (e) {
-            continue;
+        extracted.forEach(item => {
+          if (!seenUrls.has(item.url)) {
+            seenUrls.add(item.url);
+            allNewsletters.push(item);
           }
-        }
+        });
       }
 
-      // Method 2: Manual URLs
-      if (inputMode === "manual" && manualUrls.trim()) {
-        const urls = manualUrls.split(/[\n,]+/).map(u => u.trim()).filter(u => u);
-        for (const url of urls) {
+      // STEP 1B: Process manual URLs
+      if (inputMethod === "manual" && manualUrls.trim()) {
+        const urls = manualUrls
+          .split(/[\n,]/)
+          .map(u => u.trim())
+          .filter(u => u && u.startsWith('http'));
+        
+        urls.forEach((url, idx) => {
           if (!seenUrls.has(url)) {
             seenUrls.add(url);
-            discoveredItems.push({
-              title: 'Newsletter from ' + new URL(url).hostname,
+            allNewsletters.push({
+              title: `Newsletter ${idx + 1}`,
               url: url,
               date: '',
-              source: 'manual'
-            });
-          }
-        }
-      }
-
-      // Method 3: Raw content
-      if (inputMode === "raw" && rawContent.trim()) {
-        // Split by clear delimiters
-        const sections = rawContent.split(/\n\n---+\n\n|\n\n={3,}\n\n/);
-        sections.forEach((section, idx) => {
-          if (section.trim().length > 100) {
-            const lines = section.trim().split('\n');
-            const title = lines[0].substring(0, 100);
-            discoveredItems.push({
-              title: title || `Pasted Newsletter #${idx + 1}`,
-              url: null,
-              date: '',
-              content: section,
-              source: 'raw'
+              preview: ''
             });
           }
         });
       }
 
-      if (discoveredItems.length === 0) {
-        setError("No newsletters found. Please check your input and try again.");
-      } else {
-        // Limit to 20 most recent
-        const limited = discoveredItems.slice(0, 20);
-        setNewsletters(limited);
-        setSelectedNewsletters(new Set(limited.map((_, idx) => idx)));
+      // STEP 1C: Process raw content
+      if (inputMethod === "raw" && rawContent.trim()) {
+        // Split by clear delimiters (multiple newlines, headings, dates)
+        const sections = rawContent.split(/\n\n\n+|\n={3,}|\n-{3,}/);
         
-        if (discoveredItems.length > 20) {
-          setError(`Found ${discoveredItems.length} newsletters. Showing the first 20. Uncheck any you don't want to analyze.`);
-        }
+        sections.forEach((section, idx) => {
+          const trimmed = section.trim();
+          if (trimmed.length > 100) { // Minimum content length
+            const lines = trimmed.split('\n');
+            const title = lines[0].substring(0, 100) || `Pasted Newsletter ${idx + 1}`;
+            
+            // Try to extract date
+            let date = '';
+            const dateMatch = trimmed.match(/\d{1,2}\/\d{1,2}\/\d{2,4}/);
+            if (dateMatch) {
+              const dateParts = dateMatch[0].split('/');
+              const month = dateParts[0].padStart(2, '0');
+              const day = dateParts[1].padStart(2, '0');
+              let year = dateParts[2];
+              if (year.length === 2) year = '20' + year;
+              date = `${year}-${month}-${day}`;
+            }
+            
+            allNewsletters.push({
+              title: title,
+              url: null,
+              date: date,
+              preview: trimmed.substring(0, 200),
+              rawContent: trimmed
+            });
+          }
+        });
       }
+
+      // STEP 2: Validate results
+      if (allNewsletters.length === 0) {
+        setError("Could not find any newsletter links or content. Please try: 1) Paste several individual newsletter URLs, or 2) Paste the text content of newsletters directly.");
+        setIsCrawling(false);
+        return;
+      }
+
+      // Limit to 20 most recent
+      const limited = allNewsletters.slice(0, 20);
+      if (allNewsletters.length > 20) {
+        setError(`Found ${allNewsletters.length} newsletters. Showing the first 20 for analysis.`);
+      }
+
+      setNewsletters(limited);
+      setSelectedNewsletters(new Set(limited.map((_, idx) => idx)));
     } catch (err) {
-      setError("Error discovering newsletters: " + err.message);
+      setError("Error collecting newsletters. Please check your inputs and try again.");
       console.error(err);
     }
     
@@ -160,34 +205,62 @@ export default function BulkAnalysis() {
     setProcessedCount(0);
     setProcessingProgress(0);
 
-    const analyses = [];
-
     for (let i = 0; i < selected.length; i++) {
       const newsletter = selected[i];
       
       try {
-        let contentToAnalyze = newsletter.content || newsletter.url;
-        
+        let contentSource;
+        if (newsletter.rawContent) {
+          contentSource = `Raw newsletter content: ${newsletter.rawContent}`;
+        } else {
+          contentSource = `Newsletter URL: ${newsletter.url}`;
+        }
+
         const analysis = await base44.integrations.Core.InvokeLLM({
-          prompt: `You are analyzing a healthcare newsletter for investment intelligence purposes.
+          prompt: `You are a seasoned healthcare investment banking and private equity analyst.
 
-${newsletter.content ? 'Newsletter content:' : 'Newsletter URL: ' + newsletter.url}
+Analyze this healthcare newsletter and extract ACTIONABLE investment intelligence:
 
-Extract structured insights focusing on:
+${contentSource}
 
-1. **TLDR** - Sharp 2-3 sentence executive summary
-2. **KEY STATISTICS** - All important numbers, metrics, data points with context
-3. **RECOMMENDED ACTIONS** - 3-5 concrete next steps for healthcare executives
-4. **KEY TAKEAWAYS** - 5-7 strategic insights for investors
-5. **MAJOR THEMES** - 3-5 themes with deep market context
-6. **M&A ACTIVITIES** - Deals with strategic rationale and valuation context
-7. **FUNDING ROUNDS** - Investment rounds with investor thesis and sector benchmarks
-8. **KEY PLAYERS** - Companies making strategic moves
-9. **SENTIMENT** - Overall market tone
-10. **SUMMARY** - 2-3 paragraph executive summary for investment committee
+Extract structured insights:
 
-Provide detailed, actionable intelligence suitable for healthcare investors and executives.`,
-          add_context_from_internet: !newsletter.content,
+**TLDR** - Sharp 2-3 sentence summary for executives
+
+**KEY STATISTICS** - Extract all numbers, metrics, data points (deal values, growth rates, market sizes, patient volumes, cost savings, etc.). For each stat, provide the figure and context.
+
+**KEY TAKEAWAYS** - 5-7 insights for investors:
+- Strategic implications for healthcare investors
+- Market shifts or inflection points
+- Competitive dynamics emerging
+- Regulatory or reimbursement trends to monitor
+
+**RECOMMENDED ACTIONS** - 3-5 concrete next steps healthcare executives should consider
+
+**THEMES** - 3-5 major themes with context:
+- Why this matters NOW
+- Investment opportunities or risks
+- Which sectors/subsectors affected
+- 12-24 month outlook
+
+**M&A ACTIVITIES** - Analyze deals with strategic context:
+- Strategic rationale (scale, tech acquisition, vertical integration)
+- Valuation multiples if available
+- Comparison to recent comparable transactions
+- What this signals about sector consolidation
+
+**FUNDING ROUNDS** - Venture insights:
+- What funding signals about investor confidence
+- Lead investors and their thesis
+- Valuation vs sector benchmarks
+- Milestones or catalysts
+
+**KEY PLAYERS** - Companies making strategic moves
+
+**SENTIMENT** - Overall market tone
+
+**SUMMARY** - 2-3 paragraph executive summary for investment committee`,
+          add_context_from_internet: newsletter.url ? true : false,
           response_json_schema: {
             type: "object",
             properties: {
@@ -247,11 +320,9 @@ Provide detailed, actionable intelligence suitable for healthcare investors and 
           }
         });
 
-        analyses.push(analysis);
-
         await base44.entities.Newsletter.create({
           ...analysis,
-          source_url: newsletter.url || "Pasted content",
+          source_url: newsletter.url || "Manual Entry",
           title: analysis.title || newsletter.title,
           publication_date: analysis.publication_date || newsletter.date
         });
@@ -270,86 +341,106 @@ Provide detailed, actionable intelligence suitable for healthcare investors and 
   return (
     <div className="space-y-6">
       {error && (
-        <Alert variant={error.includes('Showing') ? "default" : "destructive"}>
+        <Alert variant={error.includes("Found") ? "default" : "destructive"}>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <Tabs value={inputMode} onValueChange={setInputMode}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="index">Index URL</TabsTrigger>
-          <TabsTrigger value="manual">Manual URLs</TabsTrigger>
-          <TabsTrigger value="raw">Paste Content</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="index" className="space-y-4">
-          <div>
-            <Input
-              placeholder="https://elion.health/newsletter"
-              value={indexUrl}
-              onChange={(e) => setIndexUrl(e.target.value)}
-              className="h-14 text-lg"
-              disabled={isCrawling || isProcessing}
-            />
-            <p className="text-sm text-slate-500 mt-2">
-              Enter a page that lists multiple newsletters
-            </p>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="manual" className="space-y-4">
-          <div>
-            <Textarea
-              placeholder="https://newsletter1.com&#10;https://newsletter2.com&#10;https://newsletter3.com"
-              value={manualUrls}
-              onChange={(e) => setManualUrls(e.target.value)}
-              className="min-h-32 text-base"
-              disabled={isCrawling || isProcessing}
-            />
-            <p className="text-sm text-slate-500 mt-2">
-              Paste newsletter URLs (one per line or comma-separated)
-            </p>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="raw" className="space-y-4">
-          <div>
-            <Textarea
-              placeholder="Paste newsletter content here... Separate multiple newsletters with --- on a new line"
-              value={rawContent}
-              onChange={(e) => setRawContent(e.target.value)}
-              className="min-h-48 text-base"
-              disabled={isCrawling || isProcessing}
-            />
-            <p className="text-sm text-slate-500 mt-2">
-              Paste full newsletter text. Use "---" to separate multiple newsletters.
-            </p>
-          </div>
-        </TabsContent>
-      </Tabs>
-
       {newsletters.length === 0 ? (
-        <Button
-          onClick={discoverNewsletters}
-          disabled={isCrawling || isProcessing || 
-            (inputMode === "index" && !indexUrl.trim()) ||
-            (inputMode === "manual" && !manualUrls.trim()) ||
-            (inputMode === "raw" && !rawContent.trim())}
-          className="w-full h-14 text-lg bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg shadow-purple-500/30"
-        >
-          {isCrawling ? (
-            <>
-              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              Discovering Newsletters...
-            </>
-          ) : (
-            <>
-              <Search className="w-5 h-5 mr-2" />
-              Find Newsletters
-            </>
-          )}
-        </Button>
+        <>
+          <Tabs value={inputMethod} onValueChange={setInputMethod}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="index">Index URL</TabsTrigger>
+              <TabsTrigger value="manual">Manual URLs</TabsTrigger>
+              <TabsTrigger value="raw">Paste Content</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="index" className="space-y-4 mt-4">
+              <div>
+                <Input
+                  placeholder="https://elion.health/newsletter"
+                  value={indexUrl}
+                  onChange={(e) => setIndexUrl(e.target.value)}
+                  className="h-14 text-lg border-slate-300 focus:border-blue-500"
+                  disabled={isCrawling}
+                />
+                <p className="text-sm text-slate-500 mt-2">
+                  URL of a page that lists multiple newsletters (archive page, blog)
+                </p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="manual" className="space-y-4 mt-4">
+              <div>
+                <Textarea
+                  placeholder="https://elion.health/newsletter/issue-1&#10;https://elion.health/newsletter/issue-2&#10;https://elion.health/newsletter/issue-3"
+                  value={manualUrls}
+                  onChange={(e) => setManualUrls(e.target.value)}
+                  className="h-32 text-lg border-slate-300 focus:border-blue-500"
+                  disabled={isCrawling}
+                />
+                <p className="text-sm text-slate-500 mt-2">
+                  Paste newsletter URLs, one per line or comma-separated
+                </p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="raw" className="space-y-4 mt-4">
+              <div>
+                <Textarea
+                  placeholder="Paste newsletter content here... You can paste multiple newsletters separated by blank lines or dividers."
+                  value={rawContent}
+                  onChange={(e) => setRawContent(e.target.value)}
+                  className="h-48 text-base border-slate-300 focus:border-blue-500 font-mono"
+                  disabled={isCrawling}
+                />
+                <p className="text-sm text-slate-500 mt-2">
+                  Paste raw newsletter text or HTML. Separate multiple newsletters with blank lines.
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <Button
+            onClick={collectNewsletters}
+            disabled={isCrawling || 
+              (inputMethod === "index" && !indexUrl.trim()) ||
+              (inputMethod === "manual" && !manualUrls.trim()) ||
+              (inputMethod === "raw" && !rawContent.trim())}
+            className="w-full h-14 text-lg bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg shadow-purple-500/30"
+          >
+            {isCrawling ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Collecting Newsletters...
+              </>
+            ) : (
+              <>
+                <Search className="w-5 h-5 mr-2" />
+                Collect Newsletters
+              </>
+            )}
+          </Button>
+
+          <div className="bg-purple-50 rounded-xl p-6 border border-purple-100">
+            <h3 className="font-semibold text-slate-900 mb-3">Three ways to analyze:</h3>
+            <ul className="space-y-2 text-slate-700">
+              <li className="flex items-start gap-2">
+                <span className="text-purple-600 mt-1">•</span>
+                <span><strong>Index URL:</strong> We parse HTML &lt;a&gt; tags to find newsletter links</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-purple-600 mt-1">•</span>
+                <span><strong>Manual URLs:</strong> Paste specific newsletter URLs you want analyzed</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-purple-600 mt-1">•</span>
+                <span><strong>Paste Content:</strong> Copy/paste newsletter text directly</span>
+              </li>
+            </ul>
+          </div>
+        </>
       ) : (
         <>
           <div className="flex items-center justify-between">
@@ -374,17 +465,8 @@ Provide detailed, actionable intelligence suitable for healthcare investors and 
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h4 className="font-medium text-slate-900 mb-1">{newsletter.title}</h4>
-                          {newsletter.date && (
-                            <p className="text-xs text-slate-500">{newsletter.date}</p>
-                          )}
-                          <Badge variant="outline" className="text-xs mt-1">
-                            {newsletter.source === 'raw' ? <FileText className="w-3 h-3 mr-1" /> : null}
-                            {newsletter.source}
-                          </Badge>
-                        </div>
-                        {newsletter.url && (
+                        <h4 className="font-medium text-slate-900 mb-1">{newsletter.title}</h4>
+                        {newsletter.url ? (
                           <a
                             href={newsletter.url}
                             target="_blank"
@@ -393,8 +475,16 @@ Provide detailed, actionable intelligence suitable for healthcare investors and 
                           >
                             <ExternalLink className="w-4 h-4" />
                           </a>
+                        ) : (
+                          <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
                         )}
                       </div>
+                      {newsletter.date && (
+                        <p className="text-xs text-slate-500 mb-1">{newsletter.date}</p>
+                      )}
+                      {newsletter.preview && (
+                        <p className="text-sm text-slate-600 line-clamp-2">{newsletter.preview}</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -411,6 +501,9 @@ Provide detailed, actionable intelligence suitable for healthcare investors and 
                 </span>
               </div>
               <Progress value={processingProgress} className="h-2" />
+              <p className="text-sm text-slate-600 mt-3">
+                This may take a few minutes depending on the number of newsletters selected.
+              </p>
             </div>
           )}
 
@@ -420,7 +513,6 @@ Provide detailed, actionable intelligence suitable for healthcare investors and 
               onClick={() => {
                 setNewsletters([]);
                 setSelectedNewsletters(new Set());
-                setError(null);
               }}
               disabled={isProcessing}
               className="flex-1"
