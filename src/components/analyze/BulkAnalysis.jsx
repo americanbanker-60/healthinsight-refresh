@@ -44,38 +44,46 @@ export default function BulkAnalysis() {
       // Split content into lines for processing
       const lines = pageContent.split('\n');
       
-      // Look for date + title + link pattern
-      for (let i = 0; i < lines.length - 1; i++) {
+      // Look for date + title + link pattern (with potential empty lines in between)
+      for (let i = 0; i < lines.length; i++) {
         const currentLine = lines[i].trim();
-        const nextLine = lines[i + 1].trim();
         
-        // Check if current line is a date (MM/DD/YYYY or MM/DD/YY or YYYY)
+        // Check if current line is a date (MM/DD/YYYY or MM/DD/YY)
         const dateMatch = currentLine.match(/^(\d{1,2}\/\d{1,2}\/\d{2,4})$/);
         
-        // Check if next line contains a markdown link
-        const linkMatch = nextLine.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/);
-        
-        if (dateMatch && linkMatch) {
-          const dateStr = dateMatch[1];
-          const title = linkMatch[1].replace(/\\/g, '').trim();
-          const url = linkMatch[2];
-          
-          if (!seenUrls.has(url) && title.length > 3) {
-            seenUrls.add(url);
+        if (dateMatch) {
+          // Look for the next non-empty line with a link
+          for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+            const nextLine = lines[j].trim();
+            if (!nextLine) continue; // Skip empty lines
             
-            // Parse and format date
-            const dateParts = dateStr.split('/');
-            const month = dateParts[0].padStart(2, '0');
-            const day = dateParts[1].padStart(2, '0');
-            let year = dateParts[2];
+            // Check if this line contains a markdown link
+            const linkMatch = nextLine.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/);
             
-            // Handle 2-digit years
-            if (year.length === 2) {
-              year = '20' + year;
+            if (linkMatch) {
+              const dateStr = dateMatch[1];
+              const title = linkMatch[1].replace(/\\/g, '').trim();
+              const url = linkMatch[2];
+              
+              if (!seenUrls.has(url) && title.length > 3) {
+                seenUrls.add(url);
+                
+                // Parse and format date
+                const dateParts = dateStr.split('/');
+                const month = dateParts[0].padStart(2, '0');
+                const day = dateParts[1].padStart(2, '0');
+                let year = dateParts[2];
+                
+                // Handle 2-digit years
+                if (year.length === 2) {
+                  year = '20' + year;
+                }
+                
+                const formattedDate = `${year}-${month}-${day}`;
+                extractedNewsletters.push({ title, url, date: formattedDate, preview: "" });
+              }
+              break; // Found the link for this date, move on
             }
-            
-            const formattedDate = `${year}-${month}-${day}`;
-            extractedNewsletters.push({ title, url, date: formattedDate, preview: "" });
           }
         }
       }
