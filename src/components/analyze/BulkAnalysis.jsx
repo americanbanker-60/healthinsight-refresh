@@ -2,18 +2,24 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Search, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Search, CheckCircle2, AlertCircle, ExternalLink, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 export default function BulkAnalysis() {
   const navigate = useNavigate();
-  const [sourceUrl, setSourceUrl] = useState("");
+  const [indexUrl, setIndexUrl] = useState("");
+  const [manualUrls, setManualUrls] = useState("");
+  const [rawContent, setRawContent] = useState("");
+  const [inputMode, setInputMode] = useState("index");
+  
   const [isCrawling, setIsCrawling] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
@@ -22,95 +28,114 @@ export default function BulkAnalysis() {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processedCount, setProcessedCount] = useState(0);
 
-  const crawlSource = async () => {
-    if (!sourceUrl.trim()) {
-      setError("Please enter a valid URL");
-      return;
-    }
-
+  const discoverNewsletters = async () => {
     setIsCrawling(true);
     setError(null);
     setNewsletters([]);
     setSelectedNewsletters(new Set());
 
+    const discoveredItems = [];
+    const seenUrls = new Set();
+
     try {
-      // Fetch page content using Jina reader
-      const pageContent = await fetch(`https://r.jina.ai/${sourceUrl}`).then(res => res.text());
-      
-      // Extract all newsletter links
-      const extractedNewsletters = [];
-      const seenUrls = new Set();
-      
-      // Split content into lines for processing
-      const lines = pageContent.split('\n');
-      
-      // Look for date + title + link pattern (with potential empty lines in between)
-      for (let i = 0; i < lines.length; i++) {
-        const currentLine = lines[i].trim();
+      // Method 1: Index URL discovery
+      if (inputMode === "index" && indexUrl.trim()) {
+        const html = await fetch(indexUrl).then(res => res.text());
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
         
-        // Check if current line is a date (MM/DD/YYYY or MM/DD/YY)
-        const dateMatch = currentLine.match(/^(\d{1,2}\/\d{1,2}\/\d{2,4})$/);
+        // Extract all links from the page
+        const links = Array.from(doc.querySelectorAll('a[href]'));
+        const baseUrl = new URL(indexUrl);
         
-        if (dateMatch) {
-          // Look for the next non-empty line with a link
-          for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
-            const nextLine = lines[j].trim();
-            if (!nextLine) continue; // Skip empty lines
-            
-            // Check if this line contains a markdown link
-            const linkMatch = nextLine.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/);
-            
-            if (linkMatch) {
-              const dateStr = dateMatch[1];
-              const title = linkMatch[1].replace(/\\/g, '').trim();
-              const url = linkMatch[2];
-              
-              if (!seenUrls.has(url) && title.length > 3) {
-                seenUrls.add(url);
-                
-                // Parse and format date
-                const dateParts = dateStr.split('/');
-                const month = dateParts[0].padStart(2, '0');
-                const day = dateParts[1].padStart(2, '0');
-                let year = dateParts[2];
-                
-                // Handle 2-digit years
-                if (year.length === 2) {
-                  year = '20' + year;
-                }
-                
-                const formattedDate = `${year}-${month}-${day}`;
-                extractedNewsletters.push({ title, url, date: formattedDate, preview: "" });
-              }
-              break; // Found the link for this date, move on
-            }
-          }
-        }
-      }
-      
-      // Fallback: find all newsletter platform links if no dated entries found
-      if (extractedNewsletters.length === 0) {
-        const linkPattern = /\[([^\]]+)\]\((https?:\/\/(?:eepurl\.com|mailchi\.mp|us\d+\.campaign-archive\.com)[^)]+)\)/gi;
-        let match;
-        while ((match = linkPattern.exec(pageContent)) !== null) {
-          const title = match[1].replace(/\\/g, '').trim();
-          const url = match[2];
+        for (const link of links) {
+          let href = link.getAttribute('href');
+          if (!href) continue;
           
-          if (!seenUrls.has(url) && title.length > 5) {
-            seenUrls.add(url);
-            extractedNewsletters.push({ title, url, date: "", preview: "" });
+          // Convert relative URLs to absolute
+          try {
+            const fullUrl = new URL(href, indexUrl);
+            
+            // Only keep links from same domain
+            if (fullUrl.hostname !== baseUrl.hostname) continue;
+            
+            // Look for newsletter patterns
+            const path = fullUrl.pathname.toLowerCase();
+            if (!path.includes('newsletter') && !path.includes('briefing') && 
+                !fullUrl.hostname.includes('eepurl') && !fullUrl.hostname.includes('mailchi')) {
+              continue;
+            }
+            
+            const urlStr = fullUrl.toString();
+            if (seenUrls.has(urlStr)) continue;
+            seenUrls.add(urlStr);
+            
+            // Try to extract date and title
+            const linkText = link.textContent.trim();
+            const prevText = link.previousSibling?.textContent || '';
+            const dateMatch = (prevText + linkText).match(/(\d{1,2}\/\d{1,2}\/\d{2,4})/);
+            
+            discoveredItems.push({
+              title: linkText || 'Untitled Newsletter',
+              url: urlStr,
+              date: dateMatch ? dateMatch[1] : '',
+              source: 'index'
+            });
+          } catch (e) {
+            continue;
           }
         }
       }
 
-      if (extractedNewsletters.length > 0) {
-        setNewsletters(extractedNewsletters);
-        setSelectedNewsletters(new Set(extractedNewsletters.map((_, idx) => idx)));
+      // Method 2: Manual URLs
+      if (inputMode === "manual" && manualUrls.trim()) {
+        const urls = manualUrls.split(/[\n,]+/).map(u => u.trim()).filter(u => u);
+        for (const url of urls) {
+          if (!seenUrls.has(url)) {
+            seenUrls.add(url);
+            discoveredItems.push({
+              title: 'Newsletter from ' + new URL(url).hostname,
+              url: url,
+              date: '',
+              source: 'manual'
+            });
+          }
+        }
+      }
+
+      // Method 3: Raw content
+      if (inputMode === "raw" && rawContent.trim()) {
+        // Split by clear delimiters
+        const sections = rawContent.split(/\n\n---+\n\n|\n\n={3,}\n\n/);
+        sections.forEach((section, idx) => {
+          if (section.trim().length > 100) {
+            const lines = section.trim().split('\n');
+            const title = lines[0].substring(0, 100);
+            discoveredItems.push({
+              title: title || `Pasted Newsletter #${idx + 1}`,
+              url: null,
+              date: '',
+              content: section,
+              source: 'raw'
+            });
+          }
+        });
+      }
+
+      if (discoveredItems.length === 0) {
+        setError("No newsletters found. Please check your input and try again.");
       } else {
-        setError("No newsletters found on this page. Try a different URL or use single newsletter analysis.");
+        // Limit to 20 most recent
+        const limited = discoveredItems.slice(0, 20);
+        setNewsletters(limited);
+        setSelectedNewsletters(new Set(limited.map((_, idx) => idx)));
+        
+        if (discoveredItems.length > 20) {
+          setError(`Found ${discoveredItems.length} newsletters. Showing the first 20. Uncheck any you don't want to analyze.`);
+        }
       }
     } catch (err) {
-      setError("Error crawling the source. Please check the URL and try again.");
+      setError("Error discovering newsletters: " + err.message);
       console.error(err);
     }
     
@@ -135,25 +160,34 @@ export default function BulkAnalysis() {
     setProcessedCount(0);
     setProcessingProgress(0);
 
+    const analyses = [];
+
     for (let i = 0; i < selected.length; i++) {
       const newsletter = selected[i];
       
       try {
+        let contentToAnalyze = newsletter.content || newsletter.url;
+        
         const analysis = await base44.integrations.Core.InvokeLLM({
-          prompt: `Analyze this healthcare newsletter from ${newsletter.url} and extract structured insights. Focus on:
-1. TLDR (2-3 sentence summary)
-2. Key statistics and figures mentioned
-3. Recommended actions for healthcare executives
-4. Key takeaways and main points
-5. Major themes and topics
-6. M&A activities (mergers, acquisitions, deals)
-7. Funding rounds and investments
-8. Key players (companies, organizations)
-9. Overall market sentiment
-10. Executive summary
+          prompt: `You are analyzing a healthcare newsletter for investment intelligence purposes.
 
-Extract detailed information about the healthcare industry developments mentioned in this newsletter.`,
-          add_context_from_internet: true,
+${newsletter.content ? 'Newsletter content:' : 'Newsletter URL: ' + newsletter.url}
+
+Extract structured insights focusing on:
+
+1. **TLDR** - Sharp 2-3 sentence executive summary
+2. **KEY STATISTICS** - All important numbers, metrics, data points with context
+3. **RECOMMENDED ACTIONS** - 3-5 concrete next steps for healthcare executives
+4. **KEY TAKEAWAYS** - 5-7 strategic insights for investors
+5. **MAJOR THEMES** - 3-5 themes with deep market context
+6. **M&A ACTIVITIES** - Deals with strategic rationale and valuation context
+7. **FUNDING ROUNDS** - Investment rounds with investor thesis and sector benchmarks
+8. **KEY PLAYERS** - Companies making strategic moves
+9. **SENTIMENT** - Overall market tone
+10. **SUMMARY** - 2-3 paragraph executive summary for investment committee
+
+Provide detailed, actionable intelligence suitable for healthcare investors and executives.`,
+          add_context_from_internet: !newsletter.content,
           response_json_schema: {
             type: "object",
             properties: {
@@ -213,9 +247,11 @@ Extract detailed information about the healthcare industry developments mentione
           }
         });
 
+        analyses.push(analysis);
+
         await base44.entities.Newsletter.create({
           ...analysis,
-          source_url: newsletter.url,
+          source_url: newsletter.url || "Pasted content",
           title: analysis.title || newsletter.title,
           publication_date: analysis.publication_date || newsletter.date
         });
@@ -234,67 +270,86 @@ Extract detailed information about the healthcare industry developments mentione
   return (
     <div className="space-y-6">
       {error && (
-        <Alert variant="destructive">
+        <Alert variant={error.includes('Showing') ? "default" : "destructive"}>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div>
-        <Input
-          placeholder="https://elion.health/newsletter"
-          value={sourceUrl}
-          onChange={(e) => setSourceUrl(e.target.value)}
-          className="h-14 text-lg border-slate-300 focus:border-blue-500"
-          disabled={isCrawling || isProcessing}
-        />
-        <p className="text-sm text-slate-500 mt-2">
-          Paste the URL of a page that lists multiple newsletters (e.g., archive page, blog homepage)
-        </p>
-      </div>
+      <Tabs value={inputMode} onValueChange={setInputMode}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="index">Index URL</TabsTrigger>
+          <TabsTrigger value="manual">Manual URLs</TabsTrigger>
+          <TabsTrigger value="raw">Paste Content</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="index" className="space-y-4">
+          <div>
+            <Input
+              placeholder="https://elion.health/newsletter"
+              value={indexUrl}
+              onChange={(e) => setIndexUrl(e.target.value)}
+              className="h-14 text-lg"
+              disabled={isCrawling || isProcessing}
+            />
+            <p className="text-sm text-slate-500 mt-2">
+              Enter a page that lists multiple newsletters
+            </p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="manual" className="space-y-4">
+          <div>
+            <Textarea
+              placeholder="https://newsletter1.com&#10;https://newsletter2.com&#10;https://newsletter3.com"
+              value={manualUrls}
+              onChange={(e) => setManualUrls(e.target.value)}
+              className="min-h-32 text-base"
+              disabled={isCrawling || isProcessing}
+            />
+            <p className="text-sm text-slate-500 mt-2">
+              Paste newsletter URLs (one per line or comma-separated)
+            </p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="raw" className="space-y-4">
+          <div>
+            <Textarea
+              placeholder="Paste newsletter content here... Separate multiple newsletters with --- on a new line"
+              value={rawContent}
+              onChange={(e) => setRawContent(e.target.value)}
+              className="min-h-48 text-base"
+              disabled={isCrawling || isProcessing}
+            />
+            <p className="text-sm text-slate-500 mt-2">
+              Paste full newsletter text. Use "---" to separate multiple newsletters.
+            </p>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {newsletters.length === 0 ? (
-        <>
-          <Button
-            onClick={crawlSource}
-            disabled={isCrawling || !sourceUrl.trim() || isProcessing}
-            className="w-full h-14 text-lg bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg shadow-purple-500/30"
-          >
-            {isCrawling ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Crawling Source...
-              </>
-            ) : (
-              <>
-                <Search className="w-5 h-5 mr-2" />
-                Find Newsletters
-              </>
-            )}
-          </Button>
-
-          <div className="bg-purple-50 rounded-xl p-6 border border-purple-100">
-            <h3 className="font-semibold text-slate-900 mb-3">How it works:</h3>
-            <ul className="space-y-2 text-slate-700">
-              <li className="flex items-start gap-2">
-                <span className="text-purple-600 mt-1">1.</span>
-                <span>We'll scan the page and find all newsletter links</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-purple-600 mt-1">2.</span>
-                <span>You select which newsletters to analyze</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-purple-600 mt-1">3.</span>
-                <span>AI extracts insights from each selected newsletter</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-purple-600 mt-1">4.</span>
-                <span>All analyses are saved to your library automatically</span>
-              </li>
-            </ul>
-          </div>
-        </>
+        <Button
+          onClick={discoverNewsletters}
+          disabled={isCrawling || isProcessing || 
+            (inputMode === "index" && !indexUrl.trim()) ||
+            (inputMode === "manual" && !manualUrls.trim()) ||
+            (inputMode === "raw" && !rawContent.trim())}
+          className="w-full h-14 text-lg bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg shadow-purple-500/30"
+        >
+          {isCrawling ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              Discovering Newsletters...
+            </>
+          ) : (
+            <>
+              <Search className="w-5 h-5 mr-2" />
+              Find Newsletters
+            </>
+          )}
+        </Button>
       ) : (
         <>
           <div className="flex items-center justify-between">
@@ -319,22 +374,27 @@ Extract detailed information about the healthcare industry developments mentione
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <h4 className="font-medium text-slate-900 mb-1">{newsletter.title}</h4>
-                        <a
-                          href={newsletter.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-slate-400 hover:text-blue-600 transition-colors flex-shrink-0"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
+                        <div>
+                          <h4 className="font-medium text-slate-900 mb-1">{newsletter.title}</h4>
+                          {newsletter.date && (
+                            <p className="text-xs text-slate-500">{newsletter.date}</p>
+                          )}
+                          <Badge variant="outline" className="text-xs mt-1">
+                            {newsletter.source === 'raw' ? <FileText className="w-3 h-3 mr-1" /> : null}
+                            {newsletter.source}
+                          </Badge>
+                        </div>
+                        {newsletter.url && (
+                          <a
+                            href={newsletter.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-slate-400 hover:text-blue-600 transition-colors flex-shrink-0"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
                       </div>
-                      {newsletter.date && (
-                        <p className="text-xs text-slate-500 mb-1">{newsletter.date}</p>
-                      )}
-                      {newsletter.preview && (
-                        <p className="text-sm text-slate-600 line-clamp-2">{newsletter.preview}</p>
-                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -351,9 +411,6 @@ Extract detailed information about the healthcare industry developments mentione
                 </span>
               </div>
               <Progress value={processingProgress} className="h-2" />
-              <p className="text-sm text-slate-600 mt-3">
-                This may take a few minutes depending on the number of newsletters selected.
-              </p>
             </div>
           )}
 
@@ -363,6 +420,7 @@ Extract detailed information about the healthcare industry developments mentione
               onClick={() => {
                 setNewsletters([]);
                 setSelectedNewsletters(new Set());
+                setError(null);
               }}
               disabled={isProcessing}
               className="flex-1"
