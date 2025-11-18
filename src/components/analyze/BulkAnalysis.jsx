@@ -37,42 +37,32 @@ export default function BulkAnalysis() {
       // Fetch page content using Jina reader
       const pageContent = await fetch(`https://r.jina.ai/${sourceUrl}`).then(res => res.text());
       
-      // Extract all Mailchimp links programmatically
+      // Extract all newsletter links using regex pattern matching
       const extractedNewsletters = [];
       
-      // Split content into lines
-      const lines = pageContent.split('\n');
+      // Pattern to match date followed by title and eepurl link
+      // Format: MM/DD/YYYY\n\n[Title](http://eepurl.com/...)
+      const pattern = /(\d{1,2}\/\d{1,2}\/\d{4})\s*\n+\s*\[([^\]]+)\]\((http:\/\/eepurl\.com\/[^)]+)\)/g;
       
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
+      let match;
+      while ((match = pattern.exec(pageContent)) !== null) {
+        const dateStr = match[1];
+        const title = match[2].replace(/\\/g, ''); // Remove escaped characters
+        const url = match[3];
         
-        // Look for date pattern (MM/DD/YYYY)
-        const dateMatch = line.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        // Parse and format date (MM/DD/YYYY -> YYYY-MM-DD)
+        const dateParts = dateStr.split('/');
+        const month = dateParts[0].padStart(2, '0');
+        const day = dateParts[1].padStart(2, '0');
+        const year = dateParts[2];
+        const formattedDate = `${year}-${month}-${day}`;
         
-        if (dateMatch && i + 1 < lines.length) {
-          const nextLine = lines[i + 1].trim();
-          
-          // Look for markdown link with eepurl.com or any URL
-          const linkMatch = nextLine.match(/\[([^\]]+)\]\(([^)]+)\)/);
-          
-          if (linkMatch) {
-            const title = linkMatch[1];
-            const url = linkMatch[2];
-            
-            // Convert date to YYYY-MM-DD
-            const month = dateMatch[1].padStart(2, '0');
-            const day = dateMatch[2].padStart(2, '0');
-            const year = dateMatch[3];
-            const formattedDate = `${year}-${month}-${day}`;
-            
-            extractedNewsletters.push({
-              title,
-              url,
-              date: formattedDate,
-              preview: ""
-            });
-          }
-        }
+        extractedNewsletters.push({
+          title,
+          url,
+          date: formattedDate,
+          preview: ""
+        });
       }
 
       if (extractedNewsletters.length > 0) {
