@@ -287,14 +287,8 @@ export default function BulkAnalysis() {
         return;
       }
 
-      // Limit to 20 most recent
-      const limited = allNewsletters.slice(0, 20);
-      if (allNewsletters.length > 20) {
-        setError(`Found ${allNewsletters.length} newsletters. Showing the first 20 for analysis.`);
-      }
-
-      setNewsletters(limited);
-      setSelectedNewsletters(new Set(limited.map((_, idx) => idx)));
+      setNewsletters(allNewsletters);
+      setSelectedNewsletters(new Set(allNewsletters.map((_, idx) => idx)));
     } catch (err) {
       setError("Error collecting newsletters. Please check your inputs and try again.");
       console.error(err);
