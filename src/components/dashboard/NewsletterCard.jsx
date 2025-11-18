@@ -33,9 +33,11 @@ export default function NewsletterCard({ newsletter, index }) {
                 <div className="flex items-center gap-1 shrink-0">
                   <Calendar className="w-4 h-4" />
                   <span className="whitespace-nowrap">
-                    {newsletter.publication_date 
+                    {newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime())
                       ? format(new Date(newsletter.publication_date), "MMM d, yyyy")
-                      : format(new Date(newsletter.created_date), "MMM d, yyyy")}
+                      : newsletter.created_date && !isNaN(new Date(newsletter.created_date).getTime())
+                      ? format(new Date(newsletter.created_date), "MMM d, yyyy")
+                      : "Date not available"}
                   </span>
                 </div>
                 {newsletter.sentiment && (

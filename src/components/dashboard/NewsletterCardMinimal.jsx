@@ -21,9 +21,11 @@ export default function NewsletterCardMinimal({ newsletter, index }) {
           </div>
           <div className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
             <Calendar className="w-3 h-3" />
-            {newsletter.publication_date 
+            {newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime())
               ? format(new Date(newsletter.publication_date), "MMM d")
-              : format(new Date(newsletter.created_date), "MMM d")}
+              : newsletter.created_date && !isNaN(new Date(newsletter.created_date).getTime())
+              ? format(new Date(newsletter.created_date), "MMM d")
+              : "N/A"}
           </div>
         </div>
       </Link>

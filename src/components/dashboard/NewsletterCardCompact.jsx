@@ -38,9 +38,11 @@ export default function NewsletterCardCompact({ newsletter, index }) {
           <div className="flex items-center gap-3 text-xs text-slate-600 mb-2">
             <div className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
-              {newsletter.publication_date 
+              {newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime())
                 ? format(new Date(newsletter.publication_date), "MMM d, yyyy")
-                : format(new Date(newsletter.created_date), "MMM d, yyyy")}
+                : newsletter.created_date && !isNaN(new Date(newsletter.created_date).getTime())
+                ? format(new Date(newsletter.created_date), "MMM d, yyyy")
+                : "N/A"}
             </div>
             {newsletter.key_takeaways && newsletter.key_takeaways.length > 0 && (
               <div className="flex items-center gap-1">
