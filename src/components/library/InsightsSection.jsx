@@ -201,10 +201,15 @@ User activity in the last ${timeRange} days:
 
 Write a short paragraph summarizing what this user has been learning about.`;
 
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        add_context_from_internet: false
-      });
+      const { generateInsightsNarrative } = await import("../utils/aiAgents");
+      const insightsData = {
+        timeRange,
+        topTopics: topTopics.map(t => t.topic),
+        topPacks: topPacks.map(p => p.pack.pack_title),
+        topSources: topSources.map(s => s.source),
+        stats: activityStats
+      };
+      const result = await generateInsightsNarrative(insightsData);
       
       setAiSummary(result);
     } catch (error) {
