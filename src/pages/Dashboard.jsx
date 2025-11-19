@@ -13,6 +13,7 @@ import StatsOverview from "../components/dashboard/StatsOverview";
 import AdvancedFilters from "../components/dashboard/AdvancedFilters";
 import TrendChart from "../components/dashboard/TrendChart";
 import FeaturedPacks from "../components/dashboard/FeaturedPacks";
+import TrendDiscovery from "../components/trends/TrendDiscovery";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -256,6 +257,8 @@ export default function Dashboard() {
         isLoading={isLoading}
         visibleStats={userConfig.visible_stats}
       />
+
+      <TrendDiscovery />
 
       <FeaturedPacks />
 
