@@ -7,6 +7,10 @@ import { Sparkles, Copy, Download, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import RecommendedPacks from "../packs/RecommendedPacks";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function SummaryBuilder({ selectedNewsletters, newsletters, searchText, dateRange }) {
   const [summary, setSummary] = useState("");

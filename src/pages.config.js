@@ -7,6 +7,7 @@ import Cleanup from './pages/Cleanup';
 import ManageSources from './pages/ManageSources';
 import ExploreAllSources from './pages/ExploreAllSources';
 import LearningPacks from './pages/LearningPacks';
+import MyLibrary from './pages/MyLibrary';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +21,7 @@ export const PAGES = {
     "ManageSources": ManageSources,
     "ExploreAllSources": ExploreAllSources,
     "LearningPacks": LearningPacks,
+    "MyLibrary": MyLibrary,
 }
 
 export const pagesConfig = {
