@@ -9,12 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Calendar as CalendarIcon, Filter, X, Eye } from "lucide-react";
+import { Search, Calendar as CalendarIcon, Filter, X, Eye, BookOpen, AlertCircle } from "lucide-react";
 import { format, subDays, startOfYear } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import SummaryBuilder from "../components/explore/SummaryBuilder";
 import SavedSearchesPanel from "../components/explore/SavedSearchesPanel";
+import { Link } from "react-router-dom";
 
 const dateRangePresets = [
   { label: "Last 7 days", value: "7d" },
@@ -34,6 +35,7 @@ export default function ExploreAllSources() {
   const [topicInput, setTopicInput] = useState("");
   const [selectedNewsletters, setSelectedNewsletters] = useState([]);
   const [detailNewsletterId, setDetailNewsletterId] = useState(null);
+  const [activePack, setActivePack] = useState(null);
 
   const { data: newsletters = [], isLoading } = useQuery({
     queryKey: ['all-newsletters'],
@@ -47,6 +49,12 @@ export default function ExploreAllSources() {
     initialData: [],
   });
 
+  const { data: learningPacks = [] } = useQuery({
+    queryKey: ['learningPacks'],
+    queryFn: () => base44.entities.LearningPack.list("sort_order"),
+    initialData: [],
+  });
+
   const availableSources = sources.filter(s => !s.data?.is_deleted).map(s => s.data.name);
 
   // Initialize with all sources selected
@@ -55,6 +63,27 @@ export default function ExploreAllSources() {
       setSelectedSources(availableSources);
     }
   }, [availableSources]);
+
+  // Load Learning Pack from URL params
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const packId = urlParams.get('pack_id');
+    const packTitle = urlParams.get('pack_title');
+    
+    if (packId && learningPacks.length > 0) {
+      const pack = learningPacks.find(p => p.id === packId);
+      if (pack) {
+        setSearchText(pack.keywords || "");
+        setDateRangePreset(pack.date_range_type || "90d");
+        setCustomStartDate(pack.custom_start_date ? new Date(pack.custom_start_date) : null);
+        setCustomEndDate(pack.custom_end_date ? new Date(pack.custom_end_date) : null);
+        setSelectedSources(pack.sources_selected && pack.sources_selected.length > 0 ? pack.sources_selected : availableSources);
+        setSelectedTopics(pack.topics_selected || []);
+        setSelectedNewsletters([]);
+        setActivePack({ id: pack.id, title: packTitle || pack.pack_title });
+      }
+    }
+  }, [learningPacks, availableSources]);
 
   // Get all unique topics from newsletters
   const allTopics = useMemo(() => {
@@ -195,8 +224,42 @@ export default function ExploreAllSources() {
   return (
     <div className="p-6 md:p-10 max-w-[1800px] mx-auto">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Explore All Sources</h1>
-        <p className="text-slate-600 text-lg">Search and filter across all newsletter content</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Explore All Sources</h1>
+            <p className="text-slate-600 text-lg">Search and filter across all newsletter content</p>
+          </div>
+          <Link to={createPageUrl("LearningPacks")}>
+            <Button variant="outline" className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Browse Learning Packs
+            </Button>
+          </Link>
+        </div>
+        
+        {activePack && (
+          <div className="mt-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-purple-900">Learning Pack Active</p>
+                <p className="text-sm text-purple-700">{activePack.title}</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setActivePack(null);
+                window.history.replaceState({}, '', createPageUrl("ExploreAllSources"));
+              }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
