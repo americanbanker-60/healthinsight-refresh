@@ -477,6 +477,12 @@ Extract structured insights:
     }
 
     setIsProcessing(false);
+    
+    // Show summary if duplicates were skipped
+    if (skippedCount > 0) {
+      setError(`Processed ${selected.length - skippedCount} new newsletters. Skipped ${skippedCount} duplicates.`);
+    }
+    
     if (onComplete) {
       onComplete();
     } else {
