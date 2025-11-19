@@ -16,6 +16,8 @@ import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import SummaryBuilder from "../components/explore/SummaryBuilder";
 import SavedSearchesPanel from "../components/explore/SavedSearchesPanel";
 import RecommendedPacks from "../components/packs/RecommendedPacks";
+import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
+import { logPackView } from "../utils/packTracking";
 import { Link } from "react-router-dom";
 
 const dateRangePresets = [
@@ -74,6 +76,7 @@ export default function ExploreAllSources() {
     if (packId && learningPacks.length > 0) {
       const pack = learningPacks.find(p => p.id === packId);
       if (pack) {
+        logPackView(packId);
         setSearchText(pack.keywords || "");
         setDateRangePreset(pack.date_range_type || "90d");
         setCustomStartDate(pack.custom_start_date ? new Date(pack.custom_start_date) : null);
@@ -265,6 +268,8 @@ export default function ExploreAllSources() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          <RecentlyViewedPacks variant="compact" maxItems={5} />
+
           <RecommendedPacks
             currentPackId={activePack?.id}
             searchKeywords={searchText}

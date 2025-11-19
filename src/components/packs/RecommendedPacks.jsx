@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BookOpen, Sparkles, ArrowRight } from "lucide-react";
+import { logPackView } from "../../utils/packTracking";
 
 export default function RecommendedPacks({ 
   currentPackId = null, 
@@ -123,6 +124,7 @@ export default function RecommendedPacks({
   }, [allPacks, currentPackId, searchKeywords, selectedTopics, selectedNewsletters, newsletters]);
 
   const openPack = (pack) => {
+    logPackView(pack.id);
     const params = new URLSearchParams({
       pack_id: pack.id,
       pack_title: pack.pack_title

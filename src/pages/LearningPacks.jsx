@@ -9,6 +9,8 @@ import { createPageUrl } from "@/utils";
 import { BookOpen, Sparkles, Calendar, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import RecommendedPacks from "../components/packs/RecommendedPacks";
+import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
+import { logPackView } from "../utils/packTracking";
 
 const categoryColors = {
   "Care Models": "bg-blue-100 text-blue-700 border-blue-200",
@@ -31,6 +33,7 @@ export default function LearningPacks() {
 
   const openPack = (pack) => {
     setLastOpenedPackId(pack.id);
+    logPackView(pack.id);
     const params = new URLSearchParams({
       pack_id: pack.id,
       pack_title: pack.pack_title
@@ -59,6 +62,10 @@ export default function LearningPacks() {
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <RecentlyViewedPacks variant="full" maxItems={5} />
       </div>
 
       {lastOpenedPackId && (

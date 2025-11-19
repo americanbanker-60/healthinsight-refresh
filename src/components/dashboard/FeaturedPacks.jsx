@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BookOpen, ArrowRight, Sparkles } from "lucide-react";
+import { logPackView } from "../utils/packTracking";
 
 export default function FeaturedPacks() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ export default function FeaturedPacks() {
   });
 
   const openPack = (pack) => {
+    logPackView(pack.id);
     const params = new URLSearchParams({
       pack_id: pack.id,
       pack_title: pack.pack_title
