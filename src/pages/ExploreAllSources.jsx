@@ -162,6 +162,29 @@ export default function ExploreAllSources() {
     return results;
   }, [newsletters, searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics]);
 
+  // Log search activity when filters are applied
+  React.useEffect(() => {
+    const logActivity = async () => {
+      if (searchText || selectedTopics.length > 0 || selectedSources.length < availableSources.length) {
+        try {
+          await base44.entities.UserSearchActivity.create({
+            keywords: searchText,
+            sources_selected: selectedSources,
+            topics_selected: selectedTopics,
+            date_range_type: dateRangePreset,
+            results_count: filteredResults.length,
+            executed_at: new Date().toISOString()
+          });
+        } catch (error) {
+          console.error("Failed to log search activity:", error);
+        }
+      }
+    };
+    
+    const timeoutId = setTimeout(logActivity, 2000);
+    return () => clearTimeout(timeoutId);
+  }, [searchText, selectedSources, selectedTopics, dateRangePreset, filteredResults.length, availableSources.length]);
+
   const toggleSource = (source) => {
     setSelectedSources(prev =>
       prev.includes(source) ? prev.filter(s => s !== source) : [...prev, source]
