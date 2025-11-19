@@ -46,7 +46,18 @@ export default function SummaryBuilder({ selectedNewsletters, newsletters, searc
     });
 
     const prompt = activePack 
-      ? `SYSTEM:
+      ? `SYSTEM OVERRIDE:
+You must follow these non-negotiable rules for all outputs:
+
+1. Do NOT hallucinate, speculate, or invent facts.
+2. Use only the information explicitly provided in the inputs.
+3. Do NOT recommend actions ("you should", "operators should", "investors should").
+4. Summaries must be descriptive, not advisory.
+5. Do NOT generate confidential or private data.
+6. Maintain a professional, analytical tone suitable for M&A, strategy, or market insights.
+7. Keep structure exactly as instructed in the prompt.
+
+SYSTEM:
 You are analyzing newsletter items from different sources with distinct editorial styles
 (e.g., Elion Health, Health Tech Nerds, Hospitalogy, Healthcare Finance, TripleTree Insights).
 Your job is to normalize their voices into a single unified, neutral, analytical tone without
@@ -88,7 +99,18 @@ Learning Pack: ${activePack.title}
 
 Learning Pack contents:
 ${JSON.stringify(newsletterData, null, 2)}`
-      : `SYSTEM:
+      : `SYSTEM OVERRIDE:
+You must follow these non-negotiable rules for all outputs:
+
+1. Do NOT hallucinate, speculate, or invent facts.
+2. Use only the information explicitly provided in the inputs.
+3. Do NOT recommend actions ("you should", "operators should", "investors should").
+4. Summaries must be descriptive, not advisory.
+5. Do NOT generate confidential or private data.
+6. Maintain a professional, analytical tone suitable for M&A, strategy, or market insights.
+7. Keep structure exactly as instructed in the prompt.
+
+SYSTEM:
 You are analyzing newsletter items from different sources with distinct editorial styles
 (e.g., Elion Health, Health Tech Nerds, Hospitalogy, Healthcare Finance, TripleTree Insights).
 Your job is to normalize their voices into a single unified, neutral, analytical tone without
