@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Save, BarChart3, Eye, Filter, TrendingUp, X } from "lucide-react";
+import { ArrowLeft, Save, BarChart3, Eye, Filter, TrendingUp, X, Wrench } from "lucide-react";
 import { toast } from "sonner";
 
 const defaultConfig = {
@@ -312,6 +312,36 @@ export default function DashboardSettings() {
                   </div>
                 </Label>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60">
+          <CardHeader className="border-b border-slate-200/60">
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="w-5 h-5 text-red-600" />
+              Data Management
+            </CardTitle>
+            <CardDescription>Tools for maintaining your newsletter database</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="p-4 rounded-lg border border-slate-200">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="font-medium mb-1">Newsletter Cleanup Tool</div>
+                  <div className="text-sm text-slate-600">
+                    Remove blank newsletters and fix publication dates extracted from URLs
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => navigate(createPageUrl("Cleanup"))}
+                className="w-full"
+              >
+                <Wrench className="w-4 h-4 mr-2" />
+                Open Cleanup Tool
+              </Button>
             </div>
           </CardContent>
         </Card>
