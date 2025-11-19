@@ -32,14 +32,14 @@ const staticNavigationItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "My Library",
-    url: createPageUrl("MyLibrary"),
-    icon: Library,
+    title: "Explore All Sources",
+    url: createPageUrl("ExploreAllSources"),
+    icon: TrendingUp,
   },
   {
-    title: "My Custom Packs",
-    url: createPageUrl("MyCustomPacks"),
-    icon: FolderOpen,
+    title: "Learning Packs",
+    url: createPageUrl("LearningPacks"),
+    icon: BookOpen,
   },
   {
     title: "Topics",
@@ -52,14 +52,14 @@ const staticNavigationItems = [
     icon: Building2,
   },
   {
-    title: "Learning Packs",
-    url: createPageUrl("LearningPacks"),
-    icon: BookOpen,
+    title: "My Library",
+    url: createPageUrl("MyLibrary"),
+    icon: Library,
   },
   {
-    title: "Explore All Sources",
-    url: createPageUrl("ExploreAllSources"),
-    icon: TrendingUp,
+    title: "My Custom Packs",
+    url: createPageUrl("MyCustomPacks"),
+    icon: FolderOpen,
   },
   {
     title: "Manage Sources",
