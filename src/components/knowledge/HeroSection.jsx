@@ -21,7 +21,7 @@ export default function HeroSection() {
             Choose a topic, run a search, or jump back into your work.
           </p>
           
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 justify-start md:justify-between">
             <Button 
               size="lg"
               className="bg-white/20 backdrop-blur-sm text-white border border-white/40 hover:bg-white/30"
