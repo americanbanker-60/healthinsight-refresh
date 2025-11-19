@@ -181,40 +181,62 @@ export async function generateDeepDive(contextTitle, relevantItems) {
   });
 
   const prompt = `SYSTEM:
-You are a healthcare market research analyst creating a structured deep-dive briefing
-based solely on the provided content. Do NOT speculate or hallucinate.
+You are a senior healthcare strategy analyst creating comprehensive research briefings for C-suite executives.
+Your analysis must be sharp, nuanced, and actionable. Draw connections between data points, identify strategic implications,
+and highlight competitive dynamics. Use ONLY the provided content - no speculation.
 
 USER:
-Create a deep-dive research briefing on the following topic using only the provided 
-newsletter items and pack content.
+Create a detailed deep-dive research briefing analyzing the strategic implications and market dynamics.
 
-IMPORTANT: Use these EXACT section headers in your response:
+CRITICAL: Use these EXACT section headers (include the asterisks):
 
 **Executive Summary**
-(Write 5–8 sentences summarizing the key findings)
+Write 6-8 sentences covering: (1) What's happening, (2) Why it matters strategically, (3) Key competitive dynamics, 
+(4) Regulatory/policy implications, (5) Market positioning shifts, (6) Financial implications if relevant.
 
 **Market Overview**
-(Explain the current state and context in 2-3 paragraphs)
+Provide 3-4 paragraphs analyzing: Current market state, key players and their positioning, recent strategic moves,
+market structure changes, payer-provider dynamics, and emerging competitive threats. Include specific metrics and 
+deal values where available.
 
 **Key Drivers & Forces**
-(List 5–8 key drivers as bullets)
+List 8-12 strategic drivers as bullets. For each, explain the business impact and which stakeholders are affected.
+Include: competitive pressures, regulatory changes, technology shifts, reimbursement changes, consumer behavior,
+capital market dynamics, and M&A activity.
 
 **Landscape Map**
-(Organize by Payors, Providers, Vendors — bullets only)
+Organize by:
+- **Payors**: Strategic positioning, product launches, partnerships, geographic expansion
+- **Providers**: Operational shifts, technology adoption, network changes, care model innovations  
+- **Vendors/Tech**: Market entrants, platform plays, strategic partnerships, valuations
+- **Regulatory**: Policy changes, compliance requirements, enforcement actions
+Include specific company names and strategic moves.
 
 **Recent Timeline**
-(List events chronologically, covering 90–180 days)
+Create a chronological timeline of the 15-20 most significant events from the content. Format as:
+- [Date/Month]: Event description with strategic significance and company names
 
 **Major News Highlights**
-(List 10–20 major news items as bullets)
+List 15-25 key developments as bullets, organized by theme. Include:
+- M&A activity with deal values and strategic rationale
+- Funding rounds with amounts and investor implications
+- Product launches and go-to-market strategies
+- Partnership announcements and their strategic fit
+- Regulatory developments and compliance impacts
+- Market share shifts and competitive repositioning
 
 **Most Important Excerpts**
-(Include 5 key excerpts with source + date)
+Select 6-8 most strategically significant quotes/excerpts. For each:
+- Include the specific insight or data point
+- Note the source and date
+- Explain why it's strategically important (2-3 sentences on implications)
 
 **Consolidated Summary**
-(Write 4–6 sentences synthesizing the overall picture)
+Write 5-7 sentences synthesizing: (1) Overall strategic picture, (2) Key competitive dynamics, (3) Most significant
+risks and opportunities, (4) Market structure evolution, (5) Critical success factors going forward.
 
 Topic: ${contextTitle}
+Items analyzed: ${relevantItems.length}
 
 Content:
 ${JSON.stringify(newsletterData, null, 2)}`;

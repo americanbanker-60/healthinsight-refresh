@@ -48,26 +48,57 @@ export default function TrendDiscovery() {
         sentiment: n.sentiment
       }));
 
-      const prompt = `Analyze these healthcare newsletters and identify 3-5 emerging trends, topics, or themes that would make valuable Learning Packs or Topics for healthcare executives.
+      const prompt = `You are a healthcare market intelligence analyst identifying emerging trends for C-suite executives.
+Analyze these newsletters to discover 4-6 high-value emerging trends that warrant strategic attention.
+
+ANALYSIS FRAMEWORK:
+Look for patterns across these dimensions:
+1. **Competitive Intelligence**: New market entrants, strategic partnerships, M&A activity, market share shifts
+2. **Regulatory & Policy**: New regulations, enforcement trends, reimbursement changes, compliance requirements
+3. **Technology & Innovation**: Platform plays, AI/ML applications, digital health adoption, interoperability
+4. **Care Models**: VBC evolution, site-of-care shifts, care delivery innovations, network strategies
+5. **Financial Dynamics**: Funding patterns, valuation trends, capital allocation, margin pressures
+6. **Consumer Behavior**: Patient preferences, access patterns, utilization trends
+
+EVIDENCE REQUIREMENTS:
+- Minimum 3 newsletter mentions with specific examples
+- Must show either: (a) increasing frequency over time, (b) involvement of major players, or (c) significant capital/regulatory momentum
+- Include specific company names, deal values, or policy details as evidence
 
 Newsletters data:
 ${JSON.stringify(newsletterSummary, null, 2)}
 
-For each emerging trend you identify:
-1. Determine if it's better as a "learning_pack" (time-bound research focus) or "topic" (ongoing subject area)
-2. Create a compelling title
-3. Explain why this is emerging and its significance
-4. List 3-5 relevant keywords
-5. Give a confidence score (0-100) based on frequency and recency
-6. Suggest an emoji icon
-7. Suggest a category (Care Models, Payor Topics, Technology, Provider Operations, Policy & Regulation)
-8. List the newsletter IDs that support this trend
+For each emerging trend you identify, provide:
 
-Focus on trends that:
-- Are appearing with increasing frequency
-- Have recent momentum
-- Represent significant market shifts
-- Are actionable for healthcare executives`;
+1. **suggestion_type**: "learning_pack" (if time-bound research area) OR "topic" (if ongoing strategic theme)
+
+2. **title**: Compelling, specific title (e.g., "AI-Powered Prior Authorization Platforms" not "Healthcare AI")
+
+3. **description**: 3-4 sentences explaining:
+   - What's emerging and why now
+   - Strategic significance (market size, competitive implications, regulatory drivers)
+   - Who's moving (specific companies/organizations)
+   - Key risk or opportunity
+
+4. **keywords**: 4-7 specific, searchable keywords
+
+5. **confidence_score**: 0-100 based on:
+   - Frequency of mentions (30 points)
+   - Recency/momentum (30 points)  
+   - Involvement of major players (20 points)
+   - Regulatory or capital significance (20 points)
+
+6. **supporting_evidence**: Array of newsletter IDs that contain evidence, with brief reason for each
+
+7. **icon_suggestion**: Relevant emoji
+
+8. **category**: One of: Care Models, Payor Topics, Technology, Provider Operations, Policy & Regulation
+
+9. **key_players**: Array of 3-5 specific company names or organizations driving this trend
+
+10. **strategic_implications**: 2-3 sentence summary of why executives should care
+
+Output ONLY trends with confidence_score >= 60. Prioritize competitive intelligence and regulatory shifts.`;
 
       const result = await base44.integrations.Core.InvokeLLM({
         prompt,
@@ -86,7 +117,9 @@ Focus on trends that:
                   confidence_score: { type: "number" },
                   supporting_evidence: { type: "array", items: { type: "string" } },
                   icon_suggestion: { type: "string" },
-                  category: { type: "string" }
+                  category: { type: "string" },
+                  key_players: { type: "array", items: { type: "string" } },
+                  strategic_implications: { type: "string" }
                 }
               }
             }
@@ -207,6 +240,11 @@ Focus on trends that:
                         </Badge>
                       </div>
                       <p className="text-sm text-slate-600 mb-2">{suggestion.description}</p>
+                      {suggestion.strategic_implications && (
+                        <p className="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1 mb-2 italic">
+                          {suggestion.strategic_implications}
+                        </p>
+                      )}
                       <div className="flex flex-wrap gap-1 mb-2">
                         {suggestion.keywords?.slice(0, 5).map((keyword, idx) => (
                           <Badge key={idx} variant="secondary" className="text-xs">
@@ -214,10 +252,22 @@ Focus on trends that:
                           </Badge>
                         ))}
                       </div>
-                      {suggestion.category && (
-                        <Badge variant="outline" className="text-xs">
-                          {suggestion.category}
-                        </Badge>
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        {suggestion.category && (
+                          <Badge variant="outline" className="text-xs">
+                            {suggestion.category}
+                          </Badge>
+                        )}
+                        {suggestion.key_players && suggestion.key_players.length > 0 && (
+                          <span className="text-xs text-slate-500">
+                            Key players: {suggestion.key_players.slice(0, 3).join(", ")}
+                          </span>
+                        )}
+                      </div>
+                      {suggestion.supporting_evidence && suggestion.supporting_evidence.length > 0 && (
+                        <div className="text-xs text-slate-500">
+                          Based on {suggestion.supporting_evidence.length} newsletter{suggestion.supporting_evidence.length > 1 ? 's' : ''}
+                        </div>
                       )}
                     </div>
                     <div className="flex gap-2">
