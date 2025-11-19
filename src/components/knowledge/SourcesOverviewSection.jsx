@@ -23,7 +23,7 @@ export default function SourcesOverviewSection() {
     initialData: [],
   });
 
-  const activeSources = sources.filter(s => !s.data?.is_deleted);
+  const activeSources = sources.filter(s => s && typeof s === 'object' && !s.is_deleted && s.name && s.id);
 
   const viewSourceContent = (sourceName) => {
     const params = new URLSearchParams();
@@ -47,25 +47,26 @@ export default function SourcesOverviewSection() {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {activeSources.map(source => {
-          const count = getSourceCount(source.data.name);
+          if (!source || !source.name) return null;
+          const count = getSourceCount(source.name);
           return (
             <Card key={source.id} className="hover:shadow-md transition-all">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-3">
                   <Newspaper className="w-6 h-6 text-blue-600" />
-                  {source.data.category && (
+                  {source.category && (
                     <Badge variant="outline" className="text-xs">
-                      {source.data.category}
+                      {source.category}
                     </Badge>
                   )}
                 </div>
                 
                 <h3 className="font-semibold text-slate-900 mb-2">
-                  {source.data.name}
+                  {source.name}
                 </h3>
                 
                 <p className="text-sm text-slate-600 mb-3 line-clamp-2">
-                  {source.data.description || "Healthcare newsletter source"}
+                  {source.description || "Healthcare newsletter source"}
                 </p>
 
                 {count > 0 && (
@@ -79,13 +80,13 @@ export default function SourcesOverviewSection() {
                     size="sm" 
                     variant="outline"
                     className="w-full"
-                    onClick={() => viewSourceContent(source.data.name)}
+                    onClick={() => viewSourceContent(source.name)}
                   >
                     View Latest from This Source
                   </Button>
-                  {source.data.url && (
+                  {source.url && (
                     <a 
-                      href={source.data.url} 
+                      href={source.url} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="flex items-center justify-center text-xs text-blue-600 hover:text-blue-700 gap-1"
