@@ -9,6 +9,8 @@ import ExploreAllSources from './pages/ExploreAllSources';
 import LearningPacks from './pages/LearningPacks';
 import MyLibrary from './pages/MyLibrary';
 import KnowledgeHub from './pages/KnowledgeHub';
+import TopicPage from './pages/TopicPage';
+import TopicsDirectory from './pages/TopicsDirectory';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +26,8 @@ export const PAGES = {
     "LearningPacks": LearningPacks,
     "MyLibrary": MyLibrary,
     "KnowledgeHub": KnowledgeHub,
+    "TopicPage": TopicPage,
+    "TopicsDirectory": TopicsDirectory,
 }
 
 export const pagesConfig = {
