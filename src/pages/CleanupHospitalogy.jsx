@@ -1,14 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash2, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function CleanupHospitalogy() {
+  const [selectedSource, setSelectedSource] = useState("all");
   const [isProcessing, setIsProcessing] = useState(false);
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState({ deleted: 0, updated: 0, skipped: 0 });
+
+  const { data: sources = [] } = useQuery({
+    queryKey: ['sources'],
+    queryFn: () => base44.entities.Source.list("name"),
+    initialData: [],
+  });
 
   const addLog = (message, type = "info") => {
     setLogs(prev => [...prev, { message, type, time: new Date().toLocaleTimeString() }]);
@@ -36,14 +45,17 @@ export default function CleanupHospitalogy() {
     setStats({ deleted: 0, updated: 0, skipped: 0 });
 
     try {
-      addLog("Fetching all Hospitalogy newsletters...");
+      const filterQuery = selectedSource === "all" ? {} : { source_name: selectedSource };
+      const sourceLabel = selectedSource === "all" ? "all sources" : selectedSource;
+      
+      addLog(`Fetching newsletters from ${sourceLabel}...`);
       const newsletters = await base44.entities.Newsletter.filter(
-        { source_name: "Hospitalogy" },
+        filterQuery,
         "-created_date",
         500
       );
 
-      addLog(`Found ${newsletters.length} Hospitalogy newsletters`);
+      addLog(`Found ${newsletters.length} newsletters from ${sourceLabel}`);
 
       for (const newsletter of newsletters) {
         // Check if blank
@@ -79,7 +91,22 @@ export default function CleanupHospitalogy() {
 
   return (
     <div className="p-10 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Hospitalogy Newsletter Cleanup</h1>
+      <h1 className="text-3xl font-bold mb-6">Newsletter Cleanup Tool</h1>
+      
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-2">Select Source</label>
+        <Select value={selectedSource} onValueChange={setSelectedSource} disabled={isProcessing}>
+          <SelectTrigger className="w-full max-w-xs">
+            <SelectValue placeholder="Select source" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Sources</SelectItem>
+            {sources.map(source => (
+              <SelectItem key={source.id} value={source.name}>{source.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <Card>
