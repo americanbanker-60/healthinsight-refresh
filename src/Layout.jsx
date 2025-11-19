@@ -4,6 +4,7 @@ import { createPageUrl } from "@/utils";
 import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, Newspaper, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { WalkthroughProvider } from "@/components/walkthrough/WalkthroughManager";
 import {
   Sidebar,
   SidebarContent,
@@ -94,8 +95,9 @@ export default function Layout({ children, currentPageName }) {
   }, [sources]);
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+    <WalkthroughProvider>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
         <style>{`
           :root {
             --primary: 222 47% 35%;
@@ -198,5 +200,6 @@ export default function Layout({ children, currentPageName }) {
         </main>
       </div>
     </SidebarProvider>
+    </WalkthroughProvider>
   );
 }
