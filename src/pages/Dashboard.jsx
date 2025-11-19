@@ -257,11 +257,25 @@ export default function Dashboard() {
       />
 
       {userConfig.show_charts && newsletters.length > 0 && (
-        <TrendChart newsletters={newsletters} />
+        <TrendChart newsletters={tabFilteredNewsletters} />
       )}
 
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList className="bg-white border border-slate-200">
+          <TabsTrigger value="all">All Sources ({newsletters.length})</TabsTrigger>
+          {sources.map(source => {
+            const count = newsletters.filter(n => n.source_name === source.name).length;
+            return (
+              <TabsTrigger key={source.id} value={source.name}>
+                {source.name} ({count})
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+      </Tabs>
+
       <AdvancedFilters 
-        newsletters={newsletters} 
+        newsletters={tabFilteredNewsletters} 
         onFiltersChange={setFilters}
         defaultExpanded={showFilters}
       />
