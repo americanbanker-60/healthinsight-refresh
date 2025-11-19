@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatSummaryAsMarkdown } from "../utils/markdownFormatter";
 
 export default function SummaryBuilder({ selectedNewsletters, newsletters, searchText, dateRange, activePack }) {
   const [summary, setSummary] = useState("");
@@ -119,16 +120,23 @@ ${JSON.stringify(newsletterData, null, 2)}`;
     setIsGenerating(false);
   };
 
-  const copyToClipboard = () => {
-    const sourcesList = selectedItems.map(n => {
-      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-      return `- ${n.title} – ${n.source_name} (${format(pubDate, "MMM d, yyyy")})`;
-    }).join('\n');
+  const copyToClipboard = async () => {
+    try {
+      const formattedSummary = await formatSummaryAsMarkdown(summary);
+      
+      const sourcesList = selectedItems.map(n => {
+        const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
+        return `- ${n.title} – ${n.source_name} (${format(pubDate, "MMM d, yyyy")})`;
+      }).join('\n');
 
-    const fullText = `${summary}\n\n## Sources Included\n${sourcesList}`;
-    
-    navigator.clipboard.writeText(fullText);
-    toast.success("Copied to clipboard!");
+      const fullText = `${formattedSummary}\n\n## Sources Included\n${sourcesList}`;
+      
+      await navigator.clipboard.writeText(fullText);
+      toast.success("Copied formatted markdown to clipboard!");
+    } catch (error) {
+      toast.error("Failed to copy");
+      console.error(error);
+    }
   };
 
   const saveSummaryMutation = useMutation({
@@ -156,18 +164,21 @@ ${JSON.stringify(newsletterData, null, 2)}`;
     saveSummaryMutation.mutate(summaryTitle);
   };
 
-  const downloadMarkdown = () => {
-    const { start, end } = dateRange;
-    const dateRangeText = start && end 
-      ? `${format(start, "MMM d, yyyy")} - ${format(end, "MMM d, yyyy")}`
-      : "All time";
+  const downloadMarkdown = async () => {
+    try {
+      const formattedSummary = await formatSummaryAsMarkdown(summary);
+      
+      const { start, end } = dateRange;
+      const dateRangeText = start && end 
+        ? `${format(start, "MMM d, yyyy")} - ${format(end, "MMM d, yyyy")}`
+        : "All time";
 
-    const sourcesList = selectedItems.map(n => {
-      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-      return `- **${n.title}** – ${n.source_name} (${format(pubDate, "MMM d, yyyy")})`;
-    }).join('\n');
+      const sourcesList = selectedItems.map(n => {
+        const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
+        return `- **${n.title}** – ${n.source_name} (${format(pubDate, "MMM d, yyyy")})`;
+      }).join('\n');
 
-    const markdown = `# Healthcare Newsletter Summary
+      const markdown = `# Healthcare Newsletter Summary
 
 **Search Query:** ${searchText || "All newsletters"}
 **Date Range:** ${dateRangeText}
@@ -176,7 +187,7 @@ ${JSON.stringify(newsletterData, null, 2)}`;
 
 ---
 
-${summary}
+${formattedSummary}
 
 ---
 
@@ -185,17 +196,21 @@ ${summary}
 ${sourcesList}
 `;
 
-    const blob = new Blob([markdown], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `newsletter-summary-${format(new Date(), "yyyy-MM-dd")}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast.success("Downloaded!");
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `newsletter-summary-${format(new Date(), "yyyy-MM-dd")}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success("Downloaded!");
+    } catch (error) {
+      toast.error("Failed to download");
+      console.error(error);
+    }
   };
 
   return (

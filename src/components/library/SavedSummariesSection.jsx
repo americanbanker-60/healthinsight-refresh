@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { FileText, Trash2, Download, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { formatSummaryAsMarkdown } from "../utils/markdownFormatter";
 
 export default function SavedSummariesSection() {
   const queryClient = useQueryClient();
@@ -32,17 +33,24 @@ export default function SavedSummariesSection() {
     },
   });
 
-  const downloadSummary = (summary) => {
-    const blob = new Blob([summary.summary_body], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${summary.summary_title.replace(/[^a-z0-9]/gi, '_')}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Summary downloaded");
+  const downloadSummary = async (summary) => {
+    try {
+      const formattedMarkdown = await formatSummaryAsMarkdown(summary.summary_body);
+      
+      const blob = new Blob([formattedMarkdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${summary.summary_title.replace(/[^a-z0-9]/gi, '_')}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Formatted markdown downloaded");
+    } catch (error) {
+      toast.error("Failed to download");
+      console.error(error);
+    }
   };
 
   if (summaries.length === 0) {
