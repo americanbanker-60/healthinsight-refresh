@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { formatSummaryAsMarkdown } from "../components/utils/markdownFormatter";
+import ReactMarkdown from "react-markdown";
 
 export default function DeepDiveResults() {
   const navigate = useNavigate();
@@ -293,9 +294,9 @@ ${sourcesList}
         <TabsContent value="all">
           <Card>
             <CardContent className="pt-6">
-              <pre className="whitespace-pre-wrap text-sm font-sans text-slate-700 leading-relaxed">
+              <ReactMarkdown className="prose prose-slate max-w-none prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-p:text-slate-700 prose-p:leading-relaxed prose-li:text-slate-700 prose-strong:text-slate-900 prose-strong:font-semibold">
                 {deepDive.content}
-              </pre>
+              </ReactMarkdown>
             </CardContent>
           </Card>
         </TabsContent>
@@ -306,9 +307,9 @@ ${sourcesList}
               <CardTitle>Executive Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm font-sans text-slate-700 leading-relaxed">
+              <ReactMarkdown className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:leading-relaxed prose-strong:text-slate-900 prose-strong:font-semibold">
                 {sections.executive}
-              </pre>
+              </ReactMarkdown>
             </CardContent>
           </Card>
         </TabsContent>
@@ -319,9 +320,9 @@ ${sourcesList}
               <CardTitle>Market Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm font-sans text-slate-700 leading-relaxed">
+              <ReactMarkdown className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:leading-relaxed prose-strong:text-slate-900 prose-strong:font-semibold prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2">
                 {sections.overview}
-              </pre>
+              </ReactMarkdown>
             </CardContent>
           </Card>
         </TabsContent>
@@ -332,9 +333,9 @@ ${sourcesList}
               <CardTitle>Key Drivers & Forces</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm font-sans text-slate-700 leading-relaxed">
+              <ReactMarkdown className="prose prose-slate max-w-none prose-li:text-slate-700 prose-li:my-2 prose-strong:text-slate-900 prose-strong:font-semibold">
                 {sections.drivers}
-              </pre>
+              </ReactMarkdown>
             </CardContent>
           </Card>
         </TabsContent>
@@ -345,9 +346,9 @@ ${sourcesList}
               <CardTitle>Landscape Map</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm font-sans text-slate-700 leading-relaxed">
+              <ReactMarkdown className="prose prose-slate max-w-none prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2 prose-li:text-slate-700 prose-strong:text-slate-900 prose-strong:font-semibold">
                 {sections.landscape}
-              </pre>
+              </ReactMarkdown>
             </CardContent>
           </Card>
         </TabsContent>
@@ -358,9 +359,9 @@ ${sourcesList}
               <CardTitle>Recent Timeline</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm font-sans text-slate-700 leading-relaxed">
+              <ReactMarkdown className="prose prose-slate max-w-none prose-li:text-slate-700 prose-li:my-1 prose-strong:text-slate-900 prose-strong:font-semibold">
                 {sections.timeline}
-              </pre>
+              </ReactMarkdown>
             </CardContent>
           </Card>
         </TabsContent>
@@ -371,9 +372,9 @@ ${sourcesList}
               <CardTitle>Major News Highlights</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm font-sans text-slate-700 leading-relaxed">
+              <ReactMarkdown className="prose prose-slate max-w-none prose-li:text-slate-700 prose-li:my-2 prose-strong:text-slate-900 prose-strong:font-semibold prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2">
                 {sections.highlights}
-              </pre>
+              </ReactMarkdown>
             </CardContent>
           </Card>
         </TabsContent>
@@ -384,9 +385,9 @@ ${sourcesList}
               <CardTitle>Most Important Excerpts</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm font-sans text-slate-700 leading-relaxed">
+              <ReactMarkdown className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:leading-relaxed prose-strong:text-slate-900 prose-strong:font-semibold prose-li:my-2">
                 {sections.excerpts}
-              </pre>
+              </ReactMarkdown>
             </CardContent>
           </Card>
         </TabsContent>
@@ -397,9 +398,9 @@ ${sourcesList}
               <CardTitle>Consolidated Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm font-sans text-slate-700 leading-relaxed">
+              <ReactMarkdown className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:leading-relaxed prose-strong:text-slate-900 prose-strong:font-semibold">
                 {sections.summary}
-              </pre>
+              </ReactMarkdown>
             </CardContent>
           </Card>
         </TabsContent>

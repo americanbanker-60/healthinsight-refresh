@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatSummaryAsMarkdown } from "../utils/markdownFormatter";
+import ReactMarkdown from "react-markdown";
 
 export default function SummaryBuilder({ selectedNewsletters, newsletters, searchText, dateRange, activePack }) {
   const [summary, setSummary] = useState("");
@@ -184,12 +185,10 @@ ${sourcesList}
 
             {summary && (
               <>
-                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 max-h-96 overflow-y-auto">
-                  <Textarea
-                    value={summary}
-                    readOnly
-                    className="min-h-[300px] bg-white border-0 resize-none"
-                  />
+                <div className="border border-slate-200 rounded-lg p-4 bg-white max-h-96 overflow-y-auto">
+                  <ReactMarkdown className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-h2:text-lg prose-h2:mt-4 prose-h2:mb-2 prose-h3:text-base prose-h3:mt-3 prose-h3:mb-2 prose-p:text-slate-700 prose-p:leading-relaxed prose-li:text-slate-700 prose-li:my-1 prose-strong:text-slate-900 prose-strong:font-semibold">
+                    {summary}
+                  </ReactMarkdown>
                 </div>
 
                 <div className="flex gap-2">
