@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { securedInvokeLLM } from "../components/utils/aiDefenseWrapper";
+import { generateCustomPackSummary } from "../components/utils/aiAgents";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -100,57 +100,8 @@ export default function CustomPackDetail() {
 
     setIsGenerating(true);
 
-    const newsletterData = itemsWithNewsletters.map(item => {
-      const n = item.newsletter;
-      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-      return {
-        title: n.title,
-        source: n.source_name,
-        date: format(pubDate, "MMM d, yyyy"),
-        summary: n.tldr || n.summary || "No summary available",
-        key_takeaways: n.key_takeaways || [],
-        note: item.note || null
-      };
-    });
-
-    const prompt = `SYSTEM OVERRIDE:
-You must follow these non-negotiable rules for all outputs:
-
-1. Do NOT hallucinate, speculate, or invent facts.
-2. Use only the information explicitly provided in the inputs.
-3. Do NOT recommend actions ("you should", "operators should", "investors should").
-4. Summaries must be descriptive, not advisory.
-5. Do NOT generate confidential or private data.
-6. Maintain a professional, analytical tone suitable for M&A, strategy, or market insights.
-
-You are summarizing a custom intelligence pack curated by a healthcare professional.
-Some items may have user notes attached explaining their importance.
-
-USER:
-Create a synthesis of this Custom Pack with the following structure:
-
-1. **Executive Summary (4–6 sentences)**
-   - Explain the themes across the curated items.
-
-2. **Key Insights**
-   - 3–6 major insights from the content.
-
-3. **Notable Highlights**
-   - Important events, deals, trends, or data points.
-
-4. **User Context** (if notes are present)
-   - Incorporate any user notes that explain why items were selected.
-
-Custom Pack: ${pack?.pack_title || "Custom Intelligence Pack"}
-
-Content:
-${JSON.stringify(newsletterData, null, 2)}`;
-
     try {
-      const result = await securedInvokeLLM({
-        prompt,
-        add_context_from_internet: false
-      });
+      const result = await generateCustomPackSummary(itemsWithNewsletters, pack?.pack_title || "Custom Intelligence Pack");
 
       setSummary(result);
       toast.success("Summary generated!");

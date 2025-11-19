@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { securedInvokeLLM } from "../components/utils/aiDefenseWrapper";
+import { generateDeepDive } from "../components/utils/aiAgents";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -72,51 +72,7 @@ export default function DeepDiveResults() {
 
       setRelevantItems(items);
 
-      const newsletterData = items.map(n => {
-        const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-        return {
-          title: n.title,
-          source: n.source_name,
-          date: format(pubDate, "MMM d, yyyy"),
-          summary: n.tldr || n.summary || "",
-          key_takeaways: n.key_takeaways || [],
-          key_statistics: n.key_statistics || [],
-          themes: n.themes || [],
-          ma_activities: n.ma_activities || [],
-          funding_rounds: n.funding_rounds || [],
-          key_players: n.key_players || []
-        };
-      });
-
-      const prompt = `SYSTEM:
-You are a healthcare market research analyst creating a structured deep-dive briefing
-based solely on the provided content. Do NOT speculate or hallucinate.
-
-USER:
-Create a deep-dive research briefing on the following topic using only the provided 
-newsletter items and pack content.
-
-Follow this exact structure:
-
-1. **Executive Summary** (5–8 sentences)
-2. **Market Overview** (explain the current state and context)
-3. **Key Drivers & Forces** (5–8 bullets)
-4. **Landscape Map** (Payors, Providers, Vendors — bullets only)
-5. **Recent Timeline** (chronological, 90–180 days)
-6. **Major News Highlights** (10–20 bullets)
-7. **Most Important Excerpts**
-   - Include 5 excerpts with source + date
-8. **Consolidated Summary** (4–6 sentences)
-
-Topic: ${contextTitle}
-
-Content:
-${JSON.stringify(newsletterData, null, 2)}`;
-
-      const result = await securedInvokeLLM({
-        prompt,
-        add_context_from_internet: false
-      });
+      const result = await generateDeepDive(contextTitle, items);
 
       setDeepDive({
         title: contextTitle,

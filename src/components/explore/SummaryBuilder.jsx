@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { securedInvokeLLM } from "../utils/aiDefenseWrapper";
+import { generateSummary, generatePackSummary } from "../utils/aiAgents";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,7 +23,7 @@ export default function SummaryBuilder({ selectedNewsletters, newsletters, searc
 
   const selectedItems = newsletters.filter(n => selectedNewsletters.includes(n.id));
 
-  const generateSummary = async () => {
+  const handleGenerateSummary = async () => {
     if (selectedItems.length === 0) {
       toast.error("Please select at least one newsletter");
       return;
@@ -31,129 +31,10 @@ export default function SummaryBuilder({ selectedNewsletters, newsletters, searc
 
     setIsGenerating(true);
 
-    const newsletterData = selectedItems.map(n => {
-      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-      return {
-        title: n.title,
-        source: n.source_name,
-        date: format(pubDate, "MMM d, yyyy"),
-        summary: n.tldr || n.summary || "No summary available",
-        key_takeaways: n.key_takeaways || [],
-        themes: n.themes?.map(t => t.theme) || [],
-        ma_activities: n.ma_activities || [],
-        funding_rounds: n.funding_rounds || [],
-        key_statistics: n.key_statistics || []
-      };
-    });
-
-    const prompt = activePack 
-      ? `SYSTEM OVERRIDE:
-You must follow these non-negotiable rules for all outputs:
-
-1. Do NOT hallucinate, speculate, or invent facts.
-2. Use only the information explicitly provided in the inputs.
-3. Do NOT recommend actions ("you should", "operators should", "investors should").
-4. Summaries must be descriptive, not advisory.
-5. Do NOT generate confidential or private data.
-6. Maintain a professional, analytical tone suitable for M&A, strategy, or market insights.
-7. Keep structure exactly as instructed in the prompt.
-
-SYSTEM:
-You are analyzing newsletter items from different sources with distinct editorial styles
-(e.g., Elion Health, Health Tech Nerds, Hospitalogy, Healthcare Finance, TripleTree Insights).
-Your job is to normalize their voices into a single unified, neutral, analytical tone without
-losing the meaning of each source.
-
-RULES:
-- Do NOT weight one source more heavily unless the content volume is higher.
-- If two sources disagree or present different angles, note the difference clearly.
-- Never fabricate consensus where none exists.
-- Only use the content provided.
-
-You are a healthcare market intelligence analyst. Your task is to summarize and synthesize
-all items contained in a Learning Pack. Focus on clarity and pattern recognition.
-Do NOT guess or add content not present in the inputs.
-
-USER:
-Provide a high-level synthesis of the Learning Pack contents using this structure:
-
-1. **Executive Summary (4–6 sentences)**
-   - Explain the core theme of the Pack.
-   - Highlight the major insights contained across the curated items.
-
-2. **Key Drivers & Trends**
-   - 3–6 trends shaping this topic.
-   - Keep each trend to 2–3 sentences.
-
-3. **What Matters for Operators / Payors / Investors**
-   - Provide a short bullet section identifying implications.
-   - This must be descriptive, not advisory. ("The content suggests…", not "You should…")
-
-4. **Notable News & Events**
-   - Bullet list of major events, policy changes, launches, partnerships, or analytics.
-   - Only include items mentioned in the input.
-
-5. **Terminology & Concepts (Optional)**
-   - Define any key terms mentioned repeatedly.
-
-Learning Pack: ${activePack.title}
-
-Learning Pack contents:
-${JSON.stringify(newsletterData, null, 2)}`
-      : `SYSTEM OVERRIDE:
-You must follow these non-negotiable rules for all outputs:
-
-1. Do NOT hallucinate, speculate, or invent facts.
-2. Use only the information explicitly provided in the inputs.
-3. Do NOT recommend actions ("you should", "operators should", "investors should").
-4. Summaries must be descriptive, not advisory.
-5. Do NOT generate confidential or private data.
-6. Maintain a professional, analytical tone suitable for M&A, strategy, or market insights.
-7. Keep structure exactly as instructed in the prompt.
-
-SYSTEM:
-You are analyzing newsletter items from different sources with distinct editorial styles
-(e.g., Elion Health, Health Tech Nerds, Hospitalogy, Healthcare Finance, TripleTree Insights).
-Your job is to normalize their voices into a single unified, neutral, analytical tone without
-losing the meaning of each source.
-
-RULES:
-- Do NOT weight one source more heavily unless the content volume is higher.
-- If two sources disagree or present different angles, note the difference clearly.
-- Never fabricate consensus where none exists.
-- Only use the content provided.
-
-You are a healthcare insights analyst tasked with producing a 60-second briefing on a topic.
-The goal is to help a busy professional quickly understand the state of the topic based
-solely on the provided content. No speculation, no unsupported claims.
-
-USER:
-Create a short "Get Smart Fast" briefing with the following structure:
-
-1. **What This Topic Is About (2–3 sentences)**
-   - Plain, direct description of the topic using inputs only.
-
-2. **Current Landscape (4–6 bullets)**
-   - Capture what's happening now according to the inputs.
-
-3. **Key Forces & Pressures (3–5 bullets)**
-   - Policy, operational, payer, provider, or market dynamics.
-   - Must be grounded in the input content.
-
-4. **Recent Highlights (5–10 bullets)**
-   - News, stats, regulatory notes, deals, product releases, payer updates.
-
-5. **Reading Priority**
-   - Identify the two most relevant items to start with (from inputs) and explain why.
-
-Content:
-${JSON.stringify(newsletterData, null, 2)}`;
-
     try {
-      const result = await securedInvokeLLM({
-        prompt,
-        add_context_from_internet: false
-      });
+      const result = activePack 
+        ? await generatePackSummary(selectedItems, activePack.title)
+        : await generateSummary(selectedItems);
 
       setSummary(result);
       toast.success("Summary generated!");
@@ -284,7 +165,7 @@ ${sourcesList}
         ) : (
           <>
             <Button
-              onClick={generateSummary}
+              onClick={handleGenerateSummary}
               disabled={isGenerating}
               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
             >

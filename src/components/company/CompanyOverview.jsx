@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { securedInvokeLLM } from "../utils/aiDefenseWrapper";
+import { generateCompanyOverview } from "../utils/aiAgents";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2, ChevronDown, ChevronUp } from "lucide-react";
@@ -20,49 +19,8 @@ export default function CompanyOverview({ company, relevantNewsletters }) {
 
     setIsGenerating(true);
 
-    const newsletterData = relevantNewsletters.slice(0, 15).map(n => {
-      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-      return {
-        title: n.title,
-        source: n.source_name,
-        date: format(pubDate, "MMM d, yyyy"),
-        summary: n.tldr || n.summary || "No summary available",
-        key_takeaways: n.key_takeaways || [],
-        ma_activities: n.ma_activities || [],
-        funding_rounds: n.funding_rounds || [],
-        key_players: n.key_players || []
-      };
-    });
-
-    const prompt = `SYSTEM OVERRIDE:
-You must follow these non-negotiable rules for all outputs:
-
-1. Do NOT hallucinate, speculate, or invent facts.
-2. Use only the information explicitly provided in the inputs.
-3. Do NOT recommend actions or provide advisory guidance.
-4. Summaries must be descriptive, not advisory.
-5. Do NOT generate confidential or private data.
-6. Maintain a professional, analytical tone suitable for market intelligence.
-
-You are creating a brief company intelligence overview based solely on newsletter mentions.
-
-USER:
-Create a concise company overview (3-4 paragraphs) covering:
-
-1. **What the company does** - Based on how they're described in the content
-2. **Recent activity** - Major news, launches, deals, or strategic moves mentioned
-3. **Market presence** - How they're positioned or discussed in healthcare industry coverage
-
-Company: ${company.company_name}
-
-Content referencing this company:
-${JSON.stringify(newsletterData, null, 2)}`;
-
     try {
-      const result = await securedInvokeLLM({
-        prompt,
-        add_context_from_internet: false
-      });
+      const result = await generateCompanyOverview(company.company_name, relevantNewsletters);
 
       setOverview(result);
       setIsExpanded(true);
