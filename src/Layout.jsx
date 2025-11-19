@@ -84,7 +84,9 @@ export default function Layout({ children, currentPageName }) {
 
   // Filter out deleted sources and group by category
   const activeSourcesByCategory = React.useMemo(() => {
-    const active = sources.filter(s => s && !s.is_deleted && s.name);
+    if (!sources || !Array.isArray(sources)) return {};
+    
+    const active = sources.filter(s => s && typeof s === 'object' && !s.is_deleted && s.name && s.id);
     const grouped = {};
     active.forEach(source => {
       const category = source.category || "General";
@@ -152,7 +154,7 @@ export default function Layout({ children, currentPageName }) {
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {activeSourcesByCategory[category].map((source) => (
+                    {activeSourcesByCategory[category]?.map((source) => source && source.id && source.name ? (
                       <SidebarMenuItem key={source.id}>
                         <SidebarMenuButton 
                           asChild 
@@ -166,7 +168,7 @@ export default function Layout({ children, currentPageName }) {
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                    ))}
+                    ) : null)}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
