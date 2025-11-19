@@ -147,23 +147,24 @@ export default function ExploreAllSources() {
       });
     }
 
-    // Search text filter
+    // Search text filter - split keywords and check if ANY match
     if (searchText.trim()) {
-      const search = searchText.toLowerCase();
+      const keywords = searchText.toLowerCase().split(/\s+/);
       results = results.filter(n => {
-        const inTitle = n.title?.toLowerCase().includes(search);
-        const inSummary = n.summary?.toLowerCase().includes(search) || n.tldr?.toLowerCase().includes(search);
-        const inTakeaways = n.key_takeaways?.some(t => t.toLowerCase().includes(search));
-        const inThemes = n.themes?.some(t => 
-          t.theme?.toLowerCase().includes(search) || 
-          t.description?.toLowerCase().includes(search)
-        );
-        return inTitle || inSummary || inTakeaways || inThemes;
+        const searchableText = [
+          n.title,
+          n.summary,
+          n.tldr,
+          ...(n.key_takeaways || []),
+          ...(n.themes?.map(t => `${t.theme} ${t.description}`) || [])
+        ].join(' ').toLowerCase();
+        
+        return keywords.some(keyword => searchableText.includes(keyword));
       });
     }
 
     return results;
-  }, [newsletters, searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics]);
+  }, [newsletters, searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics, availableSources]);
 
   // Log search activity when filters are applied
   React.useEffect(() => {
