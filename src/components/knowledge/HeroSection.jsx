@@ -24,27 +24,27 @@ export default function HeroSection() {
           <div className="flex flex-wrap gap-4 justify-start md:justify-between">
             <Button 
               size="lg"
-              className="bg-white/20 backdrop-blur-sm text-white border border-white/40 hover:bg-white/30"
+              className="bg-white/20 backdrop-blur-sm text-white border border-white/40 hover:bg-white/30 hover:text-white"
               onClick={() => navigate(createPageUrl("ExploreAllSources"))}
             >
-              <Search className="w-5 h-5 mr-2" />
-              Explore All Sources
+              <Search className="w-5 h-5 mr-2 text-white" />
+              <span className="text-white">Explore All Sources</span>
             </Button>
             <Button 
               size="lg"
-              className="bg-white/20 backdrop-blur-sm text-white border border-white/40 hover:bg-white/30"
+              className="bg-white/20 backdrop-blur-sm text-white border border-white/40 hover:bg-white/30 hover:text-white"
               onClick={() => navigate(createPageUrl("LearningPacks"))}
             >
-              <BookOpen className="w-5 h-5 mr-2" />
-              Browse Learning Packs
+              <BookOpen className="w-5 h-5 mr-2 text-white" />
+              <span className="text-white">Browse Learning Packs</span>
             </Button>
             <Button 
               size="lg"
-              className="bg-white/20 backdrop-blur-sm text-white border border-white/40 hover:bg-white/30"
+              className="bg-white/20 backdrop-blur-sm text-white border border-white/40 hover:bg-white/30 hover:text-white"
               onClick={() => navigate(createPageUrl("MyLibrary"))}
             >
-              <Library className="w-5 h-5 mr-2" />
-              Go to My Library
+              <Library className="w-5 h-5 mr-2 text-white" />
+              <span className="text-white">Go to My Library</span>
             </Button>
           </div>
         </div>
