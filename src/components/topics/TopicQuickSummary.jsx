@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 export default function TopicQuickSummary({ topic, relevantNewsletters }) {
   const [summary, setSummary] = useState("");
@@ -78,10 +79,10 @@ export default function TopicQuickSummary({ topic, relevantNewsletters }) {
           </div>
         ) : (
           isExpanded && (
-            <div className="prose prose-sm max-w-none">
-              <pre className="whitespace-pre-wrap text-sm font-sans text-slate-700 bg-white/60 p-4 rounded-lg">
+            <div className="bg-white/60 p-4 rounded-lg">
+              <ReactMarkdown className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-h2:text-base prose-h2:mt-3 prose-h2:mb-2 prose-h3:text-sm prose-h3:mt-2 prose-h3:mb-1 prose-p:text-slate-700 prose-p:leading-relaxed prose-li:text-slate-700 prose-li:my-1 prose-strong:text-slate-900 prose-strong:font-semibold">
                 {summary}
-              </pre>
+              </ReactMarkdown>
             </div>
           )
         )}

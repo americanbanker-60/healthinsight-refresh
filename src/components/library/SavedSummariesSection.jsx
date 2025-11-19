@@ -8,6 +8,7 @@ import { FileText, Trash2, Download, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { formatSummaryAsMarkdown } from "../utils/markdownFormatter";
+import ReactMarkdown from "react-markdown";
 
 export default function SavedSummariesSection() {
   const queryClient = useQueryClient();
@@ -138,11 +139,9 @@ export default function SavedSummariesSection() {
             <DialogHeader>
               <DialogTitle>{selectedSummary.summary_title}</DialogTitle>
             </DialogHeader>
-            <div className="prose prose-sm max-w-none">
-              <pre className="whitespace-pre-wrap text-sm font-sans">
-                {selectedSummary.summary_body}
-              </pre>
-            </div>
+            <ReactMarkdown className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-h2:text-lg prose-h2:mt-4 prose-h2:mb-3 prose-h3:text-base prose-h3:mt-3 prose-h3:mb-2 prose-p:text-slate-700 prose-p:leading-relaxed prose-li:text-slate-700 prose-li:my-1 prose-strong:text-slate-900 prose-strong:font-semibold">
+              {selectedSummary.summary_body}
+            </ReactMarkdown>
           </DialogContent>
         </Dialog>
       )}
