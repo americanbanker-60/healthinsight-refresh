@@ -266,7 +266,7 @@ export default function Dashboard() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList className="bg-white border border-slate-200">
           <TabsTrigger value="all">All Sources ({newsletters.length})</TabsTrigger>
-          {sources.filter(s => !s.is_deleted).map(source => {
+          {sources.filter(s => s && !s.is_deleted && s.name).map(source => {
             const count = newsletters.filter(n => n.source_name === source.name).length;
             return (
               <TabsTrigger key={source.id} value={source.name}>
