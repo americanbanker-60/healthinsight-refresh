@@ -10,7 +10,7 @@ import { BookOpen, Sparkles, Calendar, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import RecommendedPacks from "../components/packs/RecommendedPacks";
 import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
-import { logPackView } from "../utils/packTracking";
+import { logPackView } from "../components/utils/packTracking";
 
 const categoryColors = {
   "Care Models": "bg-blue-100 text-blue-700 border-blue-200",

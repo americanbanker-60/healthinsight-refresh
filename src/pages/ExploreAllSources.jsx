@@ -17,7 +17,7 @@ import SummaryBuilder from "../components/explore/SummaryBuilder";
 import SavedSearchesPanel from "../components/explore/SavedSearchesPanel";
 import RecommendedPacks from "../components/packs/RecommendedPacks";
 import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
-import { logPackView } from "../utils/packTracking";
+import { logPackView } from "../components/utils/packTracking";
 import { Link } from "react-router-dom";
 
 const dateRangePresets = [

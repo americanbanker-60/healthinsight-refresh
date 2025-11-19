@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BookOpen, Sparkles, ArrowRight } from "lucide-react";
-import { logPackView } from "../../utils/packTracking";
+import { logPackView } from "../utils/packTracking";
 
 export default function RecommendedPacks({ 
   currentPackId = null, 
