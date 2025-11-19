@@ -13,6 +13,7 @@ import { Search, Calendar as CalendarIcon, Filter, X, Eye } from "lucide-react";
 import { format, subDays, startOfYear } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
+import SummaryBuilder from "../components/explore/SummaryBuilder";
 
 const dateRangePresets = [
   { label: "Last 7 days", value: "7d" },
@@ -130,12 +131,14 @@ export default function ExploreAllSources() {
     setSelectedSources(prev =>
       prev.includes(source) ? prev.filter(s => s !== source) : [...prev, source]
     );
+    setSelectedNewsletters([]);
   };
 
   const toggleTopic = (topic) => {
     setSelectedTopics(prev =>
       prev.includes(topic) ? prev.filter(t => t !== topic) : [...prev, topic]
     );
+    setSelectedNewsletters([]);
   };
 
   const addCustomTopic = () => {
@@ -170,13 +173,16 @@ export default function ExploreAllSources() {
   const detailNewsletter = newsletters.find(n => n.id === detailNewsletterId);
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto">
+    <div className="p-6 md:p-10 max-w-[1800px] mx-auto">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Explore All Sources</h1>
         <p className="text-slate-600 text-lg">Search and filter across all newsletter content</p>
       </div>
 
-      <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 mb-6">
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+
+        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 mb-6">
         <CardContent className="pt-6 space-y-6">
           {/* Search Bar */}
           <div className="relative">
@@ -304,19 +310,19 @@ export default function ExploreAllSources() {
             </Button>
           </div>
         </CardContent>
-      </Card>
+        </Card>
 
-      {/* Results */}
-      <div className="mb-4 flex justify-between items-center">
+        {/* Results */}
+        <div className="mb-4 flex justify-between items-center">
         <p className="text-slate-600">
           <span className="font-semibold text-slate-900">{filteredResults.length}</span> results found
           {selectedNewsletters.length > 0 && (
             <span className="ml-2">• <span className="font-semibold text-blue-600">{selectedNewsletters.length}</span> selected</span>
           )}
         </p>
-      </div>
+        </div>
 
-      <div className="space-y-3">
+        <div className="space-y-3">
         {isLoading ? (
           Array(5).fill(0).map((_, i) => (
             <Card key={i} className="bg-white/80">
@@ -378,6 +384,18 @@ export default function ExploreAllSources() {
             );
           })
         )}
+        </div>
+
+        </div>
+
+        <div className="lg:col-span-1">
+          <SummaryBuilder
+            selectedNewsletters={selectedNewsletters}
+            newsletters={newsletters}
+            searchText={searchText}
+            dateRange={getDateRange()}
+          />
+        </div>
       </div>
 
       {detailNewsletter && (
