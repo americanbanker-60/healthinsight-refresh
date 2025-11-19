@@ -44,18 +44,36 @@ export default function SummaryBuilder({ selectedNewsletters, newsletters, searc
       };
     });
 
-    const prompt = `You are analyzing ${selectedItems.length} healthcare newsletters. Generate a comprehensive executive summary.
+    const prompt = `SYSTEM:
+You are a healthcare strategy analyst summarizing multiple newsletter excerpts.
+Your job is to synthesize themes, trends, and insights across the provided items.
+Do NOT hallucinate, speculate, or introduce unverified claims. Only use the content given.
+Keep the writing crisp, concise, and business-oriented.
 
-Newsletter data:
-${JSON.stringify(newsletterData, null, 2)}
+USER:
+Summarize the following newsletter items as if preparing briefing notes for a healthcare strategy meeting. The output must follow this structure:
 
-Generate a summary with:
-1. A 3-7 bullet TL;DR of the collective content
-2. Key themes and trends across all items
-3. Important statistics, policy changes, or company moves
-4. A "Priority Reading" section suggesting 1-2 most important items to read first
+1. **TL;DR (5–10 bullets)**
+   - Concise, actionable, and theme-based points.
+   - No fluff or generic statements.
 
-Format your response in markdown.`;
+2. **Key Themes**
+   - 3–5 themes that appear across multiple items.
+   - Include 1–2 sentences per theme with examples drawn from the content.
+
+3. **Notable Points & Signals**
+   - Important stats, policy shifts, deal activity, product launches, or payer/provider moves.
+   - Only include verifiable information provided in the inputs.
+
+4. **Source Notes (Optional)**
+   - 1–2 bullets per source summarizing what that source emphasized.
+   - Only include sources that appear in the input items.
+
+5. **If You Only Read One…**
+   - Identify the single most informative item and explain why in one sentence.
+
+Here are the newsletter items to analyze:
+${JSON.stringify(newsletterData, null, 2)}`;
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({
