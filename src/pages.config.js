@@ -8,6 +8,7 @@ import ManageSources from './pages/ManageSources';
 import ExploreAllSources from './pages/ExploreAllSources';
 import LearningPacks from './pages/LearningPacks';
 import MyLibrary from './pages/MyLibrary';
+import KnowledgeHub from './pages/KnowledgeHub';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +23,7 @@ export const PAGES = {
     "ExploreAllSources": ExploreAllSources,
     "LearningPacks": LearningPacks,
     "MyLibrary": MyLibrary,
+    "KnowledgeHub": KnowledgeHub,
 }
 
 export const pagesConfig = {
