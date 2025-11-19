@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function SummaryBuilder({ selectedNewsletters, newsletters, searchText, dateRange }) {
+export default function SummaryBuilder({ selectedNewsletters, newsletters, searchText, dateRange, activePack }) {
   const [summary, setSummary] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -44,7 +44,39 @@ export default function SummaryBuilder({ selectedNewsletters, newsletters, searc
       };
     });
 
-    const prompt = `SYSTEM:
+    const prompt = activePack 
+      ? `SYSTEM:
+You are a healthcare market intelligence analyst. Your task is to summarize and synthesize
+all items contained in a Learning Pack. Focus on clarity and pattern recognition.
+Do NOT guess or add content not present in the inputs.
+
+USER:
+Provide a high-level synthesis of the Learning Pack contents using this structure:
+
+1. **Executive Summary (4–6 sentences)**
+   - Explain the core theme of the Pack.
+   - Highlight the major insights contained across the curated items.
+
+2. **Key Drivers & Trends**
+   - 3–6 trends shaping this topic.
+   - Keep each trend to 2–3 sentences.
+
+3. **What Matters for Operators / Payors / Investors**
+   - Provide a short bullet section identifying implications.
+   - This must be descriptive, not advisory. ("The content suggests…", not "You should…")
+
+4. **Notable News & Events**
+   - Bullet list of major events, policy changes, launches, partnerships, or analytics.
+   - Only include items mentioned in the input.
+
+5. **Terminology & Concepts (Optional)**
+   - Define any key terms mentioned repeatedly.
+
+Learning Pack: ${activePack.title}
+
+Learning Pack contents:
+${JSON.stringify(newsletterData, null, 2)}`
+      : `SYSTEM:
 You are a healthcare strategy analyst summarizing multiple newsletter excerpts.
 Your job is to synthesize themes, trends, and insights across the provided items.
 Do NOT hallucinate, speculate, or introduce unverified claims. Only use the content given.

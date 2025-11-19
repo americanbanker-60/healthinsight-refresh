@@ -521,6 +521,7 @@ export default function ExploreAllSources() {
             newsletters={newsletters}
             searchText={searchText}
             dateRange={getDateRange()}
+            activePack={activePack}
           />
         </div>
       </div>
