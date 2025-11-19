@@ -3,7 +3,7 @@ import AnalyzeNewsletter from './pages/AnalyzeNewsletter';
 import NewsletterDetail from './pages/NewsletterDetail';
 import DashboardSettings from './pages/DashboardSettings';
 import SourcePage from './pages/SourcePage';
-import CleanupHospitalogy from './pages/CleanupHospitalogy';
+import Cleanup from './pages/Cleanup';
 import __Layout from './Layout.jsx';
 
 
@@ -13,7 +13,7 @@ export const PAGES = {
     "NewsletterDetail": NewsletterDetail,
     "DashboardSettings": DashboardSettings,
     "SourcePage": SourcePage,
-    "CleanupHospitalogy": CleanupHospitalogy,
+    "Cleanup": Cleanup,
 }
 
 export const pagesConfig = {
