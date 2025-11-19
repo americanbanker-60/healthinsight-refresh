@@ -10,6 +10,8 @@ import { BookOpen, Sparkles, Calendar, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import RecommendedPacks from "../components/packs/RecommendedPacks";
 import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
+import FavoritePacks from "../components/packs/FavoritePacks";
+import FavoriteButton from "../components/packs/FavoriteButton";
 import { logPackView } from "../components/utils/packTracking";
 
 const categoryColors = {
@@ -24,10 +26,20 @@ export default function LearningPacks() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState("order");
   const [lastOpenedPackId, setLastOpenedPackId] = useState(null);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   const { data: packs = [], isLoading } = useQuery({
     queryKey: ['learningPacks'],
     queryFn: () => base44.entities.LearningPack.list(sortBy === "order" ? "sort_order" : "pack_title"),
+    initialData: [],
+  });
+
+  const { data: favorites = [] } = useQuery({
+    queryKey: ['favoritePacks'],
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      return await base44.entities.FavoritePack.filter({ created_by: user.email });
+    },
     initialData: [],
   });
 
@@ -41,7 +53,11 @@ export default function LearningPacks() {
     navigate(createPageUrl("ExploreAllSources") + "?" + params.toString());
   };
 
-  const groupedPacks = packs.reduce((acc, pack) => {
+  const filteredPacks = showOnlyFavorites
+    ? packs.filter(pack => favorites.some(fav => fav.pack_id === pack.id))
+    : packs;
+
+  const groupedPacks = filteredPacks.reduce((acc, pack) => {
     const category = pack.category || "Other";
     if (!acc[category]) acc[category] = [];
     acc[category].push(pack);
@@ -64,15 +80,25 @@ export default function LearningPacks() {
         </div>
       </div>
 
-      <div className="mb-6">
+      <div className="space-y-6 mb-8">
+        <FavoritePacks variant="full" maxItems={6} />
         <RecentlyViewedPacks variant="full" maxItems={5} />
+        {lastOpenedPackId && (
+          <RecommendedPacks currentPackId={lastOpenedPackId} />
+        )}
       </div>
 
-      {lastOpenedPackId && (
-        <div className="mb-6">
-          <RecommendedPacks currentPackId={lastOpenedPackId} />
-        </div>
-      )}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-slate-800">All Learning Packs</h2>
+        <Button
+          variant={showOnlyFavorites ? "default" : "outline"}
+          onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+          className="gap-2"
+        >
+          <Star className={`w-4 h-4 ${showOnlyFavorites ? "fill-yellow-400 text-yellow-400" : ""}`} />
+          {showOnlyFavorites ? "Show All" : "Show Favorites Only"}
+        </Button>
+      </div>
 
       {isLoading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -157,11 +183,17 @@ export default function LearningPacks() {
         </div>
       )}
 
-      {!isLoading && packs.length === 0 && (
+      {!isLoading && filteredPacks.length === 0 && (
         <Card className="bg-white/80 backdrop-blur-sm text-center py-16">
           <BookOpen className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-700 mb-2">No Learning Packs Yet</h3>
-          <p className="text-slate-500">Learning packs will appear here once created</p>
+          <h3 className="text-xl font-semibold text-slate-700 mb-2">
+            {showOnlyFavorites ? "No Favorite Packs" : "No Learning Packs Yet"}
+          </h3>
+          <p className="text-slate-500">
+            {showOnlyFavorites
+              ? "Star some packs to see them here"
+              : "Learning packs will appear here once created"}
+          </p>
         </Card>
       )}
     </div>

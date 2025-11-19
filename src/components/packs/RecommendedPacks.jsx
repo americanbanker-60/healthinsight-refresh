@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BookOpen, Sparkles, ArrowRight } from "lucide-react";
 import { logPackView } from "../utils/packTracking";
+import FavoriteButton from "./FavoriteButton";
 
 export default function RecommendedPacks({ 
   currentPackId = null, 
@@ -160,12 +161,19 @@ export default function RecommendedPacks({
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
-                  {pack.icon && <div className="text-2xl">{pack.icon}</div>}
-                  {pack.category && (
-                    <Badge variant="outline" className="text-xs">
-                      {pack.category}
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {pack.icon && <div className="text-2xl">{pack.icon}</div>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <FavoriteButton packId={pack.id} variant="icon" />
+                    </div>
+                    {pack.category && (
+                      <Badge variant="outline" className="text-xs">
+                        {pack.category}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <h4 className="font-semibold text-sm text-slate-900 mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">
                   {pack.pack_title}

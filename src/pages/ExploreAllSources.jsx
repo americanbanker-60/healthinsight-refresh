@@ -17,6 +17,7 @@ import SummaryBuilder from "../components/explore/SummaryBuilder";
 import SavedSearchesPanel from "../components/explore/SavedSearchesPanel";
 import RecommendedPacks from "../components/packs/RecommendedPacks";
 import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
+import FavoritePacks from "../components/packs/FavoritePacks";
 import { logPackView } from "../components/utils/packTracking";
 import { Link } from "react-router-dom";
 
@@ -268,6 +269,8 @@ export default function ExploreAllSources() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          <FavoritePacks variant="compact" maxItems={5} />
+          
           <RecentlyViewedPacks variant="compact" maxItems={5} />
 
           <RecommendedPacks

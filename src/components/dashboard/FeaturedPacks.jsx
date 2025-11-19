@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BookOpen, ArrowRight, Sparkles } from "lucide-react";
 import { logPackView } from "../utils/packTracking";
+import FavoriteButton from "../packs/FavoriteButton";
 
 export default function FeaturedPacks() {
   const navigate = useNavigate();
@@ -53,12 +54,19 @@ export default function FeaturedPacks() {
           >
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
-                {pack.icon && <div className="text-3xl">{pack.icon}</div>}
-                {pack.category && (
-                  <Badge variant="outline" className="text-xs">
-                    {pack.category}
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  {pack.icon && <div className="text-3xl">{pack.icon}</div>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <FavoriteButton packId={pack.id} variant="icon" />
+                  </div>
+                  {pack.category && (
+                    <Badge variant="outline" className="text-xs">
+                      {pack.category}
+                    </Badge>
+                  )}
+                </div>
               </div>
               <CardTitle className="text-base group-hover:text-blue-600 transition-colors">
                 {pack.pack_title}
