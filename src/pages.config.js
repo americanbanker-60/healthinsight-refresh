@@ -11,6 +11,8 @@ import MyLibrary from './pages/MyLibrary';
 import KnowledgeHub from './pages/KnowledgeHub';
 import TopicPage from './pages/TopicPage';
 import TopicsDirectory from './pages/TopicsDirectory';
+import CompanyPage from './pages/CompanyPage';
+import CompaniesDirectory from './pages/CompaniesDirectory';
 import __Layout from './Layout.jsx';
 
 
@@ -28,6 +30,8 @@ export const PAGES = {
     "KnowledgeHub": KnowledgeHub,
     "TopicPage": TopicPage,
     "TopicsDirectory": TopicsDirectory,
+    "CompanyPage": CompanyPage,
+    "CompaniesDirectory": CompaniesDirectory,
 }
 
 export const pagesConfig = {
