@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,8 +12,8 @@ import AnalyzeNewsletterForm from "../components/source/AnalyzeNewsletterForm";
 
 export default function SourcePage() {
   const [showAnalyze, setShowAnalyze] = useState(false);
-  const urlParams = new URLSearchParams(window.location.search);
-  const sourceName = urlParams.get('name');
+  const [searchParams] = useSearchParams();
+  const sourceName = searchParams.get('name');
 
   const { data: source, isLoading: sourceLoading } = useQuery({
     queryKey: ['source', sourceName],
