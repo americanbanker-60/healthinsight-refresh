@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { securedInvokeLLM } from "../utils/aiDefenseWrapper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -149,7 +150,7 @@ Content:
 ${JSON.stringify(newsletterData, null, 2)}`;
 
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = await securedInvokeLLM({
         prompt,
         add_context_from_internet: false
       });
