@@ -14,6 +14,7 @@ import AdvancedFilters from "../components/dashboard/AdvancedFilters";
 import TrendChart from "../components/dashboard/TrendChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Dashboard() {
   const [filters, setFilters] = useState({
@@ -28,10 +29,17 @@ export default function Dashboard() {
   });
   const [userConfig, setUserConfig] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
 
   const { data: newsletters, isLoading } = useQuery({
     queryKey: ['newsletters'],
     queryFn: () => base44.entities.Newsletter.list("-created_date"),
+    initialData: [],
+  });
+
+  const { data: sources = [] } = useQuery({
+    queryKey: ['sources'],
+    queryFn: () => base44.entities.Source.list("name"),
     initialData: [],
   });
 
@@ -62,13 +70,19 @@ export default function Dashboard() {
     }
   };
 
+  // Filter by active tab
+  const tabFilteredNewsletters = React.useMemo(() => {
+    if (activeTab === "all") return newsletters;
+    return newsletters.filter(n => n.source_name === activeTab);
+  }, [newsletters, activeTab]);
+
   // Filter by investment focus
   const focusFilteredNewsletters = React.useMemo(() => {
     if (!userConfig?.investment_focus || userConfig.investment_focus.length === 0) {
-      return newsletters;
+      return tabFilteredNewsletters;
     }
 
-    return newsletters.map(newsletter => {
+    return tabFilteredNewsletters.map(newsletter => {
       let relevanceScore = 0;
       const matchedFocusAreas = [];
 
@@ -88,8 +102,8 @@ export default function Dashboard() {
       });
 
       return { ...newsletter, relevanceScore, matchedFocusAreas };
-    }).sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
-  }, [newsletters, userConfig]);
+      }).sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+      }, [tabFilteredNewsletters, userConfig]);
 
   const filteredNewsletters = focusFilteredNewsletters.filter(newsletter => {
     // Keywords search - across title, summary, takeaways, themes
@@ -218,9 +232,6 @@ export default function Dashboard() {
         <div>
           <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Healthcare Intelligence</h1>
           <p className="text-slate-600 text-lg">Track market movements, M&A activity, and emerging trends</p>
-          <Badge variant="outline" className="mt-2 text-xs">
-            Showing all sources
-          </Badge>
           {userConfig.investment_focus && userConfig.investment_focus.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {userConfig.investment_focus.map(focus => (
