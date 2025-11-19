@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, Newspaper, BookOpen, Library, Compass, Lightbulb, Building2 } from "lucide-react";
+import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, Newspaper, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -34,6 +34,11 @@ const staticNavigationItems = [
     title: "My Library",
     url: createPageUrl("MyLibrary"),
     icon: Library,
+  },
+  {
+    title: "My Custom Packs",
+    url: createPageUrl("MyCustomPacks"),
+    icon: FolderOpen,
   },
   {
     title: "Topics",

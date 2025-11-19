@@ -13,6 +13,8 @@ import TopicPage from './pages/TopicPage';
 import TopicsDirectory from './pages/TopicsDirectory';
 import CompanyPage from './pages/CompanyPage';
 import CompaniesDirectory from './pages/CompaniesDirectory';
+import MyCustomPacks from './pages/MyCustomPacks';
+import CustomPackDetail from './pages/CustomPackDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -32,6 +34,8 @@ export const PAGES = {
     "TopicsDirectory": TopicsDirectory,
     "CompanyPage": CompanyPage,
     "CompaniesDirectory": CompaniesDirectory,
+    "MyCustomPacks": MyCustomPacks,
+    "CustomPackDetail": CustomPackDetail,
 }
 
 export const pagesConfig = {
