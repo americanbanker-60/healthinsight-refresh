@@ -3,10 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { HelpCircle, BookOpen, Search, Library, Play } from "lucide-react";
+import { HelpCircle, BookOpen, Search, Library, Play, Sparkles } from "lucide-react";
+import { useWalkthrough } from "../walkthrough/WalkthroughManager";
 
 export default function HelpSection() {
   const navigate = useNavigate();
+  const { startWalkthrough, hasCompletedWalkthrough } = useWalkthrough();
 
   return (
     <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
@@ -52,7 +54,11 @@ export default function HelpSection() {
         </div>
 
         <div className="flex gap-3">
-          <Button onClick={() => navigate(createPageUrl("ExploreAllSources"))}>
+          <Button onClick={startWalkthrough} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+            <Sparkles className="w-4 h-4 mr-2" />
+            {hasCompletedWalkthrough ? "Replay Interactive Tour" : "Take Interactive Tour"}
+          </Button>
+          <Button variant="outline" onClick={() => navigate(createPageUrl("ExploreAllSources"))}>
             <Play className="w-4 h-4 mr-2" />
             Start Exploring
           </Button>
