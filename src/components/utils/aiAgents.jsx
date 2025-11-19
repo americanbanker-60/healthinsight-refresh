@@ -188,17 +188,31 @@ USER:
 Create a deep-dive research briefing on the following topic using only the provided 
 newsletter items and pack content.
 
-Follow this exact structure:
+IMPORTANT: Use these EXACT section headers in your response:
 
-1. **Executive Summary** (5–8 sentences)
-2. **Market Overview** (explain the current state and context)
-3. **Key Drivers & Forces** (5–8 bullets)
-4. **Landscape Map** (Payors, Providers, Vendors — bullets only)
-5. **Recent Timeline** (chronological, 90–180 days)
-6. **Major News Highlights** (10–20 bullets)
-7. **Most Important Excerpts**
-   - Include 5 excerpts with source + date
-8. **Consolidated Summary** (4–6 sentences)
+**Executive Summary**
+(Write 5–8 sentences summarizing the key findings)
+
+**Market Overview**
+(Explain the current state and context in 2-3 paragraphs)
+
+**Key Drivers & Forces**
+(List 5–8 key drivers as bullets)
+
+**Landscape Map**
+(Organize by Payors, Providers, Vendors — bullets only)
+
+**Recent Timeline**
+(List events chronologically, covering 90–180 days)
+
+**Major News Highlights**
+(List 10–20 major news items as bullets)
+
+**Most Important Excerpts**
+(Include 5 key excerpts with source + date)
+
+**Consolidated Summary**
+(Write 4–6 sentences synthesizing the overall picture)
 
 Topic: ${contextTitle}
 
