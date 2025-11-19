@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BookOpen, Sparkles, Calendar, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import RecommendedPacks from "../components/packs/RecommendedPacks";
 
 const categoryColors = {
   "Care Models": "bg-blue-100 text-blue-700 border-blue-200",
@@ -20,6 +21,7 @@ const categoryColors = {
 export default function LearningPacks() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState("order");
+  const [lastOpenedPackId, setLastOpenedPackId] = useState(null);
 
   const { data: packs = [], isLoading } = useQuery({
     queryKey: ['learningPacks'],
@@ -28,6 +30,7 @@ export default function LearningPacks() {
   });
 
   const openPack = (pack) => {
+    setLastOpenedPackId(pack.id);
     const params = new URLSearchParams({
       pack_id: pack.id,
       pack_title: pack.pack_title
@@ -57,6 +60,12 @@ export default function LearningPacks() {
           </div>
         </div>
       </div>
+
+      {lastOpenedPackId && (
+        <div className="mb-6">
+          <RecommendedPacks currentPackId={lastOpenedPackId} />
+        </div>
+      )}
 
       {isLoading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

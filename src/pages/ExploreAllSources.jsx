@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import SummaryBuilder from "../components/explore/SummaryBuilder";
 import SavedSearchesPanel from "../components/explore/SavedSearchesPanel";
+import RecommendedPacks from "../components/packs/RecommendedPacks";
 import { Link } from "react-router-dom";
 
 const dateRangePresets = [
@@ -264,6 +265,14 @@ export default function ExploreAllSources() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          <RecommendedPacks
+            currentPackId={activePack?.id}
+            searchKeywords={searchText}
+            selectedTopics={selectedTopics}
+            selectedNewsletters={selectedNewsletters}
+            newsletters={newsletters}
+          />
+
           <SavedSearchesPanel
             currentSearch={currentSearchState}
             onLoadSearch={loadSavedSearch}
