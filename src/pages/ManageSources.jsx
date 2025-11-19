@@ -24,7 +24,7 @@ export default function ManageSources() {
     initialData: [],
   });
 
-  const activeSources = sources.filter(s => !s.is_deleted);
+  const activeSources = sources.filter(s => s && typeof s === 'object' && !s.is_deleted && s.name && s.id);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Source.create(data),
@@ -76,6 +76,7 @@ export default function ManageSources() {
   };
 
   const sourcesByCategory = activeSources.reduce((acc, source) => {
+    if (!source || typeof source !== 'object') return acc;
     const cat = source.category || "General";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(source);
