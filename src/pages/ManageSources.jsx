@@ -24,7 +24,7 @@ export default function ManageSources() {
     initialData: [],
   });
 
-  const activeSources = sources.filter(s => !s.data?.is_deleted);
+  const activeSources = sources.filter(s => !s.is_deleted);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Source.create(data),
@@ -55,7 +55,7 @@ export default function ManageSources() {
 
   const startEdit = (source) => {
     setEditingId(source.id);
-    setFormData(source.data);
+    setFormData({ name: source.name, description: source.description, url: source.url, category: source.category });
   };
 
   const cancelEdit = () => {
@@ -76,7 +76,7 @@ export default function ManageSources() {
   };
 
   const sourcesByCategory = activeSources.reduce((acc, source) => {
-    const cat = source.data?.category || "General";
+    const cat = source.category || "General";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(source);
     return acc;
@@ -196,13 +196,13 @@ export default function ManageSources() {
                       ) : (
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-slate-900">{source.data.name}</h3>
-                            {source.data.description && (
-                              <p className="text-slate-600 text-sm mt-1">{source.data.description}</p>
+                            <h3 className="text-lg font-semibold text-slate-900">{source.name}</h3>
+                            {source.description && (
+                              <p className="text-slate-600 text-sm mt-1">{source.description}</p>
                             )}
-                            {source.data.url && (
-                              <a href={source.data.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-sm hover:underline mt-1 inline-block">
-                                {source.data.url}
+                            {source.url && (
+                              <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-sm hover:underline mt-1 inline-block">
+                                {source.url}
                               </a>
                             )}
                           </div>
