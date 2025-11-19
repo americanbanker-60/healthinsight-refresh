@@ -148,18 +148,18 @@ export default function ExploreAllSources() {
     }
 
     // Search text filter - split keywords and check if ANY match
-    if (searchText.trim()) {
+    if (searchText && searchText.trim()) {
       const keywords = searchText.toLowerCase().split(/\s+/);
       results = results.filter(n => {
         const searchableText = [
-          n.title,
-          n.summary,
-          n.tldr,
+          n.title || '',
+          n.summary || '',
+          n.tldr || '',
           ...(n.key_takeaways || []),
-          ...(n.themes?.map(t => `${t.theme} ${t.description}`) || [])
+          ...(n.themes?.map(t => `${t.theme || ''} ${t.description || ''}`) || [])
         ].join(' ').toLowerCase();
         
-        return keywords.some(keyword => searchableText.includes(keyword));
+        return keywords.some(keyword => keyword && searchableText.includes(keyword));
       });
     }
 
