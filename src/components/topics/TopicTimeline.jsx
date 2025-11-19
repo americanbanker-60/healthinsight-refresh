@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Timeline, TrendingUp } from "lucide-react";
+import { Clock, TrendingUp } from "lucide-react";
 import { format, startOfWeek, startOfMonth, eachWeekOfInterval, eachMonthOfInterval, subDays } from "date-fns";
 
 export default function TopicTimeline({ newsletters, timeRange, onTimeRangeChange }) {
@@ -60,7 +60,7 @@ export default function TopicTimeline({ newsletters, timeRange, onTimeRangeChang
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Timeline className="w-5 h-5 text-green-600" />
+            <Clock className="w-5 h-5 text-green-600" />
             Timeline of Mentions
           </CardTitle>
           <div className="flex gap-2">
