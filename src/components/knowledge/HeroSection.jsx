@@ -32,21 +32,19 @@ export default function HeroSection() {
             </Button>
             <Button 
               size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white/10 hover:text-white"
+              className="bg-white/20 backdrop-blur-sm text-white border border-white/40 hover:bg-white/30"
               onClick={() => navigate(createPageUrl("LearningPacks"))}
             >
               <BookOpen className="w-5 h-5 mr-2" />
-              <span>Browse Learning Packs</span>
+              Browse Learning Packs
             </Button>
             <Button 
               size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white/10 hover:text-white"
+              className="bg-white/20 backdrop-blur-sm text-white border border-white/40 hover:bg-white/30"
               onClick={() => navigate(createPageUrl("MyLibrary"))}
             >
               <Library className="w-5 h-5 mr-2" />
-              <span>Go to My Library</span>
+              Go to My Library
             </Button>
           </div>
         </div>
