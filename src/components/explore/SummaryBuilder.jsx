@@ -47,6 +47,17 @@ export default function SummaryBuilder({ selectedNewsletters, newsletters, searc
 
     const prompt = activePack 
       ? `SYSTEM:
+You are analyzing newsletter items from different sources with distinct editorial styles
+(e.g., Elion Health, Health Tech Nerds, Hospitalogy, Healthcare Finance, TripleTree Insights).
+Your job is to normalize their voices into a single unified, neutral, analytical tone without
+losing the meaning of each source.
+
+RULES:
+- Do NOT weight one source more heavily unless the content volume is higher.
+- If two sources disagree or present different angles, note the difference clearly.
+- Never fabricate consensus where none exists.
+- Only use the content provided.
+
 You are a healthcare market intelligence analyst. Your task is to summarize and synthesize
 all items contained in a Learning Pack. Focus on clarity and pattern recognition.
 Do NOT guess or add content not present in the inputs.
@@ -78,6 +89,17 @@ Learning Pack: ${activePack.title}
 Learning Pack contents:
 ${JSON.stringify(newsletterData, null, 2)}`
       : `SYSTEM:
+You are analyzing newsletter items from different sources with distinct editorial styles
+(e.g., Elion Health, Health Tech Nerds, Hospitalogy, Healthcare Finance, TripleTree Insights).
+Your job is to normalize their voices into a single unified, neutral, analytical tone without
+losing the meaning of each source.
+
+RULES:
+- Do NOT weight one source more heavily unless the content volume is higher.
+- If two sources disagree or present different angles, note the difference clearly.
+- Never fabricate consensus where none exists.
+- Only use the content provided.
+
 You are a healthcare insights analyst tasked with producing a 60-second briefing on a topic.
 The goal is to help a busy professional quickly understand the state of the topic based
 solely on the provided content. No speculation, no unsupported claims.
