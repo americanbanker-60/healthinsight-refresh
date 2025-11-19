@@ -84,7 +84,7 @@ export default function Layout({ children, currentPageName }) {
 
   // Filter out deleted sources and group by category
   const activeSourcesByCategory = React.useMemo(() => {
-    const active = sources.filter(s => !s.is_deleted);
+    const active = sources.filter(s => s && !s.is_deleted && s.name);
     const grouped = {};
     active.forEach(source => {
       const category = source.category || "General";
