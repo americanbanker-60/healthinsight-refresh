@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { BookOpen, Sparkles, Calendar, Search } from "lucide-react";
+import { BookOpen, Sparkles, Calendar, Search, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import RecommendedPacks from "../components/packs/RecommendedPacks";
 import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
@@ -131,14 +131,21 @@ export default function LearningPacks() {
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between mb-2">
-                        {pack.icon && (
-                          <div className="text-4xl mb-2">{pack.icon}</div>
-                        )}
-                        {pack.category && (
-                          <Badge className={categoryColors[pack.category] || "bg-slate-100 text-slate-700"}>
-                            {pack.category}
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {pack.icon && (
+                            <div className="text-4xl mb-2">{pack.icon}</div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <FavoriteButton packId={pack.id} variant="icon" />
+                          </div>
+                          {pack.category && (
+                            <Badge className={categoryColors[pack.category] || "bg-slate-100 text-slate-700"}>
+                              {pack.category}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
                         {pack.pack_title}
