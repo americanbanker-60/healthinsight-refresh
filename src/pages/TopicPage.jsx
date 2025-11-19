@@ -64,7 +64,7 @@ export default function TopicPage() {
         ...(n.themes?.map(t => t.description) || [])
       ].join(' ').toLowerCase();
       
-      return keywords.some(keyword => searchText.includes(keyword.toLowerCase()));
+      return keywords.some(keyword => keyword && searchText.includes(keyword.toLowerCase()));
     });
   }, [topic, newsletters, timeRange]);
 

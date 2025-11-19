@@ -19,7 +19,8 @@ import RecommendedPacks from "../components/packs/RecommendedPacks";
 import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
 import FavoritePacks from "../components/packs/FavoritePacks";
 import { logPackView } from "../components/utils/packTracking";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 const dateRangePresets = [
   { label: "Last 7 days", value: "7d" },
@@ -30,6 +31,7 @@ const dateRangePresets = [
 ];
 
 export default function ExploreAllSources() {
+  const navigate = useNavigate();
   const [searchText, setSearchText] = useState("");
   const [dateRangePreset, setDateRangePreset] = useState("30d");
   const [customStartDate, setCustomStartDate] = useState(null);
@@ -59,7 +61,7 @@ export default function ExploreAllSources() {
     initialData: [],
   });
 
-  const availableSources = sources.filter(s => !s.data?.is_deleted).map(s => s.data.name);
+  const availableSources = sources.filter(s => !s.is_deleted).map(s => s.name);
 
   // Initialize with all sources selected
   React.useEffect(() => {
