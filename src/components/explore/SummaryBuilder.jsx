@@ -77,34 +77,30 @@ Learning Pack: ${activePack.title}
 Learning Pack contents:
 ${JSON.stringify(newsletterData, null, 2)}`
       : `SYSTEM:
-You are a healthcare strategy analyst summarizing multiple newsletter excerpts.
-Your job is to synthesize themes, trends, and insights across the provided items.
-Do NOT hallucinate, speculate, or introduce unverified claims. Only use the content given.
-Keep the writing crisp, concise, and business-oriented.
+You are a healthcare insights analyst tasked with producing a 60-second briefing on a topic.
+The goal is to help a busy professional quickly understand the state of the topic based
+solely on the provided content. No speculation, no unsupported claims.
 
 USER:
-Summarize the following newsletter items as if preparing briefing notes for a healthcare strategy meeting. The output must follow this structure:
+Create a short "Get Smart Fast" briefing with the following structure:
 
-1. **TL;DR (5–10 bullets)**
-   - Concise, actionable, and theme-based points.
-   - No fluff or generic statements.
+1. **What This Topic Is About (2–3 sentences)**
+   - Plain, direct description of the topic using inputs only.
 
-2. **Key Themes**
-   - 3–5 themes that appear across multiple items.
-   - Include 1–2 sentences per theme with examples drawn from the content.
+2. **Current Landscape (4–6 bullets)**
+   - Capture what's happening now according to the inputs.
 
-3. **Notable Points & Signals**
-   - Important stats, policy shifts, deal activity, product launches, or payer/provider moves.
-   - Only include verifiable information provided in the inputs.
+3. **Key Forces & Pressures (3–5 bullets)**
+   - Policy, operational, payer, provider, or market dynamics.
+   - Must be grounded in the input content.
 
-4. **Source Notes (Optional)**
-   - 1–2 bullets per source summarizing what that source emphasized.
-   - Only include sources that appear in the input items.
+4. **Recent Highlights (5–10 bullets)**
+   - News, stats, regulatory notes, deals, product releases, payer updates.
 
-5. **If You Only Read One…**
-   - Identify the single most informative item and explain why in one sentence.
+5. **Reading Priority**
+   - Identify the two most relevant items to start with (from inputs) and explain why.
 
-Here are the newsletter items to analyze:
+Content:
 ${JSON.stringify(newsletterData, null, 2)}`;
 
     try {
