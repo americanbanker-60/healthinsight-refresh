@@ -5,6 +5,7 @@ import SavedSearchesSection from "../components/library/SavedSearchesSection";
 import RecentlyViewedSection from "../components/library/RecentlyViewedSection";
 import SavedSummariesSection from "../components/library/SavedSummariesSection";
 import InsightsSection from "../components/library/InsightsSection";
+import WatchedTopicsSection from "../components/library/WatchedTopicsSection";
 
 export default function MyLibrary() {
   return (

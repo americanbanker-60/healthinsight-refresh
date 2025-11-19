@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import TopicQuickSummary from "../components/topics/TopicQuickSummary";
 import TopicTimeline from "../components/topics/TopicTimeline";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
+import WatchTopicButton from "../components/topics/WatchTopicButton";
 
 export default function TopicPage() {
   const navigate = useNavigate();
