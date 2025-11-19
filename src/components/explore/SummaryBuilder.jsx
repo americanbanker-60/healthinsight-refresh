@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Copy, Download, Loader2 } from "lucide-react";
+import { Sparkles, Copy, Download, Loader2, Save } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import RecommendedPacks from "../packs/RecommendedPacks";
@@ -15,6 +15,9 @@ import { Label } from "@/components/ui/label";
 export default function SummaryBuilder({ selectedNewsletters, newsletters, searchText, dateRange }) {
   const [summary, setSummary] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [summaryTitle, setSummaryTitle] = useState("");
+  const queryClient = useQueryClient();
 
   const selectedItems = newsletters.filter(n => selectedNewsletters.includes(n.id));
 
@@ -80,6 +83,31 @@ Format your response in markdown.`;
     
     navigator.clipboard.writeText(fullText);
     toast.success("Copied to clipboard!");
+  };
+
+  const saveSummaryMutation = useMutation({
+    mutationFn: async (title) => {
+      return await base44.entities.SavedSummary.create({
+        summary_title: title,
+        summary_body: summary,
+        sources_included: selectedItems.map(n => n.title),
+        search_context: searchText || "Explore All Sources"
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedSummaries'] });
+      setShowSaveDialog(false);
+      setSummaryTitle("");
+      toast.success("Saved! View it anytime in My Library.");
+    },
+  });
+
+  const handleSaveSummary = () => {
+    if (!summaryTitle.trim()) {
+      toast.error("Please enter a title");
+      return;
+    }
+    saveSummaryMutation.mutate(summaryTitle);
   };
 
   const downloadMarkdown = () => {
@@ -178,13 +206,17 @@ ${sourcesList}
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={copyToClipboard} variant="outline" className="flex-1">
+                  <Button onClick={copyToClipboard} variant="outline" size="sm">
                     <Copy className="w-4 h-4 mr-2" />
                     Copy
                   </Button>
-                  <Button onClick={downloadMarkdown} variant="outline" className="flex-1">
+                  <Button onClick={downloadMarkdown} variant="outline" size="sm">
                     <Download className="w-4 h-4 mr-2" />
                     Download
+                  </Button>
+                  <Button onClick={() => setShowSaveDialog(true)} size="sm">
+                    <Save className="w-4 h-4 mr-2" />
+                    Save
                   </Button>
                 </div>
               </>
@@ -204,6 +236,34 @@ ${sourcesList}
         )}
       </CardContent>
       </Card>
+
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Summary to My Library</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="title">Summary Title</Label>
+              <Input
+                id="title"
+                placeholder="e.g., Q4 Healthcare Trends Summary"
+                value={summaryTitle}
+                onChange={(e) => setSummaryTitle(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveSummary()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveSummary} disabled={saveSummaryMutation.isPending}>
+              {saveSummaryMutation.isPending ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
