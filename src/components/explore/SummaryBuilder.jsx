@@ -11,12 +11,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatSummaryAsMarkdown } from "../utils/markdownFormatter";
 
 export default function SummaryBuilder({ selectedNewsletters, newsletters, searchText, dateRange, activePack }) {
   const [summary, setSummary] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isFormatting, setIsFormatting] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [summaryTitle, setSummaryTitle] = useState("");
   const queryClient = useQueryClient();
@@ -121,24 +119,16 @@ ${JSON.stringify(newsletterData, null, 2)}`;
     setIsGenerating(false);
   };
 
-  const copyToClipboard = async () => {
-    setIsFormatting(true);
-    try {
-      const sourcesList = selectedItems.map(n => {
-        const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-        return `- ${n.title} – ${n.source_name} (${format(pubDate, "MMM d, yyyy")})`;
-      }).join('\n');
+  const copyToClipboard = () => {
+    const sourcesList = selectedItems.map(n => {
+      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
+      return `- ${n.title} – ${n.source_name} (${format(pubDate, "MMM d, yyyy")})`;
+    }).join('\n');
 
-      const fullText = `${summary}\n\n## Sources Included\n${sourcesList}`;
-      
-      const formattedText = await formatSummaryAsMarkdown(fullText);
-      
-      navigator.clipboard.writeText(formattedText);
-      toast.success("Copied formatted markdown to clipboard!");
-    } catch (error) {
-      toast.error("Failed to copy");
-    }
-    setIsFormatting(false);
+    const fullText = `${summary}\n\n## Sources Included\n${sourcesList}`;
+    
+    navigator.clipboard.writeText(fullText);
+    toast.success("Copied to clipboard!");
   };
 
   const saveSummaryMutation = useMutation({
@@ -166,20 +156,18 @@ ${JSON.stringify(newsletterData, null, 2)}`;
     saveSummaryMutation.mutate(summaryTitle);
   };
 
-  const downloadMarkdown = async () => {
-    setIsFormatting(true);
-    try {
-      const { start, end } = dateRange;
-      const dateRangeText = start && end 
-        ? `${format(start, "MMM d, yyyy")} - ${format(end, "MMM d, yyyy")}`
-        : "All time";
+  const downloadMarkdown = () => {
+    const { start, end } = dateRange;
+    const dateRangeText = start && end 
+      ? `${format(start, "MMM d, yyyy")} - ${format(end, "MMM d, yyyy")}`
+      : "All time";
 
-      const sourcesList = selectedItems.map(n => {
-        const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-        return `- **${n.title}** – ${n.source_name} (${format(pubDate, "MMM d, yyyy")})`;
-      }).join('\n');
+    const sourcesList = selectedItems.map(n => {
+      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
+      return `- **${n.title}** – ${n.source_name} (${format(pubDate, "MMM d, yyyy")})`;
+    }).join('\n');
 
-      const markdown = `# Healthcare Newsletter Summary
+    const markdown = `# Healthcare Newsletter Summary
 
 **Search Query:** ${searchText || "All newsletters"}
 **Date Range:** ${dateRangeText}
@@ -197,23 +185,17 @@ ${summary}
 ${sourcesList}
 `;
 
-      const formattedMarkdown = await formatSummaryAsMarkdown(markdown);
-
-      const blob = new Blob([formattedMarkdown], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `newsletter-summary-${format(new Date(), "yyyy-MM-dd")}.md`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast.success("Downloaded!");
-    } catch (error) {
-      toast.error("Failed to download");
-    }
-    setIsFormatting(false);
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `newsletter-summary-${format(new Date(), "yyyy-MM-dd")}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success("Downloaded!");
   };
 
   return (
@@ -270,20 +252,12 @@ ${sourcesList}
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={copyToClipboard} variant="outline" size="sm" disabled={isFormatting}>
-                    {isFormatting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Copy className="w-4 h-4 mr-2" />
-                    )}
+                  <Button onClick={copyToClipboard} variant="outline" size="sm">
+                    <Copy className="w-4 h-4 mr-2" />
                     Copy
                   </Button>
-                  <Button onClick={downloadMarkdown} variant="outline" size="sm" disabled={isFormatting}>
-                    {isFormatting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Download className="w-4 h-4 mr-2" />
-                    )}
+                  <Button onClick={downloadMarkdown} variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-2" />
                     Download
                   </Button>
                   <Button onClick={() => setShowSaveDialog(true)} size="sm">

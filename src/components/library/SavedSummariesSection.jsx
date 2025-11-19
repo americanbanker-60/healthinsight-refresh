@@ -4,15 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Trash2, Download, Eye, Loader2 } from "lucide-react";
+import { FileText, Trash2, Download, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { formatSummaryAsMarkdown } from "../utils/markdownFormatter";
 
 export default function SavedSummariesSection() {
   const queryClient = useQueryClient();
   const [selectedSummary, setSelectedSummary] = useState(null);
-  const [exportingId, setExportingId] = useState(null);
 
   const { data: summaries = [] } = useQuery({
     queryKey: ['savedSummaries'],
@@ -34,25 +32,17 @@ export default function SavedSummariesSection() {
     },
   });
 
-  const downloadSummary = async (summary) => {
-    setExportingId(summary.id);
-    try {
-      const formattedMarkdown = await formatSummaryAsMarkdown(summary.summary_body);
-      
-      const blob = new Blob([formattedMarkdown], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${summary.summary_title.replace(/[^a-z0-9]/gi, '_')}.md`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success("Summary downloaded");
-    } catch (error) {
-      toast.error("Failed to download summary");
-    }
-    setExportingId(null);
+  const downloadSummary = (summary) => {
+    const blob = new Blob([summary.summary_body], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${summary.summary_title.replace(/[^a-z0-9]/gi, '_')}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Summary downloaded");
   };
 
   if (summaries.length === 0) {
@@ -115,13 +105,8 @@ export default function SavedSummariesSection() {
                         size="sm"
                         variant="outline"
                         onClick={() => downloadSummary(summary)}
-                        disabled={exportingId === summary.id}
                       >
-                        {exportingId === summary.id ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <Download className="w-3 h-3" />
-                        )}
+                        <Download className="w-3 h-3" />
                       </Button>
                       <Button
                         size="sm"
