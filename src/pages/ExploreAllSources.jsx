@@ -61,7 +61,7 @@ export default function ExploreAllSources() {
     initialData: [],
   });
 
-  const availableSources = sources.filter(s => !s.is_deleted).map(s => s.name);
+  const availableSources = sources.filter(s => s && !s.is_deleted && s.name).map(s => s.name);
 
   // Initialize with all sources selected
   React.useEffect(() => {
