@@ -95,7 +95,7 @@ export function WalkthroughProvider({ children }) {
   };
 
   const currentStepData = isActive && currentStep !== null ? walkthroughSteps[currentStep] : null;
-  const shouldShowOnboarding = progress === null || (!progress.completed && !progress.skipped);
+  const shouldShowOnboarding = !progress || (!progress.completed && !progress.skipped);
 
   return (
     <WalkthroughContext.Provider
@@ -111,7 +111,7 @@ export function WalkthroughProvider({ children }) {
         completeWalkthrough,
         resetWalkthrough,
         shouldShowOnboarding,
-        hasCompletedWalkthrough: progress?.completed
+        hasCompletedWalkthrough: progress?.completed || false
       }}
     >
       {children}
