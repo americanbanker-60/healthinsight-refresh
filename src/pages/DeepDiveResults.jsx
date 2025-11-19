@@ -23,11 +23,11 @@ export default function DeepDiveResults() {
 
   useEffect(() => {
     if (topicId || packId) {
-      generateDeepDive();
+      generateDeepDiveReport();
     }
   }, [topicId, packId]);
 
-  const generateDeepDive = async () => {
+  const generateDeepDiveReport = async () => {
     setIsGenerating(true);
 
     try {
@@ -44,15 +44,15 @@ export default function DeepDiveResults() {
           const keywords = Array.isArray(topic.keywords) ? topic.keywords : [topic.keywords];
           
           items = newsletters.filter(n => {
-            const searchText = [
-              n.title,
-              n.summary,
-              n.tldr,
+            const searchableText = [
+              n.title || '',
+              n.summary || '',
+              n.tldr || '',
               ...(n.key_takeaways || []),
-              ...(n.themes?.map(t => t.theme) || [])
+              ...(n.themes?.map(t => t.theme || '') || [])
             ].join(' ').toLowerCase();
             
-            return keywords.some(keyword => searchText.includes(keyword.toLowerCase()));
+            return keywords.some(keyword => keyword && searchableText.includes(keyword.toLowerCase()));
           }).slice(0, 50);
         }
       } else if (packId) {
@@ -63,9 +63,15 @@ export default function DeepDiveResults() {
           contextTitle = pack.pack_title;
           const newsletters = await base44.entities.Newsletter.list("-publication_date", 500);
           
+          const keywords = pack.keywords ? pack.keywords.split(/\s+/) : [];
           items = newsletters.filter(n => {
-            const searchText = [n.title, n.summary, n.tldr].join(' ').toLowerCase();
-            return pack.keywords && searchText.includes(pack.keywords.toLowerCase());
+            const searchableText = [
+              n.title || '',
+              n.summary || '',
+              n.tldr || ''
+            ].join(' ').toLowerCase();
+            
+            return keywords.length > 0 && keywords.some(keyword => keyword && searchableText.includes(keyword.toLowerCase()));
           }).slice(0, 50);
         }
       }
