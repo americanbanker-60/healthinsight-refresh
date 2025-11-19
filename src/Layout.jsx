@@ -26,6 +26,11 @@ const staticNavigationItems = [
     icon: LayoutDashboard,
   },
   {
+    title: "Explore All Sources",
+    url: createPageUrl("ExploreAllSources"),
+    icon: TrendingUp,
+  },
+  {
     title: "Manage Sources",
     url: createPageUrl("ManageSources"),
     icon: Settings,

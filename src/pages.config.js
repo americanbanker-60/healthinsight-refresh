@@ -5,6 +5,7 @@ import DashboardSettings from './pages/DashboardSettings';
 import SourcePage from './pages/SourcePage';
 import Cleanup from './pages/Cleanup';
 import ManageSources from './pages/ManageSources';
+import ExploreAllSources from './pages/ExploreAllSources';
 import __Layout from './Layout.jsx';
 
 
@@ -16,6 +17,7 @@ export const PAGES = {
     "SourcePage": SourcePage,
     "Cleanup": Cleanup,
     "ManageSources": ManageSources,
+    "ExploreAllSources": ExploreAllSources,
 }
 
 export const pagesConfig = {
