@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, TrendingUp, BookOpen, Calendar, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, TrendingUp, BookOpen, Calendar, Eye, ChevronDown, ChevronUp, FileText } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import TopicQuickSummary from "../components/topics/TopicQuickSummary";
@@ -118,6 +118,14 @@ export default function TopicPage() {
     navigate(createPageUrl("ExploreAllSources") + "?" + params.toString());
   };
 
+  const generateDeepDive = () => {
+    const params = new URLSearchParams({
+      topic_id: topic.id,
+      title: topic.topic_name
+    });
+    navigate(createPageUrl("DeepDiveResults") + "?" + params.toString());
+  };
+
   const displayedNews = showAllNews ? relevantNewsletters : relevantNewsletters.slice(0, 10);
   const detailNewsletter = newsletters.find(n => n.id === detailNewsletterId);
 
@@ -156,6 +164,10 @@ export default function TopicPage() {
           </div>
           <div className="flex gap-2">
             <WatchTopicButton topicId={topic.id} variant="outline" />
+            <Button variant="outline" onClick={generateDeepDive} className="gap-2">
+              <FileText className="w-4 h-4" />
+              Generate Deep Dive
+            </Button>
             <Button onClick={exploreInAllSources} className="gap-2">
               <TrendingUp className="w-4 h-4" />
               Explore in All Sources

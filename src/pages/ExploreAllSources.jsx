@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Calendar as CalendarIcon, Filter, X, Eye, BookOpen, AlertCircle } from "lucide-react";
+import { Search, Calendar as CalendarIcon, Filter, X, Eye, BookOpen, AlertCircle, FileText } from "lucide-react";
 import { format, subDays, startOfYear } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
@@ -247,6 +247,16 @@ export default function ExploreAllSources() {
     topicsSelected: selectedTopics,
   };
 
+  const generateDeepDive = () => {
+    if (activePack) {
+      const params = new URLSearchParams({
+        pack_id: activePack.id,
+        title: activePack.title
+      });
+      navigate(createPageUrl("DeepDiveResults") + "?" + params.toString());
+    }
+  };
+
   const detailNewsletter = newsletters.find(n => n.id === detailNewsletterId);
 
   return (
@@ -276,16 +286,27 @@ export default function ExploreAllSources() {
                 <p className="text-sm text-purple-700">{activePack.title}</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setActivePack(null);
-                window.history.replaceState({}, '', createPageUrl("ExploreAllSources"));
-              }}
-            >
-              <X className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={generateDeepDive}
+                className="bg-white/80"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Deep Dive
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setActivePack(null);
+                  window.history.replaceState({}, '', createPageUrl("ExploreAllSources"));
+                }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         )}
       </div>
