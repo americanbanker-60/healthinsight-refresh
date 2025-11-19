@@ -7,6 +7,7 @@ import { Calendar, ExternalLink, ChevronRight, TrendingUp, Briefcase } from "luc
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import AddToPackButton from "../packs/AddToPackButton";
 
 const sentimentColors = {
   positive: "bg-green-100 text-green-800 border-green-200",
@@ -95,12 +96,15 @@ export default function NewsletterCard({ newsletter, index }) {
             </div>
           )}
 
-          <Link to={createPageUrl("NewsletterDetail") + "?id=" + newsletter.id}>
-            <Button variant="ghost" className="w-full justify-between group-hover:bg-blue-50 group-hover:text-blue-700 transition-colors">
-              View Full Analysis
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <AddToPackButton newsletterId={newsletter.id} />
+            <Link to={createPageUrl("NewsletterDetail") + "?id=" + newsletter.id} className="flex-1">
+              <Button variant="ghost" className="w-full justify-between group-hover:bg-blue-50 group-hover:text-blue-700 transition-colors">
+                View Full Analysis
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </motion.div>

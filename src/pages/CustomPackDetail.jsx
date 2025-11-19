@@ -217,7 +217,10 @@ ${sourcesList}
             </CardHeader>
             <CardContent>
               {itemsWithNewsletters.length === 0 ? (
-                <p className="text-center py-8 text-slate-500">No items in this pack yet</p>
+                <div className="text-center py-8">
+                  <p className="text-slate-500 mb-4">No items in this pack yet</p>
+                  <p className="text-sm text-slate-400">Go to the Dashboard or Explore Sources and use the "Add to Pack" button on any newsletter to add it here.</p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {itemsWithNewsletters.map(item => {
