@@ -14,6 +14,7 @@ import { format, subDays, startOfYear } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import SummaryBuilder from "../components/explore/SummaryBuilder";
+import SavedSearchesPanel from "../components/explore/SavedSearchesPanel";
 
 const dateRangePresets = [
   { label: "Last 7 days", value: "7d" },
@@ -170,6 +171,25 @@ export default function ExploreAllSources() {
     return "No summary available";
   };
 
+  const loadSavedSearch = (savedSearch) => {
+    setSearchText(savedSearch.keywords || "");
+    setDateRangePreset(savedSearch.date_range_type || "30d");
+    setCustomStartDate(savedSearch.custom_start_date ? new Date(savedSearch.custom_start_date) : null);
+    setCustomEndDate(savedSearch.custom_end_date ? new Date(savedSearch.custom_end_date) : null);
+    setSelectedSources(savedSearch.sources_selected || []);
+    setSelectedTopics(savedSearch.topics_selected || []);
+    setSelectedNewsletters([]);
+  };
+
+  const currentSearchState = {
+    keywords: searchText,
+    dateRangeType: dateRangePreset,
+    customStartDate,
+    customEndDate,
+    sourcesSelected: selectedSources,
+    topicsSelected: selectedTopics,
+  };
+
   const detailNewsletter = newsletters.find(n => n.id === detailNewsletterId);
 
   return (
@@ -181,6 +201,10 @@ export default function ExploreAllSources() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          <SavedSearchesPanel
+            currentSearch={currentSearchState}
+            onLoadSearch={loadSavedSearch}
+          />
 
         <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 mb-6">
         <CardContent className="pt-6 space-y-6">
