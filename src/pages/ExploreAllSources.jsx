@@ -84,6 +84,7 @@ export default function ExploreAllSources() {
         setDateRangePreset(pack.date_range_type || "90d");
         setCustomStartDate(pack.custom_start_date ? new Date(pack.custom_start_date) : null);
         setCustomEndDate(pack.custom_end_date ? new Date(pack.custom_end_date) : null);
+        // If no sources specified in pack, use all available sources
         setSelectedSources(pack.sources_selected && pack.sources_selected.length > 0 ? pack.sources_selected : availableSources);
         setSelectedTopics(pack.topics_selected || []);
         setSelectedNewsletters([]);
@@ -133,8 +134,8 @@ export default function ExploreAllSources() {
       });
     }
 
-    // Source filter
-    if (selectedSources.length > 0) {
+    // Source filter (only apply if sources are actually selected)
+    if (selectedSources.length > 0 && selectedSources.length < availableSources.length) {
       results = results.filter(n => selectedSources.includes(n.source_name));
     }
 
