@@ -20,13 +20,15 @@ import {
       } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import EnhanceSummaryButton from "../components/newsletter/EnhanceSummaryButton";
+import EditableNewsletterSection from "../components/newsletter/EditableNewsletterSection";
 
 export default function NewsletterDetail() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const newsletterId = urlParams.get('id');
 
-  const { data: newsletter, isLoading } = useQuery({
+  const { data: newsletter, isLoading, refetch } = useQuery({
     queryKey: ['newsletter', newsletterId],
     queryFn: async () => {
       const newsletters = await base44.entities.Newsletter.filter({ id: newsletterId });
@@ -66,14 +68,17 @@ export default function NewsletterDetail() {
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto">
-      <Button
-        variant="ghost"
-        onClick={() => navigate(createPageUrl("Dashboard"))}
-        className="mb-6 hover:bg-slate-100"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Dashboard
-      </Button>
+      <div className="flex items-center justify-between mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(createPageUrl("Dashboard"))}
+          className="hover:bg-slate-100"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Button>
+        <EnhanceSummaryButton newsletter={newsletter} onEnhanced={refetch} />
+      </div>
 
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/60 p-8 mb-6">
         <div className="flex items-start justify-between mb-4">
@@ -107,18 +112,30 @@ export default function NewsletterDetail() {
 
         {newsletter.tldr && (
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 mt-6">
-            <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide">TL;DR</h3>
-            <p className="text-slate-800 font-medium leading-relaxed">{newsletter.tldr}</p>
+            <EditableNewsletterSection
+              newsletterId={newsletter.id}
+              fieldName="tldr"
+              value={newsletter.tldr}
+              title="TL;DR"
+              type="text"
+              onUpdate={refetch}
+            />
           </div>
         )}
 
         {newsletter.summary && (
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mt-4">
-            <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-3">
               <Lightbulb className="w-5 h-5 text-blue-600" />
-              Executive Summary
-            </h3>
-            <p className="text-slate-700 leading-relaxed">{newsletter.summary}</p>
+            </div>
+            <EditableNewsletterSection
+              newsletterId={newsletter.id}
+              fieldName="summary"
+              value={newsletter.summary}
+              title="Executive Summary"
+              type="textarea"
+              onUpdate={refetch}
+            />
           </div>
         )}
       </div>
@@ -153,16 +170,14 @@ export default function NewsletterDetail() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
-            <ul className="space-y-3">
-              {newsletter.recommended_actions.map((action, index) => (
-                <li key={index} className="flex gap-3 items-start">
-                  <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5 font-semibold text-sm">
-                    {index + 1}
-                  </div>
-                  <span className="text-slate-700 flex-1">{action}</span>
-                </li>
-              ))}
-            </ul>
+            <EditableNewsletterSection
+              newsletterId={newsletter.id}
+              fieldName="recommended_actions"
+              value={newsletter.recommended_actions}
+              title=""
+              type="array"
+              onUpdate={refetch}
+            />
           </CardContent>
         </Card>
       )}
@@ -177,14 +192,14 @@ export default function NewsletterDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
-              <ul className="space-y-3">
-                {newsletter.key_takeaways.map((takeaway, index) => (
-                  <li key={index} className="flex gap-3">
-                    <span className="text-blue-600 font-bold mt-1">•</span>
-                    <span className="text-slate-700">{takeaway}</span>
-                  </li>
-                ))}
-              </ul>
+              <EditableNewsletterSection
+                newsletterId={newsletter.id}
+                fieldName="key_takeaways"
+                value={newsletter.key_takeaways}
+                title=""
+                type="array"
+                onUpdate={refetch}
+              />
             </CardContent>
           </Card>
         )}
