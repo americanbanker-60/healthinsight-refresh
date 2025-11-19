@@ -26,6 +26,7 @@ export default function MyLibrary() {
 
       <div className="space-y-6">
         <InsightsSection />
+        <WatchedTopicsSection />
         <FavoritePacksSection />
         <SavedSearchesSection />
         <RecentlyViewedSection />

@@ -154,10 +154,13 @@ export default function TopicPage() {
               )}
             </div>
           </div>
-          <Button onClick={exploreInAllSources} className="gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Explore in All Sources
-          </Button>
+          <div className="flex gap-2">
+            <WatchTopicButton topicId={topic.id} variant="outline" />
+            <Button onClick={exploreInAllSources} className="gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Explore in All Sources
+            </Button>
+          </div>
         </div>
         
         <div className="flex items-center gap-2 text-sm text-slate-600">
