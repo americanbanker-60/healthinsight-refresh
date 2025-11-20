@@ -18,6 +18,7 @@ import {
   SidebarFooter,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const staticNavigationItems = [
@@ -73,16 +74,14 @@ const staticNavigationItems = [
   },
 ];
 
-export default function Layout({ children, currentPageName }) {
-  const location = useLocation();
-  
-  const { data: sources = [] } = useQuery({
-    queryKey: ['sources'],
-    queryFn: () => base44.entities.Source.list("name"),
-    initialData: [],
-  });
+function LayoutContent({ children, currentPageName, location, sources }) {
+  const { setOpen } = useSidebar();
 
-  // Filter out deleted sources and group by category
+  const handleLinkClick = () => {
+    // Close sidebar on mobile when a link is clicked
+    setOpen(false);
+  };
+
   const activeSourcesByCategory = React.useMemo(() => {
     if (!sources || !Array.isArray(sources)) return {};
     
@@ -97,9 +96,7 @@ export default function Layout({ children, currentPageName }) {
   }, [sources]);
 
   return (
-    <WalkthroughProvider>
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+    <div className="min-h-screen flex w-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
         <style>{`
           :root {
             --primary: 222 47% 35%;
@@ -136,7 +133,7 @@ export default function Layout({ children, currentPageName }) {
                           location.pathname === item.url ? 'bg-blue-50 text-blue-700 shadow-sm' : ''
                         }`}
                       >
-                        <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
+                        <Link to={item.url} onClick={handleLinkClick} className="flex items-center gap-3 px-4 py-3">
                           <item.icon className="w-4 h-4" />
                           <span className="font-medium">{item.title}</span>
                         </Link>
@@ -162,7 +159,7 @@ export default function Layout({ children, currentPageName }) {
                             location.pathname === createPageUrl("SourcePage") && location.search.includes(source.name) ? 'bg-blue-50 text-blue-700 shadow-sm' : ''
                           }`}
                         >
-                          <Link to={createPageUrl("SourcePage") + "?name=" + encodeURIComponent(source.name)} className="flex items-center gap-3 px-4 py-3">
+                          <Link to={createPageUrl("SourcePage") + "?name=" + encodeURIComponent(source.name)} onClick={handleLinkClick} className="flex items-center gap-3 px-4 py-3">
                             <Newspaper className="w-4 h-4" />
                             <span className="font-medium">{source.name}</span>
                           </Link>
@@ -201,7 +198,28 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </main>
       </div>
-    </SidebarProvider>
-    </WalkthroughProvider>
-  );
-}
+      );
+      }
+
+      export default function Layout({ children, currentPageName }) {
+      const location = useLocation();
+
+      const { data: sources = [] } = useQuery({
+      queryKey: ['sources'],
+      queryFn: () => base44.entities.Source.list("name"),
+      initialData: [],
+      });
+
+      return (
+      <WalkthroughProvider>
+        <SidebarProvider>
+          <LayoutContent 
+            children={children} 
+            currentPageName={currentPageName}
+            location={location}
+            sources={sources}
+          />
+        </SidebarProvider>
+      </WalkthroughProvider>
+      );
+      }
