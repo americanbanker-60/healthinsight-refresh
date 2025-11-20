@@ -22,7 +22,7 @@ export default function TrendDiscovery() {
 
   const { data: newsletters = [] } = useQuery({
     queryKey: ['newsletters'],
-    queryFn: () => base44.entities.Newsletter.list("-publication_date", 200),
+    queryFn: () => base44.entities.Newsletter.list("-publication_date", 1000),
     initialData: [],
   });
 
@@ -37,7 +37,7 @@ export default function TrendDiscovery() {
     setIsAnalyzing(true);
     try {
       // Prepare newsletter data for AI analysis
-      const recentNewsletters = newsletters.slice(0, 100);
+      const recentNewsletters = newsletters.slice(0, 500);
       const newsletterSummary = recentNewsletters.map(n => ({
         id: n.id,
         title: n.title,
@@ -187,7 +187,7 @@ Output ONLY trends with confidence_score >= 60. Prioritize competitive intellige
   return (
     <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-600" />
             <CardTitle>AI Trend Discovery</CardTitle>
@@ -227,9 +227,9 @@ Output ONLY trends with confidence_score >= 60. Prioritize competitive intellige
             {suggestions.map((suggestion) => (
               <Card key={suggestion.id} className="bg-white border-purple-200">
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-3">
                         <span className="text-2xl">{suggestion.icon_suggestion || "✨"}</span>
                         <h4 className="font-semibold text-slate-900">{suggestion.title}</h4>
                         <Badge variant="outline" className="text-xs">
@@ -239,20 +239,20 @@ Output ONLY trends with confidence_score >= 60. Prioritize competitive intellige
                           {suggestion.confidence_score}% confidence
                         </Badge>
                       </div>
-                      <p className="text-sm text-slate-600 mb-2">{suggestion.description}</p>
+                      <p className="text-sm text-slate-600 mb-3">{suggestion.description}</p>
                       {suggestion.strategic_implications && (
-                        <p className="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1 mb-2 italic">
+                        <p className="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1 mb-3 italic">
                           {suggestion.strategic_implications}
                         </p>
                       )}
-                      <div className="flex flex-wrap gap-1 mb-2">
+                      <div className="flex flex-wrap gap-1 mb-3">
                         {suggestion.keywords?.slice(0, 5).map((keyword, idx) => (
                           <Badge key={idx} variant="secondary" className="text-xs">
                             {keyword}
                           </Badge>
                         ))}
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
                         {suggestion.category && (
                           <Badge variant="outline" className="text-xs">
                             {suggestion.category}
@@ -270,7 +270,7 @@ Output ONLY trends with confidence_score >= 60. Prioritize competitive intellige
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 flex-shrink-0">
                       <Button
                         size="sm"
                         variant="ghost"
