@@ -38,11 +38,20 @@ export default function SourcePage() {
     
     const search = searchText.toLowerCase();
     return newsletters.filter(n => {
-      const inTitle = n.title?.toLowerCase().includes(search);
-      const inSummary = n.summary?.toLowerCase().includes(search) || n.tldr?.toLowerCase().includes(search);
-      const inTakeaways = n.key_takeaways?.some(t => t.toLowerCase().includes(search));
-      const inThemes = n.themes?.some(t => t.theme?.toLowerCase().includes(search));
-      return inTitle || inSummary || inTakeaways || inThemes;
+      const searchableText = [
+        n.title || '',
+        n.summary || '',
+        n.tldr || '',
+        ...(n.key_takeaways || []),
+        ...(n.recommended_actions || []),
+        ...(n.themes?.map(t => `${t.theme || ''} ${t.description || ''}`) || []),
+        ...(n.key_players || []),
+        ...(n.ma_activities?.map(ma => `${ma.acquirer || ''} ${ma.target || ''} ${ma.description || ''}`) || []),
+        ...(n.funding_rounds?.map(fr => `${fr.company || ''} ${fr.description || ''}`) || []),
+        ...(n.key_statistics?.map(ks => `${ks.figure || ''} ${ks.context || ''}`) || [])
+      ].join(' ').toLowerCase();
+      
+      return searchableText.includes(search);
     });
   }, [newsletters, searchText]);
 
@@ -117,7 +126,7 @@ export default function SourcePage() {
       <div className="relative mb-6">
         <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
         <Input
-          placeholder="Search newsletters by title, summary, or topic..."
+          placeholder="Search across all newsletter content (titles, summaries, takeaways, M&A, funding, etc.)..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           className="pl-10 text-lg"
