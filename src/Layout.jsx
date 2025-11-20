@@ -78,8 +78,10 @@ function LayoutContent({ children, currentPageName, location, sources }) {
   const { setOpen } = useSidebar();
 
   const handleLinkClick = () => {
-    // Close sidebar on mobile when a link is clicked
-    setOpen(false);
+    // Close sidebar only on mobile when a link is clicked
+    if (window.innerWidth < 1024) {
+      setOpen(false);
+    }
   };
 
   const activeSourcesByCategory = React.useMemo(() => {
