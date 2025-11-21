@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Search, CheckCircle2, AlertCircle, ExternalLink, FileText } from "lucide-react";
+import { Loader2, Search, CheckCircle2, AlertCircle, ExternalLink, FileText, Upload, Download } from "lucide-react";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -26,6 +27,11 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
   const [selectedNewsletters, setSelectedNewsletters] = useState(new Set());
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processedCount, setProcessedCount] = useState(0);
+  const [processedNewsletters, setProcessedNewsletters] = useState([]);
+  const [showConsolidatedReport, setShowConsolidatedReport] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [consolidatedReport, setConsolidatedReport] = useState(null);
+  const [isExportingBatchPDF, setIsExportingBatchPDF] = useState(false);
 
   const extractMainContent = (html) => {
     const parser = new DOMParser();
@@ -297,6 +303,32 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
     setIsCrawling(false);
   };
 
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target?.result;
+      if (typeof text === 'string') {
+        // Parse URLs from file (one per line)
+        const urls = text
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line && line.startsWith('http'));
+        
+        if (urls.length > 0) {
+          setManualUrls(urls.join('\n'));
+          setInputMethod('manual');
+          toast.success(`Loaded ${urls.length} URLs from file`);
+        } else {
+          toast.error('No valid URLs found in file');
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const toggleNewsletter = (index) => {
     const newSelected = new Set(selectedNewsletters);
     if (newSelected.has(index)) {
@@ -314,6 +346,7 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
     setIsProcessing(true);
     setProcessedCount(0);
     setProcessingProgress(0);
+    setProcessedNewsletters([]);
 
     // Check for existing newsletters by URL
     const existingNewsletters = await base44.entities.Newsletter.list();
@@ -461,13 +494,15 @@ Extract structured insights:
           }
         });
 
-        await base44.entities.Newsletter.create({
+        const createdNewsletter = await base44.entities.Newsletter.create({
           ...analysis,
           source_url: newsletter.url || "Manual Entry",
           title: analysis.title || newsletter.title,
           publication_date: analysis.publication_date || newsletter.date,
           source_name: sourceName || undefined
         });
+
+        setProcessedNewsletters(prev => [...prev, createdNewsletter]);
       } catch (err) {
         console.error(`Error processing ${newsletter.title}:`, err);
       }
@@ -483,12 +518,238 @@ Extract structured insights:
       setError(`Processed ${selected.length - skippedCount} new newsletters. Skipped ${skippedCount} duplicates.`);
     }
     
-    if (onComplete) {
-      onComplete();
-    } else {
-      navigate(createPageUrl("Dashboard"));
-    }
+    toast.success(`Successfully processed ${selected.length - skippedCount} newsletters`);
   };
+
+  const generateConsolidatedReport = async () => {
+    if (processedNewsletters.length === 0) return;
+
+    setIsGeneratingReport(true);
+    try {
+      const newsletterSummaries = processedNewsletters.map(n => ({
+        title: n.title,
+        tldr: n.tldr,
+        key_statistics: n.key_statistics,
+        themes: n.themes,
+        sentiment: n.sentiment
+      }));
+
+      const report = await base44.integrations.Core.InvokeLLM({
+        prompt: `Generate a consolidated executive report from these ${processedNewsletters.length} analyzed newsletters:
+
+${JSON.stringify(newsletterSummaries, null, 2)}
+
+Create a comprehensive report with:
+1. Executive Summary - Overall trends across all newsletters
+2. Key Themes - Common themes and patterns
+3. Market Sentiment - Overall sentiment analysis
+4. Critical Statistics - Most important numbers across all sources
+5. Strategic Implications - What this means for healthcare investors
+6. Recommended Actions - Top 5-7 actionable insights
+
+Format as markdown with clear sections.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            executive_summary: { type: "string" },
+            key_themes: { type: "array", items: { type: "string" } },
+            market_sentiment: { type: "string" },
+            critical_statistics: { type: "array", items: { type: "string" } },
+            strategic_implications: { type: "string" },
+            recommended_actions: { type: "array", items: { type: "string" } }
+          }
+        }
+      });
+
+      setConsolidatedReport(report);
+      setShowConsolidatedReport(true);
+      toast.success('Consolidated report generated');
+    } catch (error) {
+      toast.error('Failed to generate report');
+      console.error(error);
+    }
+    setIsGeneratingReport(false);
+  };
+
+  const exportBatchPDF = async () => {
+    if (processedNewsletters.length === 0) return;
+
+    setIsExportingBatchPDF(true);
+    try {
+      for (let i = 0; i < processedNewsletters.length; i++) {
+        const newsletter = processedNewsletters[i];
+        const response = await base44.functions.invoke('exportNewsletterPDF', { 
+          analysis: newsletter 
+        });
+        
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${newsletter.title?.replace(/[^a-z0-9]/gi, '_') || `newsletter_${i + 1}`}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Small delay between downloads
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      toast.success(`Exported ${processedNewsletters.length} PDFs`);
+    } catch (error) {
+      toast.error('Failed to export PDFs');
+      console.error(error);
+    }
+    setIsExportingBatchPDF(false);
+  };
+
+  const downloadConsolidatedReport = () => {
+    if (!consolidatedReport) return;
+
+    let markdown = `# Consolidated Healthcare Intelligence Report\n\n`;
+    markdown += `*Generated from ${processedNewsletters.length} newsletters*\n\n`;
+    markdown += `---\n\n`;
+    
+    markdown += `## Executive Summary\n\n${consolidatedReport.executive_summary}\n\n`;
+    
+    if (consolidatedReport.key_themes?.length > 0) {
+      markdown += `## Key Themes\n\n`;
+      consolidatedReport.key_themes.forEach(theme => {
+        markdown += `- ${theme}\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    markdown += `## Market Sentiment\n\n${consolidatedReport.market_sentiment}\n\n`;
+    
+    if (consolidatedReport.critical_statistics?.length > 0) {
+      markdown += `## Critical Statistics\n\n`;
+      consolidatedReport.critical_statistics.forEach(stat => {
+        markdown += `- ${stat}\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    markdown += `## Strategic Implications\n\n${consolidatedReport.strategic_implications}\n\n`;
+    
+    if (consolidatedReport.recommended_actions?.length > 0) {
+      markdown += `## Recommended Actions\n\n`;
+      consolidatedReport.recommended_actions.forEach((action, i) => {
+        markdown += `${i + 1}. ${action}\n`;
+      });
+      markdown += `\n`;
+    }
+
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'consolidated_report.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  if (showConsolidatedReport && consolidatedReport) {
+    return (
+      <div className="space-y-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-slate-900">Consolidated Intelligence Report</h2>
+              <Button
+                variant="outline"
+                onClick={() => setShowConsolidatedReport(false)}
+              >
+                Back to Results
+              </Button>
+            </div>
+
+            <div className="space-y-6 bg-white rounded-lg p-6">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-3">Executive Summary</h3>
+                <p className="text-slate-700 leading-relaxed">{consolidatedReport.executive_summary}</p>
+              </div>
+
+              {consolidatedReport.key_themes?.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-3">Key Themes</h3>
+                  <ul className="space-y-2">
+                    {consolidatedReport.key_themes.map((theme, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-blue-600 mt-1">•</span>
+                        <span className="text-slate-700">{theme}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-3">Market Sentiment</h3>
+                <p className="text-slate-700 leading-relaxed">{consolidatedReport.market_sentiment}</p>
+              </div>
+
+              {consolidatedReport.critical_statistics?.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-3">Critical Statistics</h3>
+                  <ul className="space-y-2">
+                    {consolidatedReport.critical_statistics.map((stat, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-indigo-600 mt-1">•</span>
+                        <span className="text-slate-700">{stat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-3">Strategic Implications</h3>
+                <p className="text-slate-700 leading-relaxed">{consolidatedReport.strategic_implications}</p>
+              </div>
+
+              {consolidatedReport.recommended_actions?.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-3">Recommended Actions</h3>
+                  <ol className="space-y-2">
+                    {consolidatedReport.recommended_actions.map((action, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <span className="font-semibold text-slate-900">{i + 1}.</span>
+                        <span className="text-slate-700">{action}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button
+                onClick={downloadConsolidatedReport}
+                variant="outline"
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Report
+              </Button>
+              {onComplete ? (
+                <Button onClick={onComplete} className="flex-1">
+                  Done
+                </Button>
+              ) : (
+                <Button onClick={() => navigate(createPageUrl("Dashboard"))} className="flex-1">
+                  Go to Dashboard
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -535,6 +796,29 @@ Extract structured insights:
                 <p className="text-sm text-slate-500 mt-2">
                   Paste newsletter URLs, one per line or comma-separated
                 </p>
+                <div className="mt-3">
+                  <label htmlFor="file-upload">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload File with URLs
+                    </Button>
+                  </label>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept=".txt,.csv"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <p className="text-xs text-slate-500 mt-2">
+                    Upload a .txt or .csv file with one URL per line
+                  </p>
+                </div>
               </div>
             </TabsContent>
 
@@ -665,6 +949,8 @@ Extract structured insights:
               onClick={() => {
                 setNewsletters([]);
                 setSelectedNewsletters(new Set());
+                setProcessedNewsletters([]);
+                setConsolidatedReport(null);
               }}
               disabled={isProcessing}
               className="flex-1"
@@ -689,6 +975,69 @@ Extract structured insights:
               )}
             </Button>
           </div>
+
+          {processedNewsletters.length > 0 && !isProcessing && (
+            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <h3 className="font-semibold text-slate-900">
+                    Successfully processed {processedNewsletters.length} newsletters
+                  </h3>
+                </div>
+                
+                <div className="grid md:grid-cols-3 gap-3">
+                  <Button
+                    onClick={generateConsolidatedReport}
+                    disabled={isGeneratingReport}
+                    variant="outline"
+                    className="bg-white"
+                  >
+                    {isGeneratingReport ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Consolidated Report
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    onClick={exportBatchPDF}
+                    disabled={isExportingBatchPDF}
+                    variant="outline"
+                    className="bg-white"
+                  >
+                    {isExportingBatchPDF ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Exporting...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Export All PDFs
+                      </>
+                    )}
+                  </Button>
+
+                  {onComplete ? (
+                    <Button onClick={onComplete} className="bg-green-600 hover:bg-green-700">
+                      Done
+                    </Button>
+                  ) : (
+                    <Button onClick={() => navigate(createPageUrl("Dashboard"))} className="bg-green-600 hover:bg-green-700">
+                      Go to Dashboard
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>
