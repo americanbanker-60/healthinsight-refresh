@@ -10,7 +10,7 @@ import NewsletterCard from "../components/dashboard/NewsletterCard";
 import NewsletterCardCompact from "../components/dashboard/NewsletterCardCompact";
 import NewsletterCardMinimal from "../components/dashboard/NewsletterCardMinimal";
 import StatsOverview from "../components/dashboard/StatsOverview";
-import AdvancedFilters from "../components/dashboard/AdvancedFilters";
+import PersistentFilters, { applyFilters } from "../components/filters/PersistentFilters";
 import TrendChart from "../components/dashboard/TrendChart";
 import FeaturedPacks from "../components/dashboard/FeaturedPacks";
 import TrendDiscovery from "../components/trends/TrendDiscovery";

@@ -3,8 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, ExternalLink, Search } from "lucide-react";
+import { Plus, ExternalLink } from "lucide-react";
+import PersistentFilters, { applyFilters } from "../components/filters/PersistentFilters";
 import { motion, AnimatePresence } from "framer-motion";
 import NewsletterCard from "../components/dashboard/NewsletterCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,7 +13,7 @@ import AnalyzeNewsletterForm from "../components/source/AnalyzeNewsletterForm";
 
 export default function SourcePage() {
   const [showAnalyze, setShowAnalyze] = useState(false);
-  const [searchText, setSearchText] = useState("");
+  const [persistentFilters, setPersistentFilters] = useState(null);
   const [searchParams] = useSearchParams();
   const sourceName = searchParams.get('name');
 
@@ -33,27 +33,30 @@ export default function SourcePage() {
     enabled: !!sourceName,
   });
 
-  const filteredNewsletters = useMemo(() => {
-    if (!searchText.trim()) return newsletters;
-    
-    const search = searchText.toLowerCase();
-    return newsletters.filter(n => {
-      const searchableText = [
-        n.title || '',
-        n.summary || '',
-        n.tldr || '',
-        ...(n.key_takeaways || []),
-        ...(n.recommended_actions || []),
-        ...(n.themes?.map(t => `${t.theme || ''} ${t.description || ''}`) || []),
-        ...(n.key_players || []),
-        ...(n.ma_activities?.map(ma => `${ma.acquirer || ''} ${ma.target || ''} ${ma.description || ''}`) || []),
-        ...(n.funding_rounds?.map(fr => `${fr.company || ''} ${fr.description || ''}`) || []),
-        ...(n.key_statistics?.map(ks => `${ks.figure || ''} ${ks.context || ''}`) || [])
-      ].join(' ').toLowerCase();
-      
-      return searchableText.includes(search);
+  const availableThemes = useMemo(() => {
+    const themes = new Set();
+    newsletters.forEach(n => {
+      if (n.themes) {
+        n.themes.forEach(t => themes.add(t.theme));
+      }
     });
-  }, [newsletters, searchText]);
+    return Array.from(themes).sort();
+  }, [newsletters]);
+
+  const availableCompanies = useMemo(() => {
+    const companies = new Set();
+    newsletters.forEach(n => {
+      if (n.key_players) {
+        n.key_players.forEach(p => companies.add(p));
+      }
+    });
+    return Array.from(companies).sort();
+  }, [newsletters]);
+
+  const filteredNewsletters = useMemo(() => {
+    if (!persistentFilters) return newsletters;
+    return applyFilters(newsletters, persistentFilters);
+  }, [newsletters, persistentFilters]);
 
   if (sourceLoading) {
     return (
@@ -89,8 +92,8 @@ export default function SourcePage() {
           )}
           <div className="flex items-center gap-2 mt-3">
             <Badge variant="outline">{newsletters.length} newsletters</Badge>
-            {searchText && (
-              <Badge variant="secondary">{filteredNewsletters.length} matching</Badge>
+            {filteredNewsletters.length !== newsletters.length && (
+              <Badge variant="secondary">{filteredNewsletters.length} matching filters</Badge>
             )}
           </div>
         </div>
@@ -123,15 +126,12 @@ export default function SourcePage() {
         )}
       </AnimatePresence>
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-        <Input
-          placeholder="Search across all newsletter content (titles, summaries, takeaways, M&A, funding, etc.)..."
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="pl-10 text-lg"
-        />
-      </div>
+      <PersistentFilters 
+        onFilterChange={setPersistentFilters}
+        availableThemes={availableThemes}
+        availableCompanies={availableCompanies}
+        showSourceFilter={false}
+      />
 
       <div className="grid gap-6">
         <AnimatePresence mode="wait">
@@ -143,14 +143,14 @@ export default function SourcePage() {
                 <Skeleton className="h-4 w-5/6 mb-4" />
               </div>
             ))
-          ) : filteredNewsletters.length === 0 && searchText ? (
+          ) : filteredNewsletters.length === 0 && persistentFilters ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-16"
             >
               <h3 className="text-xl font-semibold text-slate-700 mb-2">No matching newsletters</h3>
-              <p className="text-slate-500">Try a different search term</p>
+              <p className="text-slate-500">Try adjusting your filters</p>
             </motion.div>
           ) : newsletters.length === 0 ? (
             <motion.div
