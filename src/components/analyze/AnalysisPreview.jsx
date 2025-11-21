@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Save, TrendingUp, Lightbulb, Briefcase, DollarSign, BarChart3, CheckSquare } from "lucide-react";
+import { Save, TrendingUp, Lightbulb, Briefcase, DollarSign, BarChart3, CheckSquare, Download } from "lucide-react";
 
 const sentimentColors = {
   positive: "bg-green-100 text-green-800 border-green-200",
@@ -13,6 +13,99 @@ const sentimentColors = {
 };
 
 export default function AnalysisPreview({ analysis, onSave }) {
+  const exportToPDF = () => {
+    // Generate markdown content
+    let markdown = `# ${analysis.title}\n\n`;
+    
+    if (analysis.sentiment) {
+      markdown += `**Sentiment:** ${analysis.sentiment}\n\n`;
+    }
+    
+    if (analysis.publication_date) {
+      markdown += `**Date:** ${analysis.publication_date}\n\n`;
+    }
+    
+    if (analysis.source_url) {
+      markdown += `**Source:** ${analysis.source_url}\n\n`;
+    }
+    
+    markdown += `---\n\n`;
+    
+    if (analysis.tldr) {
+      markdown += `## TL;DR\n\n${analysis.tldr}\n\n`;
+    }
+    
+    if (analysis.summary) {
+      markdown += `## Executive Summary\n\n${analysis.summary}\n\n`;
+    }
+    
+    if (analysis.key_statistics && analysis.key_statistics.length > 0) {
+      markdown += `## Key Statistics\n\n`;
+      analysis.key_statistics.forEach(stat => {
+        markdown += `- **${stat.figure}** - ${stat.context}\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    if (analysis.recommended_actions && analysis.recommended_actions.length > 0) {
+      markdown += `## Recommended Actions\n\n`;
+      analysis.recommended_actions.forEach((action, i) => {
+        markdown += `${i + 1}. ${action}\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    if (analysis.key_takeaways && analysis.key_takeaways.length > 0) {
+      markdown += `## Key Takeaways\n\n`;
+      analysis.key_takeaways.forEach(takeaway => {
+        markdown += `- ${takeaway}\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    if (analysis.themes && analysis.themes.length > 0) {
+      markdown += `## Major Themes\n\n`;
+      analysis.themes.forEach(theme => {
+        markdown += `### ${theme.theme}\n${theme.description}\n\n`;
+      });
+    }
+    
+    if (analysis.ma_activities && analysis.ma_activities.length > 0) {
+      markdown += `## M&A Activity\n\n`;
+      analysis.ma_activities.forEach(deal => {
+        markdown += `### ${deal.acquirer} → ${deal.target}\n`;
+        if (deal.deal_value) markdown += `**Deal Value:** ${deal.deal_value}\n\n`;
+        markdown += `${deal.description}\n\n`;
+      });
+    }
+    
+    if (analysis.funding_rounds && analysis.funding_rounds.length > 0) {
+      markdown += `## Funding Activity\n\n`;
+      analysis.funding_rounds.forEach(funding => {
+        markdown += `### ${funding.company}\n`;
+        if (funding.amount) markdown += `**Amount:** ${funding.amount}`;
+        if (funding.round_type) markdown += ` (${funding.round_type})`;
+        markdown += `\n\n${funding.description}\n\n`;
+      });
+    }
+    
+    if (analysis.key_players && analysis.key_players.length > 0) {
+      markdown += `## Key Players\n\n`;
+      markdown += analysis.key_players.join(', ') + '\n\n';
+    }
+    
+    // Create and download the file
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${analysis.title?.replace(/[^a-z0-9]/gi, '_') || 'newsletter_analysis'}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -197,6 +290,13 @@ export default function AnalysisPreview({ analysis, onSave }) {
       )}
 
       <div className="flex justify-end gap-3 pt-4">
+        <Button
+          onClick={exportToPDF}
+          variant="outline"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Export as Markdown
+        </Button>
         <Button
           onClick={onSave}
           className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/30"
