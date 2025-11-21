@@ -19,18 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Dashboard() {
-  const [filters, setFilters] = useState({
-    startDate: null,
-    endDate: null,
-    keywords: "",
-    keyPlayer: "",
-    dealValueMin: "",
-    dealValueMax: "",
-    fundingStage: "all",
-    sentiment: "all"
-  });
+  const [persistentFilters, setPersistentFilters] = useState(null);
   const [userConfig, setUserConfig] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
   const { data: newsletters, isLoading } = useQuery({
@@ -56,18 +46,15 @@ export default function Dashboard() {
         visible_stats: ["newsletters", "ma_deals", "funding", "themes"],
         investment_focus: [],
         show_charts: true,
-        newsletter_display: "full",
-        filters_expanded: false
+        newsletter_display: "full"
       };
       setUserConfig(config);
-      setShowFilters(config.filters_expanded);
     } catch (err) {
       setUserConfig({
         visible_stats: ["newsletters", "ma_deals", "funding", "themes"],
         investment_focus: [],
         show_charts: true,
-        newsletter_display: "full",
-        filters_expanded: false
+        newsletter_display: "full"
       });
     }
   };
@@ -104,111 +91,39 @@ export default function Dashboard() {
       });
 
       return { ...newsletter, relevanceScore, matchedFocusAreas };
-      }).sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
-      }, [tabFilteredNewsletters, userConfig]);
+    }).sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+  }, [tabFilteredNewsletters, userConfig]);
 
-  const filteredNewsletters = focusFilteredNewsletters.filter(newsletter => {
-    // Keywords search - across title, summary, takeaways, themes
-    if (filters.keywords) {
-      const keyword = filters.keywords.toLowerCase();
-      const matchesTitle = newsletter.title?.toLowerCase().includes(keyword);
-      const matchesSummary = newsletter.summary?.toLowerCase().includes(keyword);
-      const matchesTakeaways = newsletter.key_takeaways?.some(t => 
-        t.toLowerCase().includes(keyword)
-      );
-      const matchesThemes = newsletter.themes?.some(theme => 
-        theme.theme?.toLowerCase().includes(keyword) ||
-        theme.description?.toLowerCase().includes(keyword)
-      );
-      const matchesMA = newsletter.ma_activities?.some(ma =>
-        ma.acquirer?.toLowerCase().includes(keyword) ||
-        ma.target?.toLowerCase().includes(keyword) ||
-        ma.description?.toLowerCase().includes(keyword)
-      );
-      const matchesFunding = newsletter.funding_rounds?.some(f =>
-        f.company?.toLowerCase().includes(keyword) ||
-        f.description?.toLowerCase().includes(keyword)
-      );
-      
-      if (!matchesTitle && !matchesSummary && !matchesTakeaways && !matchesThemes && !matchesMA && !matchesFunding) {
-        return false;
+  // Extract available themes and companies
+  const availableThemes = React.useMemo(() => {
+    const themes = new Set();
+    newsletters.forEach(n => {
+      if (n.themes) {
+        n.themes.forEach(t => themes.add(t.theme));
       }
-    }
+    });
+    return Array.from(themes).sort();
+  }, [newsletters]);
 
-    // Sentiment filter
-    if (filters.sentiment !== "all" && newsletter.sentiment !== filters.sentiment) {
-      return false;
-    }
-
-    // Date range filter
-    if (filters.startDate || filters.endDate) {
-      let pubDate;
-      if (newsletter.publication_date) {
-        pubDate = new Date(newsletter.publication_date);
-        if (isNaN(pubDate.getTime())) pubDate = null;
+  const availableCompanies = React.useMemo(() => {
+    const companies = new Set();
+    newsletters.forEach(n => {
+      if (n.key_players) {
+        n.key_players.forEach(p => companies.add(p));
       }
-      
-      if (!pubDate && newsletter.created_date) {
-        pubDate = new Date(newsletter.created_date);
-        if (isNaN(pubDate.getTime())) pubDate = null;
-      }
-      
-      if (!pubDate) return false;
-      
-      if (filters.startDate && pubDate < filters.startDate) return false;
-      if (filters.endDate && pubDate > filters.endDate) return false;
-    }
+    });
+    return Array.from(companies).sort();
+  }, [newsletters]);
 
-    // Key player filter
-    if (filters.keyPlayer && newsletter.key_players) {
-      const hasPlayer = newsletter.key_players.includes(filters.keyPlayer);
-      const inMA = newsletter.ma_activities?.some(ma =>
-        ma.acquirer === filters.keyPlayer || ma.target === filters.keyPlayer
-      );
-      const inFunding = newsletter.funding_rounds?.some(f =>
-        f.company === filters.keyPlayer
-      );
-      
-      if (!hasPlayer && !inMA && !inFunding) return false;
-    }
+  const availableSources = React.useMemo(() => {
+    return sources.filter(s => !s.is_deleted).map(s => s.name).sort();
+  }, [sources]);
 
-    // Funding stage filter
-    if (filters.fundingStage !== "all" && newsletter.funding_rounds) {
-      const hasFundingStage = newsletter.funding_rounds.some(f => 
-        f.round_type === filters.fundingStage
-      );
-      if (!hasFundingStage) return false;
-    }
+  const filteredNewsletters = React.useMemo(() => {
+    if (!persistentFilters) return focusFilteredNewsletters;
+    return applyFilters(focusFilteredNewsletters, persistentFilters);
+  }, [focusFilteredNewsletters, persistentFilters]);
 
-    // Deal value filter (extract numeric value from strings like "$100M", "$1.5B")
-    if ((filters.dealValueMin || filters.dealValueMax) && newsletter.ma_activities) {
-      const extractValue = (dealValue) => {
-        if (!dealValue) return null;
-        const match = dealValue.match(/\$?([\d.]+)\s*(M|B|Million|Billion)/i);
-        if (!match) return null;
-        
-        let value = parseFloat(match[1]);
-        const unit = match[2].toUpperCase();
-        
-        if (unit.startsWith('B')) value *= 1000; // Convert billions to millions
-        return value;
-      };
-
-      const hasMatchingDeal = newsletter.ma_activities.some(ma => {
-        const dealValue = extractValue(ma.deal_value);
-        if (dealValue === null) return false;
-        
-        const min = filters.dealValueMin ? parseFloat(filters.dealValueMin) : 0;
-        const max = filters.dealValueMax ? parseFloat(filters.dealValueMax) : Infinity;
-        
-        return dealValue >= min && dealValue <= max;
-      });
-
-      if (!hasMatchingDeal) return false;
-    }
-
-    return true;
-  });
 
   const NewsletterComponent = {
     full: NewsletterCard,
@@ -280,10 +195,12 @@ export default function Dashboard() {
         </TabsList>
       </Tabs>
 
-      <AdvancedFilters 
-        newsletters={tabFilteredNewsletters} 
-        onFiltersChange={setFilters}
-        defaultExpanded={showFilters}
+      <PersistentFilters 
+        onFilterChange={setPersistentFilters}
+        availableThemes={availableThemes}
+        availableCompanies={availableCompanies}
+        showSourceFilter={true}
+        availableSources={availableSources}
       />
 
       <div className={userConfig.newsletter_display === "minimal" ? "space-y-2" : "grid gap-6"}>
