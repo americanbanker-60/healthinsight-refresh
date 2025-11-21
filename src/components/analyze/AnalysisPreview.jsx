@@ -3,7 +3,9 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Save, TrendingUp, Lightbulb, Briefcase, DollarSign, BarChart3, CheckSquare, Download } from "lucide-react";
+import { Save, TrendingUp, Lightbulb, Briefcase, DollarSign, BarChart3, CheckSquare, Download, FileText } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 
 const sentimentColors = {
   positive: "bg-green-100 text-green-800 border-green-200",
@@ -13,7 +15,32 @@ const sentimentColors = {
 };
 
 export default function AnalysisPreview({ analysis, onSave }) {
-  const exportToPDF = () => {
+  const [isExportingPDF, setIsExportingPDF] = React.useState(false);
+
+  const exportToPDF = async () => {
+    setIsExportingPDF(true);
+    try {
+      const response = await base44.functions.invoke('exportNewsletterPDF', { analysis });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${analysis.title?.replace(/[^a-z0-9]/gi, '_') || 'newsletter_analysis'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success('PDF exported successfully');
+    } catch (error) {
+      toast.error('Failed to export PDF');
+      console.error(error);
+    }
+    setIsExportingPDF(false);
+  };
+
+  const exportToMarkdown = () => {
     // Generate markdown content
     let markdown = `# ${analysis.title}\n\n`;
     
@@ -292,6 +319,23 @@ export default function AnalysisPreview({ analysis, onSave }) {
       <div className="flex justify-end gap-3 pt-4">
         <Button
           onClick={exportToPDF}
+          variant="outline"
+          disabled={isExportingPDF}
+        >
+          {isExportingPDF ? (
+            <>
+              <Download className="w-4 h-4 mr-2 animate-pulse" />
+              Generating PDF...
+            </>
+          ) : (
+            <>
+              <FileText className="w-4 h-4 mr-2" />
+              Export as PDF
+            </>
+          )}
+        </Button>
+        <Button
+          onClick={exportToMarkdown}
           variant="outline"
         >
           <Download className="w-4 h-4 mr-2" />
