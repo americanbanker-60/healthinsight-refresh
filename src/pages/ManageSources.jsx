@@ -85,7 +85,8 @@ export default function ManageSources() {
   }, {});
 
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto">
+    <RoleGuard allowedRoles={["admin"]}>
+      <div className="p-6 md:p-10 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Manage Sources</h1>
