@@ -1,0 +1,246 @@
+import React from "react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { RoleGuard } from "../components/auth/RoleGuard";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Zap, Users, BarChart3 } from "lucide-react";
+import { useUserRole } from "../components/auth/RoleGuard";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
+
+export default function AdminPanel() {
+  const { user } = useUserRole();
+  
+  const { data: stats } = useQuery({
+    queryKey: ['adminStats'],
+    queryFn: async () => {
+      const [newsletters, packs, topics, companies, users] = await Promise.all([
+        base44.entities.Newsletter.list(),
+        base44.entities.LearningPack.list(),
+        base44.entities.Topic.list(),
+        base44.entities.Company.list(),
+        base44.entities.User.list()
+      ]);
+      return {
+        newsletters: newsletters.length,
+        packs: packs.length,
+        topics: topics.length,
+        companies: companies.length,
+        users: users.length,
+        admins: users.filter(u => u.role === 'admin').length,
+        powerUsers: users.filter(u => u.role === 'power').length,
+        standardUsers: users.filter(u => u.role === 'standard').length
+      };
+    }
+  });
+
+  return (
+    <RoleGuard allowedRoles={["admin"]}>
+      <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+              <Shield className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Admin Panel</h1>
+              <p className="text-slate-600 text-lg">System configuration and management</p>
+            </div>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+            <Shield className="w-5 h-5 text-amber-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-900">Administrator Access</p>
+              <p className="text-xs text-amber-700 mt-1">
+                You are logged in as <span className="font-semibold">{user?.email}</span>. 
+                These controls affect the entire application and all users.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* System Stats */}
+        {stats && (
+          <div className="grid md:grid-cols-4 gap-4 mb-8">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Total Newsletters</p>
+                    <p className="text-3xl font-bold text-blue-700">{stats.newsletters}</p>
+                  </div>
+                  <Database className="w-8 h-8 text-blue-600 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-purple-900">Learning Packs</p>
+                    <p className="text-3xl font-bold text-purple-700">{stats.packs}</p>
+                  </div>
+                  <BookOpen className="w-8 h-8 text-purple-600 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-green-900">Topics</p>
+                    <p className="text-3xl font-bold text-green-700">{stats.topics}</p>
+                  </div>
+                  <Lightbulb className="w-8 h-8 text-green-600 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-orange-900">Total Users</p>
+                    <p className="text-3xl font-bold text-orange-700">{stats.users}</p>
+                  </div>
+                  <Users className="w-8 h-8 text-orange-600 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Admin Actions */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Global Content Management */}
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-purple-600" />
+                Learning Packs
+              </CardTitle>
+              <CardDescription>Manage global learning pack definitions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to={createPageUrl("LearningPacks")}>
+                <Button className="w-full">
+                  Manage Global Packs
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-amber-600" />
+                Topics
+              </CardTitle>
+              <CardDescription>Define and organize topic metadata</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to={createPageUrl("TopicsDirectory")}>
+                <Button className="w-full">
+                  Manage Topics
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-blue-600" />
+                Companies
+              </CardTitle>
+              <CardDescription>Manage company metadata and profiles</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to={createPageUrl("CompaniesDirectory")}>
+                <Button className="w-full">
+                  Manage Companies
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Source Management */}
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="w-5 h-5 text-green-600" />
+                Newsletter Sources
+              </CardTitle>
+              <CardDescription>Add, edit, and categorize sources</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to={createPageUrl("ManageSources")}>
+                <Button className="w-full">
+                  Manage Sources
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Settings */}
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-slate-600" />
+                Dashboard Settings
+              </CardTitle>
+              <CardDescription>Configure dashboard display options</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to={createPageUrl("DashboardSettings")}>
+                <Button className="w-full">
+                  Dashboard Settings
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Analytics */}
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-indigo-600" />
+                System Analytics
+              </CardTitle>
+              <CardDescription>View usage patterns and metrics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" variant="outline" disabled>
+                Coming Soon
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Security Notice */}
+        <Card className="mt-8 bg-red-50 border-red-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-900">
+              <Shield className="w-5 h-5" />
+              Security & Access Control
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-red-800 space-y-2">
+            <p>
+              <strong>Global Prompt Injection Defense:</strong> Active and cannot be disabled from UI. 
+              All AI calls are protected.
+            </p>
+            <p>
+              <strong>Role Management:</strong> You are the only admin. Regular users cannot access 
+              this panel or modify global configurations.
+            </p>
+            <p>
+              <strong>Data Integrity:</strong> Changes made here affect all users. Test carefully 
+              before making major modifications.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </RoleGuard>
+  );
+}
