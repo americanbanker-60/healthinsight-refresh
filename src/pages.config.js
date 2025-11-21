@@ -17,6 +17,7 @@ import MyCustomPacks from './pages/MyCustomPacks';
 import CustomPackDetail from './pages/CustomPackDetail';
 import DeepDiveResults from './pages/DeepDiveResults';
 import UserSettings from './pages/UserSettings';
+import LandingRouter from './pages/LandingRouter';
 import __Layout from './Layout.jsx';
 
 
@@ -40,6 +41,7 @@ export const PAGES = {
     "CustomPackDetail": CustomPackDetail,
     "DeepDiveResults": DeepDiveResults,
     "UserSettings": UserSettings,
+    "LandingRouter": LandingRouter,
 }
 
 export const pagesConfig = {
