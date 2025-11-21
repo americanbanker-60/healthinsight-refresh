@@ -16,6 +16,7 @@ import CompaniesDirectory from './pages/CompaniesDirectory';
 import MyCustomPacks from './pages/MyCustomPacks';
 import CustomPackDetail from './pages/CustomPackDetail';
 import DeepDiveResults from './pages/DeepDiveResults';
+import UserSettings from './pages/UserSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +39,7 @@ export const PAGES = {
     "MyCustomPacks": MyCustomPacks,
     "CustomPackDetail": CustomPackDetail,
     "DeepDiveResults": DeepDiveResults,
+    "UserSettings": UserSettings,
 }
 
 export const pagesConfig = {

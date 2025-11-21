@@ -5,6 +5,9 @@ import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, Newspaper, BookOpen
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { WalkthroughProvider } from "@/components/walkthrough/WalkthroughManager";
+import { useUserRole } from "@/components/auth/RoleGuard";
+import { Badge } from "@/components/ui/badge";
+import { Shield } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -26,56 +29,73 @@ const staticNavigationItems = [
     title: "Knowledge Hub",
     url: createPageUrl("KnowledgeHub"),
     icon: Compass,
+    roles: ["admin", "power", "standard"],
   },
   {
     title: "Dashboard",
     url: createPageUrl("Dashboard"),
     icon: LayoutDashboard,
+    roles: ["admin", "power", "standard"],
   },
   {
     title: "Explore All Sources",
     url: createPageUrl("ExploreAllSources"),
     icon: TrendingUp,
+    roles: ["admin", "power", "standard"],
   },
   {
     title: "Learning Packs",
     url: createPageUrl("LearningPacks"),
     icon: BookOpen,
+    roles: ["admin", "power", "standard"],
   },
   {
     title: "Topics",
     url: createPageUrl("TopicsDirectory"),
     icon: Lightbulb,
+    roles: ["admin", "power", "standard"],
   },
   {
     title: "Companies",
     url: createPageUrl("CompaniesDirectory"),
     icon: Building2,
+    roles: ["admin", "power", "standard"],
   },
   {
     title: "My Library",
     url: createPageUrl("MyLibrary"),
     icon: Library,
+    roles: ["admin", "power", "standard"],
   },
   {
     title: "My Custom Packs",
     url: createPageUrl("MyCustomPacks"),
     icon: FolderOpen,
+    roles: ["admin", "power", "standard"],
   },
   {
     title: "Manage Sources",
     url: createPageUrl("ManageSources"),
     icon: Settings,
+    roles: ["admin"],
   },
   {
-    title: "Settings",
+    title: "Dashboard Settings",
     url: createPageUrl("DashboardSettings"),
     icon: Settings,
+    roles: ["admin", "power"],
+  },
+  {
+    title: "User Settings",
+    url: createPageUrl("UserSettings"),
+    icon: Settings,
+    roles: ["admin", "power", "standard"],
   },
 ];
 
 function LayoutContent({ children, currentPageName, location, sources }) {
   const { setOpen } = useSidebar();
+  const { role } = useUserRole();
 
   const handleLinkClick = () => {
     // Close sidebar only on mobile when a link is clicked
@@ -186,7 +206,12 @@ function LayoutContent({ children, currentPageName, location, sources }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-slate-900 text-sm truncate">Healthcare Analyst</p>
-                <p className="text-xs text-slate-500 truncate">Newsletter Intelligence</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className="text-xs px-2 py-0">
+                    <Shield className="w-3 h-3 mr-1" />
+                    {role === "admin" ? "Admin" : role === "power" ? "Power" : "Standard"}
+                  </Badge>
+                </div>
               </div>
             </div>
           </SidebarFooter>
