@@ -5,10 +5,11 @@ import { format } from "date-fns";
 /**
  * SummaryAgent - Generates structured summaries for Explore All Sources
  */
-export async function generateSummary(selectedItems) {
+export async function generateSummary(selectedItems, userVerbosity = "standard") {
   const config = createAgentConfig('summary', selectedItems, {
     dateRange: "selected items",
-    focus: "multi-source synthesis"
+    focus: "multi-source synthesis",
+    verbosity: userVerbosity
   });
   
   return await orchestrateAgent(config);
@@ -17,10 +18,11 @@ export async function generateSummary(selectedItems) {
 /**
  * PackSummaryAgent - Generates summaries for Learning Packs
  */
-export async function generatePackSummary(packItems, packTitle) {
+export async function generatePackSummary(packItems, packTitle, userVerbosity = "standard") {
   const config = createAgentConfig('packSummary', packItems, {
     dateRange: "pack-defined range",
-    focus: packTitle
+    focus: packTitle,
+    verbosity: userVerbosity
   });
   
   return await orchestrateAgent(config);
@@ -41,10 +43,11 @@ export async function generateGetSmartFast(topicName, relevantNewsletters) {
 /**
  * DeepDiveAgent - Generates comprehensive research briefings
  */
-export async function generateDeepDive(contextTitle, relevantItems) {
+export async function generateDeepDive(contextTitle, relevantItems, userVerbosity = "standard") {
   const config = createAgentConfig('deepDive', relevantItems, {
     dateRange: "comprehensive analysis period",
-    focus: contextTitle
+    focus: contextTitle,
+    verbosity: userVerbosity
   });
   
   config.context.itemCount = relevantItems.length;
@@ -92,13 +95,14 @@ ${JSON.stringify(insightsData, null, 2)}`;
 /**
  * CustomPackSummaryAgent - Generates summaries for custom packs with user notes
  */
-export async function generateCustomPackSummary(itemsWithNotes, packTitle) {
+export async function generateCustomPackSummary(itemsWithNotes, packTitle, userVerbosity = "standard") {
   const newsletters = itemsWithNotes.map(item => item.newsletter);
   
   const config = createAgentConfig('customPack', newsletters, {
     dateRange: "user-curated items",
     focus: packTitle,
-    hasUserNotes: itemsWithNotes.some(item => item.note)
+    hasUserNotes: itemsWithNotes.some(item => item.note),
+    verbosity: userVerbosity
   });
   
   return await orchestrateAgent(config);
