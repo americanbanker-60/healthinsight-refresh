@@ -100,6 +100,11 @@ function LayoutContent({ children, currentPageName, location, sources }) {
   return (
     <div className="min-h-screen flex w-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
         <style>{`
+          * {
+            overflow-wrap: break-word;
+          }
+        `}</style>
+        <style>{`
           :root {
             --primary: 222 47% 35%;
             --primary-foreground: 210 40% 98%;
@@ -187,15 +192,15 @@ function LayoutContent({ children, currentPageName, location, sources }) {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex-1 flex flex-col">
-          <header className="bg-white/60 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4 md:hidden sticky top-0 z-10">
+        <main className="flex-1 flex flex-col overflow-x-hidden">
+          <header className="bg-white/60 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-6 py-4 md:hidden sticky top-0 z-10">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors duration-200" />
-              <h1 className="text-xl font-semibold text-slate-900">HealthInsight</h1>
+              <h1 className="text-xl font-semibold text-slate-900 truncate">HealthInsight</h1>
             </div>
           </header>
 
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-x-hidden overflow-y-auto">
             {children}
           </div>
         </main>

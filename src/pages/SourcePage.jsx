@@ -73,7 +73,7 @@ export default function SourcePage() {
   }
 
   return (
-    <div className="p-4 md:p-10 max-w-7xl mx-auto w-full overflow-x-hidden">
+    <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto w-full overflow-x-hidden box-border">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">

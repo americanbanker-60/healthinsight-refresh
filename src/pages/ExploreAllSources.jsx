@@ -264,7 +264,7 @@ export default function ExploreAllSources() {
   const detailNewsletter = newsletters.find(n => n.id === detailNewsletterId);
 
   return (
-    <div className="p-6 md:p-10 max-w-[1800px] mx-auto">
+    <div className="p-4 md:p-6 lg:p-10 max-w-[1800px] mx-auto overflow-x-hidden w-full">
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
@@ -315,7 +315,7 @@ export default function ExploreAllSources() {
         )}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-4 md:gap-6 w-full">
         <div className="lg:col-span-2 space-y-6">
           <FavoritePacks variant="compact" maxItems={5} />
           
