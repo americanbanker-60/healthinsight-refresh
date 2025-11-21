@@ -19,6 +19,7 @@ import DeepDiveResults from './pages/DeepDiveResults';
 import UserSettings from './pages/UserSettings';
 import LandingRouter from './pages/LandingRouter';
 import AdminPanel from './pages/AdminPanel';
+import ManageLearningPacks from './pages/ManageLearningPacks';
 import __Layout from './Layout.jsx';
 
 
@@ -44,6 +45,7 @@ export const PAGES = {
     "UserSettings": UserSettings,
     "LandingRouter": LandingRouter,
     "AdminPanel": AdminPanel,
+    "ManageLearningPacks": ManageLearningPacks,
 }
 
 export const pagesConfig = {

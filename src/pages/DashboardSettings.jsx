@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { RoleGuard } from "../components/auth/RoleGuard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -371,5 +372,6 @@ export default function DashboardSettings() {
         </div>
       </div>
     </div>
+    </RoleGuard>
   );
 }

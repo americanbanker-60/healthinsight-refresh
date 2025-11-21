@@ -122,7 +122,7 @@ export default function AdminPanel() {
               <CardDescription>Manage global learning pack definitions</CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to={createPageUrl("LearningPacks")}>
+              <Link to={createPageUrl("ManageLearningPacks")}>
                 <Button className="w-full">
                   Manage Global Packs
                 </Button>
