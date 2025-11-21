@@ -129,7 +129,8 @@ export default function DashboardSettings() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-4xl mx-auto">
+    <RoleGuard allowedRoles={["admin", "power"]}>
+      <div className="p-6 md:p-10 max-w-4xl mx-auto">
       <Button
         variant="ghost"
         onClick={() => navigate(createPageUrl("Dashboard"))}
@@ -371,7 +372,6 @@ export default function DashboardSettings() {
           </Button>
         </div>
       </div>
-    </div>
     </RoleGuard>
   );
 }
