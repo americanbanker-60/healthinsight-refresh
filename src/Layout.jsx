@@ -103,6 +103,13 @@ function LayoutContent({ children, currentPageName, location, sources }) {
   const { setOpen, isMobile } = useSidebar();
   const { role } = useUserRole();
 
+  // Close sidebar on mobile when route changes
+  React.useEffect(() => {
+    if (isMobile) {
+      setOpen(false);
+    }
+  }, [location.pathname, isMobile, setOpen]);
+
   const handleLinkClick = () => {
     // Close sidebar on mobile when a link is clicked
     if (isMobile) {
