@@ -372,6 +372,7 @@ export default function DashboardSettings() {
           </Button>
         </div>
       </div>
+    </div>
     </RoleGuard>
   );
 }
