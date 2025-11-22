@@ -100,12 +100,12 @@ const staticNavigationItems = [
 ];
 
 function LayoutContent({ children, currentPageName, location, sources }) {
-  const { setOpen } = useSidebar();
+  const { setOpen, isMobile } = useSidebar();
   const { role } = useUserRole();
 
   const handleLinkClick = () => {
-    // Close sidebar only on mobile when a link is clicked
-    if (window.innerWidth < 1024) {
+    // Close sidebar on mobile when a link is clicked
+    if (isMobile) {
       setOpen(false);
     }
   };
