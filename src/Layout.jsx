@@ -131,10 +131,14 @@ function LayoutContent({ children, currentPageName, location, sources }) {
   }, [sources]);
 
   return (
-    <div className="min-h-screen flex w-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+    <div className="min-h-screen flex w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
         <style>{`
           * {
             overflow-wrap: break-word;
+            max-width: 100%;
+          }
+          body {
+            overflow-x: hidden;
           }
         `}</style>
         <style>{`
@@ -230,7 +234,7 @@ function LayoutContent({ children, currentPageName, location, sources }) {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex-1 flex flex-col overflow-x-hidden">
+        <main className="flex-1 flex flex-col overflow-x-hidden min-w-0 w-full">
           <header className="bg-white/60 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-6 py-4 md:hidden sticky top-0 z-10">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors duration-200" />
@@ -238,7 +242,7 @@ function LayoutContent({ children, currentPageName, location, sources }) {
             </div>
           </header>
 
-          <div className="flex-1 overflow-x-hidden overflow-y-auto">
+          <div className="flex-1 overflow-x-hidden overflow-y-auto w-full">
             {children}
           </div>
         </main>
