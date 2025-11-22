@@ -108,7 +108,7 @@ function LayoutContent({ children, currentPageName, location, sources }) {
     if (isMobile) {
       setOpen(false);
     }
-  }, [location.pathname, isMobile, setOpen]);
+  }, [location.pathname, location.search, isMobile, setOpen]);
 
   const handleLinkClick = () => {
     // Close sidebar on mobile when a link is clicked
