@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Clock, Lightbulb, Tag } from "lucide-react";
+import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Clock, Lightbulb, Tag, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -208,6 +208,21 @@ export default function SourceScraperPanel() {
                               className="text-xs text-amber-600 hover:underline"
                             >
                               Review →
+                            </Link>
+                          </div>
+                        )}
+                        
+                        {status.status === 'success' && status.data.companies_created?.length > 0 && (
+                          <div className="flex items-center gap-2 ml-5">
+                            <Building2 className="w-3 h-3 text-blue-600" />
+                            <span className="text-xs text-blue-700">
+                              {status.data.companies_created.length} new company(ies) added
+                            </span>
+                            <Link 
+                              to={createPageUrl("CompaniesDirectory")} 
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              View →
                             </Link>
                           </div>
                         )}

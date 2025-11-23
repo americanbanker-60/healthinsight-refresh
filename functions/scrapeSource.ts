@@ -142,13 +142,22 @@ Be thorough and accurate. If you can't find clear newsletters, return an empty a
       });
     }
 
-    // Get existing topics for matching
+    // Get existing topics and companies for matching
     const existingTopics = await base44.asServiceRole.entities.Topic.list();
+    const existingCompanies = await base44.asServiceRole.entities.Company.list();
+    const existingCompanyNames = new Set(
+      existingCompanies.flatMap(c => [
+        c.company_name.toLowerCase(),
+        ...(c.known_aliases || []).map(a => a.toLowerCase())
+      ])
+    );
 
-    // Create newsletter records and analyze topics
+    // Create newsletter records and analyze topics/companies
     const created = [];
     const topicAssignments = [];
     const newTopicSuggestions = [];
+    const companiesFound = new Set();
+    const companiesCreated = [];
 
     for (const newsletter of newNewsletters) {
       try {
@@ -243,6 +252,63 @@ Return matched topics with confidence scores and new topic suggestions.
         } catch (topicError) {
           console.error('Topic analysis error:', topicError);
         }
+
+        // Extract and create companies
+        try {
+          const companyMentions = [
+            ...(created_newsletter.key_players || []),
+            ...(created_newsletter.ma_activities || []).flatMap(m => [m.acquirer, m.target].filter(Boolean)),
+            ...(created_newsletter.funding_rounds || []).map(f => f.company).filter(Boolean)
+          ];
+
+          for (const companyName of companyMentions) {
+            if (!companyName || companyName.length < 2) continue;
+            
+            const normalized = companyName.toLowerCase().trim();
+            if (companiesFound.has(normalized) || existingCompanyNames.has(normalized)) continue;
+            
+            companiesFound.add(normalized);
+
+            // Create company with AI-generated metadata
+            const companyData = await base44.asServiceRole.integrations.Core.InvokeLLM({
+              prompt: `
+Generate metadata for this healthcare company: "${companyName}"
+
+Context from newsletter:
+${created_newsletter.title}
+${created_newsletter.tldr || ''}
+
+Return:
+- company_name: Official company name
+- description: 1-2 sentence description
+- known_aliases: Array of common abbreviations/alternate names
+- primary_keywords: Array of 3-5 keywords to track this company
+              `,
+              add_context_from_internet: true,
+              response_json_schema: {
+                type: "object",
+                properties: {
+                  company_name: { type: "string" },
+                  description: { type: "string" },
+                  known_aliases: { type: "array", items: { type: "string" } },
+                  primary_keywords: { type: "array", items: { type: "string" } }
+                }
+              }
+            });
+
+            const newCompany = await base44.asServiceRole.entities.Company.create({
+              company_name: companyData.company_name || companyName,
+              description: companyData.description || '',
+              known_aliases: companyData.known_aliases || [],
+              primary_keywords: companyData.primary_keywords || [companyName]
+            });
+
+            companiesCreated.push(newCompany.company_name);
+            existingCompanyNames.add(newCompany.company_name.toLowerCase());
+          }
+        } catch (companyError) {
+          console.error('Company extraction error:', companyError);
+        }
       } catch (error) {
         console.error('Error creating newsletter:', error);
       }
@@ -250,12 +316,13 @@ Return matched topics with confidence scores and new topic suggestions.
 
     return Response.json({
       success: true,
-      message: `Found and imported ${created.length} new newsletter(s)`,
+      message: `Found and imported ${created.length} new newsletter(s), ${companiesCreated.length} new companies`,
       source_name: source.name,
       new_count: created.length,
       newsletters: created.map(n => ({ id: n.id, title: n.title })),
       topic_assignments: topicAssignments,
       new_topic_suggestions: newTopicSuggestions,
+      companies_created: companiesCreated,
       checked_at: new Date().toISOString()
     });
 
