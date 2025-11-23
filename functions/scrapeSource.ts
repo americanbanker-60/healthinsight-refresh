@@ -142,8 +142,14 @@ Be thorough and accurate. If you can't find clear newsletters, return an empty a
       });
     }
 
-    // Create newsletter records
+    // Get existing topics for matching
+    const existingTopics = await base44.asServiceRole.entities.Topic.list();
+
+    // Create newsletter records and analyze topics
     const created = [];
+    const topicAssignments = [];
+    const newTopicSuggestions = [];
+
     for (const newsletter of newNewsletters) {
       try {
         const created_newsletter = await base44.asServiceRole.entities.Newsletter.create({
@@ -157,6 +163,86 @@ Be thorough and accurate. If you can't find clear newsletters, return an empty a
           key_players: newsletter.key_players || [],
         });
         created.push(created_newsletter);
+
+        // Analyze topics for this newsletter
+        try {
+          const topicAnalysis = await base44.asServiceRole.integrations.Core.InvokeLLM({
+            prompt: `
+Analyze this healthcare newsletter and match it to existing topics or suggest new ones.
+
+Newsletter:
+Title: ${created_newsletter.title}
+Summary: ${created_newsletter.tldr || created_newsletter.summary || ''}
+Themes: ${created_newsletter.themes?.map(t => t.theme).join(', ') || 'None'}
+Key Takeaways: ${created_newsletter.key_takeaways?.join(', ') || 'None'}
+
+Existing Topics:
+${existingTopics.map(t => `- ${t.topic_name}: ${t.description || ''} (keywords: ${t.keywords?.join(', ') || 'none'})`).join('\n')}
+
+Task:
+1. Find up to 3 existing topics that are highly relevant (confidence >= 70%)
+2. If no good matches exist, suggest 1-2 new topics that should be created
+
+Return matched topics with confidence scores and new topic suggestions.
+            `,
+            response_json_schema: {
+              type: "object",
+              properties: {
+                matched_topics: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      topic_name: { type: "string" },
+                      confidence: { type: "number" },
+                      reason: { type: "string" }
+                    }
+                  }
+                },
+                new_topic_suggestions: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      topic_name: { type: "string" },
+                      description: { type: "string" },
+                      keywords: { type: "array", items: { type: "string" } },
+                      icon: { type: "string" }
+                    }
+                  }
+                }
+              }
+            }
+          });
+
+          // Record matched topics
+          if (topicAnalysis.matched_topics?.length > 0) {
+            topicAssignments.push({
+              newsletter_id: created_newsletter.id,
+              newsletter_title: created_newsletter.title,
+              matched_topics: topicAnalysis.matched_topics
+            });
+          }
+
+          // Create AITrendSuggestion records for new topics
+          if (topicAnalysis.new_topic_suggestions?.length > 0) {
+            for (const suggestion of topicAnalysis.new_topic_suggestions) {
+              await base44.asServiceRole.entities.AITrendSuggestion.create({
+                suggestion_type: "topic",
+                title: suggestion.topic_name,
+                description: suggestion.description,
+                keywords: suggestion.keywords || [],
+                confidence_score: 85,
+                supporting_evidence: [created_newsletter.id],
+                status: "new",
+                icon_suggestion: suggestion.icon || "💡"
+              });
+              newTopicSuggestions.push(suggestion.topic_name);
+            }
+          }
+        } catch (topicError) {
+          console.error('Topic analysis error:', topicError);
+        }
       } catch (error) {
         console.error('Error creating newsletter:', error);
       }
@@ -168,6 +254,8 @@ Be thorough and accurate. If you can't find clear newsletters, return an empty a
       source_name: source.name,
       new_count: created.length,
       newsletters: created.map(n => ({ id: n.id, title: n.title })),
+      topic_assignments: topicAssignments,
+      new_topic_suggestions: newTopicSuggestions,
       checked_at: new Date().toISOString()
     });
 

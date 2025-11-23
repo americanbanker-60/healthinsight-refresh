@@ -4,8 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Clock, Lightbulb, Tag } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function SourceScraperPanel() {
   const queryClient = useQueryClient();
@@ -154,34 +156,60 @@ export default function SourceScraperPanel() {
                     <p className="text-xs text-slate-500 truncate">{source.url}</p>
                     
                     {status && (
-                      <div className="mt-2 flex items-center gap-2">
-                        {status.status === 'success' && (
-                          <>
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
-                            <span className="text-xs text-green-700">
-                              {status.data.new_count > 0 
-                                ? `Found ${status.data.new_count} new newsletter(s)` 
-                                : 'No new content'}
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center gap-2">
+                          {status.status === 'success' && (
+                            <>
+                              <CheckCircle2 className="w-4 h-4 text-green-600" />
+                              <span className="text-xs text-green-700">
+                                {status.data.new_count > 0 
+                                  ? `Found ${status.data.new_count} new newsletter(s)` 
+                                  : 'No new content'}
+                              </span>
+                            </>
+                          )}
+                          {status.status === 'error' && (
+                            <>
+                              <AlertCircle className="w-4 h-4 text-red-600" />
+                              <span className="text-xs text-red-700">Error: {status.error}</span>
+                            </>
+                          )}
+                          {status.status === 'loading' && (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                              <span className="text-xs text-blue-700">Checking...</span>
+                            </>
+                          )}
+                          {status.timestamp && (
+                            <span className="text-xs text-slate-400 ml-2">
+                              <Clock className="w-3 h-3 inline mr-1" />
+                              {new Date(status.timestamp).toLocaleTimeString()}
                             </span>
-                          </>
+                          )}
+                        </div>
+                        
+                        {status.status === 'success' && status.data.topic_assignments?.length > 0 && (
+                          <div className="flex items-center gap-2 ml-5">
+                            <Tag className="w-3 h-3 text-blue-600" />
+                            <span className="text-xs text-blue-700">
+                              {status.data.topic_assignments.length} newsletter(s) matched to topics
+                            </span>
+                          </div>
                         )}
-                        {status.status === 'error' && (
-                          <>
-                            <AlertCircle className="w-4 h-4 text-red-600" />
-                            <span className="text-xs text-red-700">Error: {status.error}</span>
-                          </>
-                        )}
-                        {status.status === 'loading' && (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                            <span className="text-xs text-blue-700">Checking...</span>
-                          </>
-                        )}
-                        {status.timestamp && (
-                          <span className="text-xs text-slate-400 ml-2">
-                            <Clock className="w-3 h-3 inline mr-1" />
-                            {new Date(status.timestamp).toLocaleTimeString()}
-                          </span>
+                        
+                        {status.status === 'success' && status.data.new_topic_suggestions?.length > 0 && (
+                          <div className="flex items-center gap-2 ml-5">
+                            <Lightbulb className="w-3 h-3 text-amber-600" />
+                            <span className="text-xs text-amber-700">
+                              {status.data.new_topic_suggestions.length} new topic(s) suggested
+                            </span>
+                            <Link 
+                              to={createPageUrl("Dashboard")} 
+                              className="text-xs text-amber-600 hover:underline"
+                            >
+                              Review →
+                            </Link>
+                          </div>
                         )}
                       </div>
                     )}
