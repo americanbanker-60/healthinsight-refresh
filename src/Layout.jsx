@@ -169,7 +169,9 @@ function LayoutContent({ children, currentPageName, location, sources }) {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {staticNavigationItems.map((item) => (
+                  {staticNavigationItems
+                    .filter(item => item.roles.includes(role))
+                    .map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild 
