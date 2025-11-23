@@ -38,6 +38,12 @@ const staticNavigationItems = [
     roles: ["admin", "power", "standard"],
   },
   {
+    title: "Admin Dashboard",
+    url: createPageUrl("AdminDashboard"),
+    icon: Shield,
+    roles: ["admin"],
+  },
+  {
     title: "Explore All Sources",
     url: createPageUrl("ExploreAllSources"),
     icon: TrendingUp,
@@ -169,9 +175,7 @@ function LayoutContent({ children, currentPageName, location, sources }) {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {staticNavigationItems
-                    .filter(item => item.roles.includes(role))
-                    .map((item) => (
+                  {staticNavigationItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild 
