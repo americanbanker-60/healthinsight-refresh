@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AdminOnlyButton } from "../components/admin/AdminOnlyButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +13,7 @@ import { createPageUrl } from "@/utils";
 import { Building2, Search, TrendingUp, Plus, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { AdminOnlyButton } from "../components/admin/AdminOnlyButton";
 
 export default function CompaniesDirectory() {
   const navigate = useNavigate();
@@ -129,14 +129,14 @@ export default function CompaniesDirectory() {
                 Explore healthcare companies with aggregated intelligence and activity
               </p>
             </div>
-          </div>
-          <AdminOnlyButton>
+            </div>
+            <AdminOnlyButton>
             <Button onClick={() => setShowAddDialog(true)} className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
               Add Company
             </Button>
-          </AdminOnlyButton>
-        </div>
+            </AdminOnlyButton>
+            </div>
       </div>
 
       {/* Search */}
@@ -233,8 +233,7 @@ export default function CompaniesDirectory() {
       )}
 
       {/* Add Company Dialog */}
-      <AdminOnlyButton>
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Company</DialogTitle>
@@ -329,7 +328,6 @@ export default function CompaniesDirectory() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </AdminOnlyButton>
     </div>
   );
 }

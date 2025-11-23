@@ -20,7 +20,6 @@ import UserSettings from './pages/UserSettings';
 import LandingRouter from './pages/LandingRouter';
 import AdminPanel from './pages/AdminPanel';
 import ManageLearningPacks from './pages/ManageLearningPacks';
-import Unauthorized from './pages/Unauthorized';
 import __Layout from './Layout.jsx';
 
 
@@ -47,7 +46,6 @@ export const PAGES = {
     "LandingRouter": LandingRouter,
     "AdminPanel": AdminPanel,
     "ManageLearningPacks": ManageLearningPacks,
-    "Unauthorized": Unauthorized,
 }
 
 export const pagesConfig = {
