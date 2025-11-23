@@ -26,7 +26,7 @@ export default function DeepDiveResults() {
     if (topicId || packId) {
       generateDeepDiveReport();
     }
-  }, [topicId, packId]);
+  }, []);
 
   const generateDeepDiveReport = async () => {
     setIsGenerating(true);
@@ -90,11 +90,13 @@ export default function DeepDiveResults() {
 
       toast.success("Deep dive generated!");
     } catch (error) {
-      toast.error("Failed to generate deep dive");
-      console.error(error);
+      const errorMessage = error?.message || "Failed to generate deep dive";
+      toast.error(errorMessage);
+      console.error("Deep dive error:", error);
+      setDeepDive(null);
+    } finally {
+      setIsGenerating(false);
     }
-
-    setIsGenerating(false);
   };
 
   const parseSections = (content) => {
