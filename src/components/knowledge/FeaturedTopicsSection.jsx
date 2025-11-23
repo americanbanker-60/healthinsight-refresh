@@ -37,13 +37,13 @@ export default function FeaturedTopicsSection() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-3xl font-bold text-slate-900 mb-2">Featured Topics & Packs</h2>
-        <p className="text-slate-600">
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Featured Topics & Packs</h2>
+        <p className="text-sm md:text-base text-slate-600">
           Jump into curated content collections on key healthcare topics
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {featuredPacks.map(pack => (
           <Card 
             key={pack.id} 

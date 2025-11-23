@@ -166,16 +166,16 @@ export default function AdminDashboard() {
 
   return (
     <RoleGuard allowedRoles={["admin"]}>
-      <div className="p-6 md:p-10 max-w-7xl mx-auto">
+      <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/20">
-              <Shield className="w-7 h-7 text-white" />
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/20">
+              <Shield className="w-6 h-6 md:w-7 md:h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Admin Dashboard</h1>
-              <p className="text-slate-600 text-lg mt-1">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">Admin Dashboard</h1>
+              <p className="text-sm md:text-base lg:text-lg text-slate-600 mt-1">
                 Central hub for system administration and configuration
               </p>
             </div>
@@ -194,7 +194,7 @@ export default function AdminDashboard() {
 
         {/* Quick Stats */}
         {!isLoading && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
             <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -261,7 +261,7 @@ export default function AdminDashboard() {
                   <h2 className="text-2xl font-bold text-slate-800">{section.title}</h2>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   {section.cards.map((card) => {
                     const CardIcon = card.icon;
                     const CardContent = (

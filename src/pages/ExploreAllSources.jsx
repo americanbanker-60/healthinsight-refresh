@@ -265,16 +265,17 @@ export default function ExploreAllSources() {
 
   return (
     <div className="p-4 md:p-6 lg:p-10 max-w-[1800px] mx-auto overflow-x-hidden w-full">
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="mb-6 md:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Explore All Sources</h1>
-            <p className="text-slate-600 text-lg">Search and filter across all newsletter content</p>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight mb-2">Explore All Sources</h1>
+            <p className="text-sm md:text-base text-slate-600 lg:text-lg">Search and filter across all newsletter content</p>
           </div>
-          <Link to={createPageUrl("LearningPacks")}>
-            <Button variant="outline" className="flex items-center gap-2">
+          <Link to={createPageUrl("LearningPacks")} className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
-              Browse Learning Packs
+              <span className="hidden sm:inline">Browse Learning Packs</span>
+              <span className="sm:hidden">Packs</span>
             </Button>
           </Link>
         </div>
@@ -315,8 +316,8 @@ export default function ExploreAllSources() {
         )}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 md:gap-6 w-full">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 w-full">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           <FavoritePacks variant="compact" maxItems={5} />
           
           <RecentlyViewedPacks variant="compact" maxItems={5} />
@@ -334,21 +335,21 @@ export default function ExploreAllSources() {
             onLoadSearch={loadSavedSearch}
           />
 
-        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 mb-6">
-        <CardContent className="pt-6 space-y-6">
+        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 mb-4 md:mb-6">
+        <CardContent className="pt-4 md:pt-6 space-y-4 md:space-y-6">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-3 top-3 w-4 h-4 md:w-5 md:h-5 text-slate-400" />
             <Input
-              placeholder="Search across titles, summaries, and content..."
+              placeholder="Search titles, summaries, content..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10 text-lg"
+              className="pl-10 text-base md:text-lg"
             />
           </div>
 
           {/* Filters */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {/* Date Range */}
             <div>
               <Label className="text-sm font-semibold mb-2 block">Date Range</Label>
