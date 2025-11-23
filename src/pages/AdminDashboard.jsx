@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Database
 } from "lucide-react";
+import SourceScraperPanel from "../components/admin/SourceScraperPanel";
 
 export default function AdminDashboard() {
   const { data: stats, isLoading } = useQuery({
@@ -243,6 +244,9 @@ export default function AdminDashboard() {
             </Card>
           </div>
         )}
+
+        {/* Newsletter Scraper */}
+        <SourceScraperPanel />
 
         {/* Admin Sections */}
         <div className="space-y-8">

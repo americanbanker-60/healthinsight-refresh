@@ -1,0 +1,181 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 401 });
+    }
+
+    const { source_id } = await req.json();
+
+    if (!source_id) {
+      return Response.json({ error: 'source_id is required' }, { status: 400 });
+    }
+
+    // Get the source
+    const sources = await base44.asServiceRole.entities.Source.filter({ id: source_id });
+    if (!sources.length) {
+      return Response.json({ error: 'Source not found' }, { status: 404 });
+    }
+    const source = sources[0];
+
+    if (!source.url) {
+      return Response.json({ error: 'Source has no URL configured' }, { status: 400 });
+    }
+
+    // Get existing newsletters for this source to avoid duplicates
+    const existingNewsletters = await base44.asServiceRole.entities.Newsletter.filter({
+      source_name: source.name
+    });
+    const existingUrls = new Set(existingNewsletters.map(n => n.source_url).filter(Boolean));
+
+    // Use AI to scrape and extract newsletter data from the source
+    const aiResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      prompt: `
+You are analyzing a healthcare newsletter source website: ${source.url}
+
+Task: Extract the 5 most recent newsletter articles/publications from this source.
+
+For each newsletter found, extract:
+- title: The newsletter title
+- source_url: Direct URL to the newsletter article
+- publication_date: Publication date (YYYY-MM-DD format, estimate if not exact)
+- tldr: Brief 2-3 sentence summary
+- key_takeaways: Array of main insights (3-5 items)
+- key_statistics: Array of important metrics with figure and context
+- themes: Array of major themes (max 5), each with theme name and description
+- ma_activities: Array of M&A deals mentioned
+- funding_rounds: Array of funding activities mentioned
+- key_players: Array of important companies/organizations mentioned
+- sentiment: Overall sentiment (positive, neutral, negative, or mixed)
+
+Only include newsletters that are NOT already in this list of existing URLs:
+${Array.from(existingUrls).slice(0, 20).join('\n')}
+
+Be thorough and accurate. If you can't find clear newsletters, return an empty array.
+      `,
+      add_context_from_internet: true,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          newsletters: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                source_url: { type: "string" },
+                publication_date: { type: "string" },
+                tldr: { type: "string" },
+                key_takeaways: { type: "array", items: { type: "string" } },
+                key_statistics: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      figure: { type: "string" },
+                      context: { type: "string" }
+                    }
+                  }
+                },
+                themes: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      theme: { type: "string" },
+                      description: { type: "string" }
+                    }
+                  }
+                },
+                ma_activities: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      acquirer: { type: "string" },
+                      target: { type: "string" },
+                      deal_value: { type: "string" },
+                      description: { type: "string" }
+                    }
+                  }
+                },
+                funding_rounds: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      company: { type: "string" },
+                      amount: { type: "string" },
+                      round_type: { type: "string" },
+                      description: { type: "string" }
+                    }
+                  }
+                },
+                key_players: { type: "array", items: { type: "string" } },
+                sentiment: { type: "string", enum: ["positive", "neutral", "negative", "mixed"] }
+              },
+              required: ["title", "source_url"]
+            }
+          }
+        }
+      }
+    });
+
+    const newsletters = aiResponse.newsletters || [];
+    
+    // Filter out any that already exist
+    const newNewsletters = newsletters.filter(n => 
+      n.source_url && !existingUrls.has(n.source_url)
+    );
+
+    if (newNewsletters.length === 0) {
+      return Response.json({
+        success: true,
+        message: 'No new newsletters found',
+        source_name: source.name,
+        new_count: 0,
+        checked_at: new Date().toISOString()
+      });
+    }
+
+    // Create newsletter records
+    const created = [];
+    for (const newsletter of newNewsletters) {
+      try {
+        const created_newsletter = await base44.asServiceRole.entities.Newsletter.create({
+          ...newsletter,
+          source_name: source.name,
+          key_takeaways: newsletter.key_takeaways || [],
+          key_statistics: newsletter.key_statistics || [],
+          themes: newsletter.themes || [],
+          ma_activities: newsletter.ma_activities || [],
+          funding_rounds: newsletter.funding_rounds || [],
+          key_players: newsletter.key_players || [],
+        });
+        created.push(created_newsletter);
+      } catch (error) {
+        console.error('Error creating newsletter:', error);
+      }
+    }
+
+    return Response.json({
+      success: true,
+      message: `Found and imported ${created.length} new newsletter(s)`,
+      source_name: source.name,
+      new_count: created.length,
+      newsletters: created.map(n => ({ id: n.id, title: n.title })),
+      checked_at: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Scrape error:', error);
+    return Response.json({ 
+      success: false,
+      error: error.message || 'Failed to scrape source' 
+    }, { status: 500 });
+  }
+});
