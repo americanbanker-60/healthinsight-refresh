@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -19,9 +19,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Dashboard() {
-  const [persistentFilters, setPersistentFilters] = useState(null);
-  const [userConfig, setUserConfig] = useState(null);
-  const [activeTab, setActiveTab] = useState("all");
+  const [persistentFilters, setPersistentFilters] = React.useState(null);
+  const [userConfig, setUserConfig] = React.useState(null);
+  const [activeTab, setActiveTab] = React.useState("all");
 
   const { data: newsletters, isLoading } = useQuery({
     queryKey: ['newsletters'],
@@ -35,7 +35,7 @@ export default function Dashboard() {
     initialData: [],
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     loadUserConfig();
   }, []);
 
