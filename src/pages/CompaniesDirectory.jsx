@@ -130,10 +130,12 @@ export default function CompaniesDirectory() {
               </p>
             </div>
           </div>
-          <Button onClick={() => setShowAddDialog(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Company
-          </Button>
+          <AdminOnlyButton>
+            <Button onClick={() => setShowAddDialog(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Company
+            </Button>
+          </AdminOnlyButton>
         </div>
       </div>
 
@@ -231,7 +233,8 @@ export default function CompaniesDirectory() {
       )}
 
       {/* Add Company Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <AdminOnlyButton>
+        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Company</DialogTitle>
@@ -326,6 +329,7 @@ export default function CompaniesDirectory() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </AdminOnlyButton>
     </div>
   );
 }
