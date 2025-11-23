@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Plus, FileText, Settings } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import NewsletterCard from "../components/dashboard/NewsletterCard";
 import NewsletterCardCompact from "../components/dashboard/NewsletterCardCompact";
 import NewsletterCardMinimal from "../components/dashboard/NewsletterCardMinimal";
@@ -204,7 +204,6 @@ export default function Dashboard() {
       />
 
       <div className={userConfig.newsletter_display === "minimal" ? "space-y-2" : "grid gap-6"}>
-        <AnimatePresence mode="wait">
           {isLoading ? (
             Array(3).fill(0).map((_, i) => (
               <div key={i} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-200/60">
@@ -250,7 +249,6 @@ export default function Dashboard() {
               </div>
             ))
           )}
-        </AnimatePresence>
       </div>
     </div>
   );
