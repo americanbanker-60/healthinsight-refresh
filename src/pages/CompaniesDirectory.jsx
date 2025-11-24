@@ -22,6 +22,7 @@ export default function CompaniesDirectory() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newCompany, setNewCompany] = useState({
     company_name: "",
+    website_url: "",
     description: "",
     known_aliases: [],
     primary_keywords: [],
@@ -49,6 +50,7 @@ export default function CompaniesDirectory() {
   const resetForm = () => {
     setNewCompany({
       company_name: "",
+      website_url: "",
       description: "",
       known_aliases: [],
       primary_keywords: [],
@@ -247,6 +249,16 @@ export default function CompaniesDirectory() {
                 value={newCompany.company_name}
                 onChange={(e) => setNewCompany({ ...newCompany, company_name: e.target.value })}
                 placeholder="e.g., Epic Systems, UnitedHealth Group"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="website_url">Company Website</Label>
+              <Input
+                id="website_url"
+                value={newCompany.website_url}
+                onChange={(e) => setNewCompany({ ...newCompany, website_url: e.target.value })}
+                placeholder="https://www.company.com"
               />
             </div>
 
