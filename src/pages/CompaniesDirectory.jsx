@@ -124,52 +124,56 @@ export default function CompaniesDirectory() {
     navigate(createPageUrl("CompanyPage") + "?" + params.toString());
   };
 
-  const scanNewslettersForCompany = (company, e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const scanNewslettersForCompany = (company) => {
+    console.log("Scanning company:", company.company_name);
     
     if (!newsletters || newsletters.length === 0) {
-      toast.error("No newsletters loaded yet");
+      toast.error("No newsletters loaded yet. Please wait for data to load.");
       return;
     }
     
     setScanningCompanyId(company.id);
     
-    try {
-      const searchTerms = [
-        company.company_name,
-        ...(company.known_aliases || []),
-        ...(company.primary_keywords || [])
-      ].filter(term => term).map(term => term.toLowerCase());
+    // Use setTimeout to ensure UI updates
+    setTimeout(() => {
+      try {
+        const searchTerms = [
+          company.company_name,
+          ...(company.known_aliases || []),
+          ...(company.primary_keywords || [])
+        ].filter(term => term).map(term => term.toLowerCase());
 
-      if (searchTerms.length === 0) {
-        toast.error("No search terms available for this company");
+        console.log("Search terms:", searchTerms);
+
+        if (searchTerms.length === 0) {
+          toast.error("No search terms available for this company");
+          setScanningCompanyId(null);
+          return;
+        }
+
+        const mentions = newsletters.filter(newsletter => {
+          const searchableContent = [
+            newsletter.title || '',
+            newsletter.summary || '',
+            newsletter.tldr || '',
+            ...(newsletter.key_takeaways || []),
+            ...(newsletter.key_players || []),
+            ...(newsletter.ma_activities?.map(a => `${a.acquirer || ''} ${a.target || ''}`) || []),
+            ...(newsletter.funding_rounds?.map(f => f.company || '') || [])
+          ].join(' ').toLowerCase();
+
+          return searchTerms.some(term => searchableContent.includes(term));
+        });
+
+        console.log("Found mentions:", mentions.length);
+        toast.success(`Found ${mentions.length} newsletter mentions of ${company.company_name}`);
+      } catch (error) {
+        console.error("Scan error:", error);
+        toast.error("Failed to scan newsletters: " + error.message);
+      } finally {
         setScanningCompanyId(null);
-        return;
       }
-
-      const mentions = newsletters.filter(newsletter => {
-        const searchableContent = [
-          newsletter.title || '',
-          newsletter.summary || '',
-          newsletter.tldr || '',
-          ...(newsletter.key_takeaways || []),
-          ...(newsletter.key_players || []),
-          ...(newsletter.ma_activities?.map(a => `${a.acquirer || ''} ${a.target || ''}`) || []),
-          ...(newsletter.funding_rounds?.map(f => f.company || '') || [])
-        ].join(' ').toLowerCase();
-
-        return searchTerms.some(term => searchableContent.includes(term));
-      });
-
-      toast.success(`Found ${mentions.length} newsletter mentions of ${company.company_name}`);
-    } catch (error) {
-      toast.error("Failed to scan newsletters: " + error.message);
-    } finally {
-      setScanningCompanyId(null);
-    }
+    }, 100);
   };
 
   return (
@@ -278,7 +282,11 @@ export default function CompaniesDirectory() {
                     variant="outline"
                     size="sm"
                     className="flex-1"
-                    onClick={(e) => scanNewslettersForCompany(company, e)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      scanNewslettersForCompany(company);
+                    }}
                     disabled={scanningCompanyId === company.id}
                   >
                     <Scan className="w-4 h-4 mr-2" />
