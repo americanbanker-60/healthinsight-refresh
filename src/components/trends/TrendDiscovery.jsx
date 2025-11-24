@@ -264,9 +264,9 @@ Output ONLY trends with confidence_score >= 60. Prioritize competitive intellige
                           </span>
                         )}
                       </div>
-                      {suggestion.supporting_evidence && suggestion.supporting_evidence.length > 0 && (
+                      {suggestion.supporting_evidence && (
                         <div className="text-xs text-slate-500">
-                          Based on {suggestion.supporting_evidence.length} newsletter{suggestion.supporting_evidence.length > 1 ? 's' : ''}
+                          Based on {Array.isArray(suggestion.supporting_evidence) ? suggestion.supporting_evidence.length : 0} newsletter{(Array.isArray(suggestion.supporting_evidence) ? suggestion.supporting_evidence.length : 0) !== 1 ? 's' : ''}
                         </div>
                       )}
                     </div>
