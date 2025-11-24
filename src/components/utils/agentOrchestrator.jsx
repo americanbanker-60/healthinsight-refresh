@@ -68,8 +68,19 @@ export async function orchestrateAgent(config) {
 function buildPrompt({ systemPrompt, userPrompt, structureGuide, data }) {
   let prompt = "";
   
+  const formattingRules = `
+CRITICAL FORMATTING RULES FOR WORD/PDF EXPORT:
+1. PARAGRAPHS: Keep paragraphs short (2-3 sentences max). Put ONE blank line between EVERY paragraph.
+2. HEADINGS: Put a blank line BEFORE and AFTER every heading (##, ###).
+3. LISTS: Put a blank line before and after every list. Each bullet point on its own line with a blank line between bullets.
+4. SPACING: When in doubt, add a blank line. Generous spacing is essential.
+5. NO WALLS OF TEXT: Break up long sections into logical, readable paragraphs.
+6. STRUCTURE: Use clear sections with headings when helpful.
+
+`;
+  
   if (systemPrompt) {
-    prompt += `SYSTEM:\n${systemPrompt}\n\n`;
+    prompt += `SYSTEM:\n${systemPrompt}\n\n${formattingRules}`;
   }
   
   if (userPrompt) {
