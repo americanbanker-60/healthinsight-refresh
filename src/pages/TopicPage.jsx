@@ -154,26 +154,25 @@ export default function TopicPage() {
       <BackButton className="mb-4" />
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            {topic.icon && <div className="text-5xl">{topic.icon}</div>}
-            <div>
-              <h1 className="text-4xl font-bold text-slate-900 tracking-tight">{topic.topic_name}</h1>
-              {topic.description && (
-                <p className="text-slate-600 text-lg mt-2">{topic.description}</p>
-              )}
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <WatchTopicButton topicId={topic.id} variant="outline" />
-            <Button variant="outline" onClick={generateDeepDive} className="gap-2">
-              <FileText className="w-4 h-4" />
-              Generate Deep Dive
-            </Button>
-            <Button onClick={exploreInAllSources} className="gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Explore in All Sources
-            </Button>
+        <div className="flex justify-end gap-2 mb-4">
+          <WatchTopicButton topicId={topic.id} variant="outline" />
+          <Button variant="outline" onClick={generateDeepDive} className="gap-2">
+            <FileText className="w-4 h-4" />
+            <span className="hidden sm:inline">Generate Deep Dive</span>
+          </Button>
+          <Button onClick={exploreInAllSources} className="gap-2">
+            <TrendingUp className="w-4 h-4" />
+            <span className="hidden sm:inline">Explore in All Sources</span>
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-3 mb-4">
+          {topic.icon && <div className="text-5xl">{topic.icon}</div>}
+          <div>
+            <h1 className="text-4xl font-bold text-slate-900 tracking-tight">{topic.topic_name}</h1>
+            {topic.description && (
+              <p className="text-slate-600 text-lg mt-2">{topic.description}</p>
+            )}
           </div>
         </div>
         
