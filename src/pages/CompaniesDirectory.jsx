@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Search, TrendingUp, Plus, X } from "lucide-react";
+import { Building2, Search, TrendingUp, Plus, X, Scan } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { AdminOnlyButton } from "../components/admin/AdminOnlyButton";
@@ -30,6 +30,7 @@ export default function CompaniesDirectory() {
   });
   const [aliasInput, setAliasInput] = useState("");
   const [keywordInput, setKeywordInput] = useState("");
+  const [scanningCompanyId, setScanningCompanyId] = useState(null);
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['companies'],
@@ -121,6 +122,38 @@ export default function CompaniesDirectory() {
   const openCompany = (company) => {
     const params = new URLSearchParams({ id: company.id });
     navigate(createPageUrl("CompanyPage") + "?" + params.toString());
+  };
+
+  const scanNewslettersForCompany = async (company) => {
+    setScanningCompanyId(company.id);
+    
+    try {
+      const searchTerms = [
+        company.company_name,
+        ...(company.known_aliases || []),
+        ...(company.primary_keywords || [])
+      ].map(term => term.toLowerCase());
+
+      const mentions = newsletters.filter(newsletter => {
+        const searchableContent = [
+          newsletter.title || '',
+          newsletter.summary || '',
+          newsletter.tldr || '',
+          ...(newsletter.key_takeaways || []),
+          ...(newsletter.key_players || []),
+          ...(newsletter.ma_activities?.map(a => `${a.acquirer} ${a.target}`) || []),
+          ...(newsletter.funding_rounds?.map(f => f.company) || [])
+        ].join(' ').toLowerCase();
+
+        return searchTerms.some(term => searchableContent.includes(term));
+      });
+
+      toast.success(`Found ${mentions.length} newsletter mentions of ${company.company_name}`);
+    } catch (error) {
+      toast.error("Failed to scan newsletters: " + error.message);
+    } finally {
+      setScanningCompanyId(null);
+    }
   };
 
   return (
@@ -224,16 +257,31 @@ export default function CompaniesDirectory() {
                   </p>
                 )}
 
-                <Button
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 group-hover:shadow-lg transition-all"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openCompany(company);
-                  }}
-                >
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  View Company Profile
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      scanNewslettersForCompany(company);
+                    }}
+                    disabled={scanningCompanyId === company.id}
+                  >
+                    <Scan className="w-4 h-4 mr-2" />
+                    {scanningCompanyId === company.id ? "Scanning..." : "Scan"}
+                  </Button>
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 group-hover:shadow-lg transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openCompany(company);
+                    }}
+                  >
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    View
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
