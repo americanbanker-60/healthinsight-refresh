@@ -4,7 +4,7 @@ import { generateDeepDive } from "../components/utils/aiAgents";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Download, Copy, Loader2, ArrowLeft } from "lucide-react";
+import { FileText, Download, Copy, Loader2, ArrowLeft, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -419,6 +419,46 @@ ${sourcesList}
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Sources Section */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Sources Analyzed ({relevantItems.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {relevantItems.map((item) => {
+              const pubDate = item.publication_date 
+                ? new Date(item.publication_date) 
+                : new Date(item.created_date);
+              
+              return (
+                <div key={item.id} className="flex items-start justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-slate-900 mb-1">{item.title}</h4>
+                    <div className="flex items-center gap-3 text-sm text-slate-600">
+                      <span>{item.source_name}</span>
+                      <span>•</span>
+                      <span>{format(pubDate, "MMM d, yyyy")}</span>
+                    </div>
+                  </div>
+                  {item.source_url && (
+                    <a
+                      href={item.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium ml-4"
+                    >
+                      View Source
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
