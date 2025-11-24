@@ -54,7 +54,7 @@ export default function DeepDiveResults() {
             ].join(' ').toLowerCase();
             
             return keywords.some(keyword => keyword && searchableText.includes(keyword.toLowerCase()));
-          }).slice(0, 50);
+          });
         }
       } else if (packId) {
         const packs = await base44.entities.LearningPack.list();
@@ -73,7 +73,7 @@ export default function DeepDiveResults() {
             ].join(' ').toLowerCase();
             
             return keywords.length > 0 && keywords.some(keyword => keyword && searchableText.includes(keyword.toLowerCase()));
-          }).slice(0, 50);
+          });
         }
       }
 
