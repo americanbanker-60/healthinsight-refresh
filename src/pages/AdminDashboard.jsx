@@ -130,8 +130,8 @@ export default function AdminDashboard() {
         {/* Admin Actions */}
         <h2 className="text-2xl font-bold text-slate-900 mb-4">Content Management</h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
-            <CardHeader>
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader className="flex-1">
               <CardTitle className="flex items-center gap-2">
                 <Database className="w-5 h-5 text-green-600" />
                 Newsletter Sources
@@ -145,8 +145,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
-            <CardHeader>
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader className="flex-1">
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-purple-600" />
                 Learning Packs
@@ -160,8 +160,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
-            <CardHeader>
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader className="flex-1">
               <CardTitle className="flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 text-amber-600" />
                 Topics
@@ -175,8 +175,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
-            <CardHeader>
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader className="flex-1">
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-blue-600" />
                 Companies
@@ -190,8 +190,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
-            <CardHeader>
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader className="flex-1">
               <CardTitle className="flex items-center gap-2">
                 <Settings className="w-5 h-5 text-slate-600" />
                 Dashboard Settings
@@ -205,8 +205,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow">
-            <CardHeader>
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader className="flex-1">
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-indigo-600" />
                 System Analytics
