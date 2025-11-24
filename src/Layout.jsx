@@ -26,72 +26,92 @@ import {
 } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 
-const staticNavigationItems = [
+const navigationGroups = [
   {
-    title: "Knowledge Hub",
-    url: createPageUrl("KnowledgeHub"),
-    icon: Compass,
-    roles: ["admin", "power", "standard"],
+    label: "Discovery & Learning",
+    items: [
+      {
+        title: "Knowledge Hub",
+        url: createPageUrl("KnowledgeHub"),
+        icon: Compass,
+        roles: ["admin", "power", "standard"],
+      },
+      {
+        title: "Explore All Sources",
+        url: createPageUrl("ExploreAllSources"),
+        icon: TrendingUp,
+        roles: ["admin", "power", "standard"],
+      },
+      {
+        title: "Learning Packs",
+        url: createPageUrl("LearningPacks"),
+        icon: BookOpen,
+        roles: ["admin", "power", "standard"],
+      },
+      {
+        title: "Topics",
+        url: createPageUrl("TopicsDirectory"),
+        icon: Lightbulb,
+        roles: ["admin", "power", "standard"],
+      },
+      {
+        title: "Companies",
+        url: createPageUrl("CompaniesDirectory"),
+        icon: Building2,
+        roles: ["admin", "power", "standard"],
+      },
+    ]
   },
   {
-    title: "Dashboard",
-    url: createPageUrl("Dashboard"),
-    icon: LayoutDashboard,
-    roles: ["admin", "power", "standard"],
+    label: "My Workspace",
+    items: [
+      {
+        title: "Dashboard",
+        url: createPageUrl("Dashboard"),
+        icon: LayoutDashboard,
+        roles: ["admin", "power", "standard"],
+      },
+      {
+        title: "My Library",
+        url: createPageUrl("MyLibrary"),
+        icon: Library,
+        roles: ["admin", "power", "standard"],
+      },
+      {
+        title: "My Custom Packs",
+        url: createPageUrl("MyCustomPacks"),
+        icon: FolderOpen,
+        roles: ["admin", "power", "standard"],
+      },
+    ]
   },
   {
-    title: "Explore All Sources",
-    url: createPageUrl("ExploreAllSources"),
-    icon: TrendingUp,
-    roles: ["admin", "power", "standard"],
+    label: "Settings",
+    items: [
+      {
+        title: "User Settings",
+        url: createPageUrl("UserSettings"),
+        icon: Settings,
+        roles: ["admin", "power", "standard"],
+      },
+      {
+        title: "Dashboard Settings",
+        url: createPageUrl("DashboardSettings"),
+        icon: Settings,
+        roles: ["admin", "power"],
+      },
+    ]
   },
   {
-    title: "Learning Packs",
-    url: createPageUrl("LearningPacks"),
-    icon: BookOpen,
-    roles: ["admin", "power", "standard"],
-  },
-  {
-    title: "Topics",
-    url: createPageUrl("TopicsDirectory"),
-    icon: Lightbulb,
-    roles: ["admin", "power", "standard"],
-  },
-  {
-    title: "Companies",
-    url: createPageUrl("CompaniesDirectory"),
-    icon: Building2,
-    roles: ["admin", "power", "standard"],
-  },
-  {
-    title: "My Library",
-    url: createPageUrl("MyLibrary"),
-    icon: Library,
-    roles: ["admin", "power", "standard"],
-  },
-  {
-    title: "My Custom Packs",
-    url: createPageUrl("MyCustomPacks"),
-    icon: FolderOpen,
-    roles: ["admin", "power", "standard"],
-  },
-  {
-    title: "Dashboard Settings",
-    url: createPageUrl("DashboardSettings"),
-    icon: Settings,
-    roles: ["admin", "power"],
-  },
-  {
-    title: "User Settings",
-    url: createPageUrl("UserSettings"),
-    icon: Settings,
-    roles: ["admin", "power", "standard"],
-  },
-  {
-    title: "Admin Dashboard",
-    url: createPageUrl("AdminDashboard"),
-    icon: Shield,
-    roles: ["admin"],
+    label: "Admin",
+    items: [
+      {
+        title: "Admin Dashboard",
+        url: createPageUrl("AdminDashboard"),
+        icon: Shield,
+        roles: ["admin"],
+      },
+    ]
   },
 ];
 
@@ -160,30 +180,32 @@ function LayoutContent({ children, currentPageName, location, sources }) {
           </SidebarHeader>
           
           <SidebarContent className="p-3">
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-3">
-                Navigation
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {staticNavigationItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton 
-                        asChild 
-                        className={`hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl mb-1 ${
-                          location.pathname === item.url ? 'bg-blue-50 text-blue-700 shadow-sm' : ''
-                        }`}
-                      >
-                        <Link to={item.url} onClick={handleLinkClick} className="flex items-center gap-3 px-4 py-3">
-                          <item.icon className="w-4 h-4" />
-                          <span className="font-medium">{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            {navigationGroups.map((group) => (
+              <SidebarGroup key={group.label}>
+                <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-3">
+                  {group.label}
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton 
+                          asChild 
+                          className={`hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl mb-1 ${
+                            location.pathname === item.url ? 'bg-blue-50 text-blue-700 shadow-sm' : ''
+                          }`}
+                        >
+                          <Link to={item.url} onClick={handleLinkClick} className="flex items-center gap-3 px-4 py-3">
+                            <item.icon className="w-4 h-4" />
+                            <span className="font-medium">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
 
             {Object.keys(activeSourcesByCategory).sort().map(category => (
               <SidebarGroup key={category} className="mt-4">
