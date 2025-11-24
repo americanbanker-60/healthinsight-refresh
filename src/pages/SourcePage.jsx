@@ -10,6 +10,7 @@ import NewsletterCard from "../components/dashboard/NewsletterCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import AnalyzeNewsletterForm from "../components/source/AnalyzeNewsletterForm";
+import BackButton from "../components/navigation/BackButton";
 
 export default function SourcePage() {
   const [showAnalyze, setShowAnalyze] = useState(false);
@@ -77,6 +78,7 @@ export default function SourcePage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto w-full overflow-x-hidden box-border">
+      <BackButton className="mb-4" />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">

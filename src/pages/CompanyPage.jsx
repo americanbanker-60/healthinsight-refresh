@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import CompanyOverview from "../components/company/CompanyOverview";
 import CompanyTimeline from "../components/company/CompanyTimeline";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
+import BackButton from "../components/navigation/BackButton";
 
 export default function CompanyPage() {
   const navigate = useNavigate();
@@ -186,6 +187,7 @@ export default function CompanyPage() {
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
+      <BackButton className="mb-4" />
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between mb-4">

@@ -13,6 +13,7 @@ import TopicQuickSummary from "../components/topics/TopicQuickSummary";
 import TopicTimeline from "../components/topics/TopicTimeline";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import WatchTopicButton from "../components/topics/WatchTopicButton";
+import BackButton from "../components/navigation/BackButton";
 
 export default function TopicPage() {
   const navigate = useNavigate();
@@ -150,6 +151,7 @@ export default function TopicPage() {
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
+      <BackButton className="mb-4" />
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between mb-4">
