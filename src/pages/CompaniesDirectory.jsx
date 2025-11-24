@@ -124,7 +124,17 @@ export default function CompaniesDirectory() {
     navigate(createPageUrl("CompanyPage") + "?" + params.toString());
   };
 
-  const scanNewslettersForCompany = async (company) => {
+  const scanNewslettersForCompany = (company, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (!newsletters || newsletters.length === 0) {
+      toast.error("No newsletters loaded yet");
+      return;
+    }
+    
     setScanningCompanyId(company.id);
     
     try {
@@ -132,7 +142,13 @@ export default function CompaniesDirectory() {
         company.company_name,
         ...(company.known_aliases || []),
         ...(company.primary_keywords || [])
-      ].map(term => term.toLowerCase());
+      ].filter(term => term).map(term => term.toLowerCase());
+
+      if (searchTerms.length === 0) {
+        toast.error("No search terms available for this company");
+        setScanningCompanyId(null);
+        return;
+      }
 
       const mentions = newsletters.filter(newsletter => {
         const searchableContent = [
@@ -141,8 +157,8 @@ export default function CompaniesDirectory() {
           newsletter.tldr || '',
           ...(newsletter.key_takeaways || []),
           ...(newsletter.key_players || []),
-          ...(newsletter.ma_activities?.map(a => `${a.acquirer} ${a.target}`) || []),
-          ...(newsletter.funding_rounds?.map(f => f.company) || [])
+          ...(newsletter.ma_activities?.map(a => `${a.acquirer || ''} ${a.target || ''}`) || []),
+          ...(newsletter.funding_rounds?.map(f => f.company || '') || [])
         ].join(' ').toLowerCase();
 
         return searchTerms.some(term => searchableContent.includes(term));
@@ -262,10 +278,7 @@ export default function CompaniesDirectory() {
                     variant="outline"
                     size="sm"
                     className="flex-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      scanNewslettersForCompany(company);
-                    }}
+                    onClick={(e) => scanNewslettersForCompany(company, e)}
                     disabled={scanningCompanyId === company.id}
                   >
                     <Scan className="w-4 h-4 mr-2" />
