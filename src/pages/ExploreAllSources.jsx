@@ -3,6 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +16,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Search, Calendar as CalendarIcon, Filter, X, Eye, BookOpen, AlertCircle, FileText } from "lucide-react";
 import { format, subDays, startOfYear } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Link, useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import SummaryBuilder from "../components/explore/SummaryBuilder";
 import SmartSearchInput from "../components/search/SmartSearchInput";
@@ -20,8 +26,6 @@ import RecommendedPacks from "../components/packs/RecommendedPacks";
 import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
 import FavoritePacks from "../components/packs/FavoritePacks";
 import { logPackView } from "../components/utils/packTracking";
-import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 
 const dateRangePresets = [
   { label: "Last 7 days", value: "7d" },
