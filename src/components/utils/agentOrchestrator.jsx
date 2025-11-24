@@ -195,9 +195,9 @@ Do NOT hallucinate or speculate. Only use the content given.`,
 - Connect directly to the content
 
 2. **Mini Email Templates** (1–2 options)
-Format as:
+Format as outreach emails FROM the user TO potential targets (company executives, PE firms, operators):
 Subject: [specific subject line]
-Body: [3–5 professional sentences referencing the insight]
+Body: [3–5 professional sentences positioning the user as an advisor/banker reaching out with relevant insights]
 
 3. **Thought Leadership / Marketing Angles** (3–5 bullets)
 - LinkedIn posts, memos, pitch themes, conference talking points
@@ -230,9 +230,9 @@ Do NOT guess or add content not present in the inputs.`,
 - Reference specific pack content
 
 2. **Mini Email Templates** (1–2 options)
-Format as:
+Format as outreach emails FROM the user TO potential targets (executives, PE principals, operators):
 Subject: [specific subject]
-Body: [3–5 sentences with pack insight reference]
+Body: [3–5 sentences positioning the user as a banker/advisor reaching out]
 
 3. **Thought Leadership / Marketing Angles** (3–5 bullets)
 - LinkedIn themes, memos, pitch angles
@@ -274,8 +274,9 @@ No speculation. Only use provided content.`,
 - Tie to valuation or consolidation
 
 5. **Mini Email Template**
+Format as outreach FROM user TO a target:
 Subject: [specific subject]
-Body: [2–3 sentences]`
+Body: [2–3 sentences as banker/advisor reaching out]`
     },
     
     deepDive: {
@@ -302,9 +303,9 @@ For each: Who to contact, why this matters to them, what angle to use, how to re
 Connect each directly to market insights.
 
 **Mini Email Templates** (2–3 options)
-Format each as:
+Format each as outreach emails FROM the user (banker/advisor) TO potential targets (executives, PE firms, operators):
 Subject: [specific subject line]
-Body: [4–5 professional sentences]
+Body: [4–5 professional sentences positioning the sender as a banker/advisor with relevant market insights]
 
 **Thought Leadership & Marketing**
 8-12 content ideas: LinkedIn posts, pitch meeting themes, conference talking points, client memos, one-pager topics.
@@ -334,8 +335,9 @@ Consider user notes as strategic context. Do NOT guess or add content not presen
 - Specify contacts and angles
 
 2. **Mini Email Templates** (1–2 options)
+Format as outreach FROM user TO targets:
 Subject: [specific]
-Body: [3–5 sentences]
+Body: [3–5 sentences as banker/advisor reaching out]
 
 3. **Thought Leadership Angles** (3–5 bullets)
 - Marketing and pitch themes from pack insights
@@ -368,8 +370,9 @@ Transform company mentions into outreach opportunities and deal angles. Do NOT h
 - Angles for BD conversations
 
 4. **Mini Email Template**
+Format as outreach FROM user TO company contacts:
 Subject: [specific]
-Body: [3–4 sentences]
+Body: [3–4 sentences as banker/advisor reaching out]
 
 5. **Deal Angle Assessment** (2–3 bullets)
 - M&A potential, growth capital needs, partnership opportunities
