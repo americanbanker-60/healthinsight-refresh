@@ -58,12 +58,13 @@ Format as markdown with clear sections. Be specific, cite examples, and focus on
         response_json_schema: null
       });
 
-      await base44.entities.LearningPack.update(pack.id, {
+      const updatedPack = await base44.entities.LearningPack.update(pack.id, {
         pack_insights: response,
         insights_generated_at: new Date().toISOString()
       });
 
-      toast.success("Pack insights generated successfully");
+      console.log("Insights saved:", updatedPack);
+      toast.success("Pack insights generated! Scroll up to view.");
       if (onInsightsGenerated) onInsightsGenerated();
     } catch (error) {
       console.error("Insight generation error:", error);
@@ -92,26 +93,26 @@ Format as markdown with clear sections. Be specific, cite examples, and focus on
   }
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
+    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200 shadow-lg">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-purple-900">
             <Sparkles className="w-5 h-5 text-purple-600" />
-            Pack Insights
+            AI-Generated Pack Insights
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={generateInsights} disabled={generating}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
+            <RefreshCw className={`w-4 h-4 mr-2 ${generating ? 'animate-spin' : ''}`} />
+            {generating ? "Refreshing..." : "Refresh"}
           </Button>
         </div>
         {pack.insights_generated_at && (
           <p className="text-xs text-slate-500">
-            Generated {format(new Date(pack.insights_generated_at), "MMM d, yyyy")}
+            Last updated {format(new Date(pack.insights_generated_at), "MMM d, yyyy 'at' h:mm a")}
           </p>
         )}
       </CardHeader>
       <CardContent>
-        <div className="prose prose-sm prose-slate max-w-none">
+        <div className="prose prose-sm prose-slate max-w-none bg-white/60 rounded-lg p-4">
           <ReactMarkdown>{pack.pack_insights}</ReactMarkdown>
         </div>
       </CardContent>
