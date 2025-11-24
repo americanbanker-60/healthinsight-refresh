@@ -80,18 +80,6 @@ const staticNavigationItems = [
     roles: ["admin", "power", "standard"],
   },
   {
-    title: "Admin Panel",
-    url: createPageUrl("AdminPanel"),
-    icon: Shield,
-    roles: ["admin"],
-  },
-  {
-    title: "Manage Sources",
-    url: createPageUrl("ManageSources"),
-    icon: Settings,
-    roles: ["admin"],
-  },
-  {
     title: "Dashboard Settings",
     url: createPageUrl("DashboardSettings"),
     icon: Settings,
