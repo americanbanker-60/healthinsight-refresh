@@ -33,6 +33,7 @@ const dateRangePresets = [
 
 export default function ExploreAllSources() {
   const navigate = useNavigate();
+  
   const [searchText, setSearchText] = useState("");
   const [dateRangePreset, setDateRangePreset] = useState("30d");
   const [customStartDate, setCustomStartDate] = useState(null);
