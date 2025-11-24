@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { WalkthroughProvider, useWalkthrough } from "@/components/walkthrough/WalkthroughManager";
 import { useUserRole } from "@/components/auth/RoleGuard";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Shield, PlayCircle } from "lucide-react";
 import {
   Sidebar,
