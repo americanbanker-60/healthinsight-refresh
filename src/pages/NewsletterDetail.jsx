@@ -322,6 +322,14 @@ export default function NewsletterDetail() {
             ? `${newsletter.funding_rounds.length} funding event(s) identified. These companies may need advisory services.`
             : `This newsletter contains ${newsletter.key_takeaways?.length || 0} insights that could support client conversations or outreach.`
         }
+        contextData={{
+          title: newsletter.title,
+          summary: newsletter.tldr || newsletter.summary,
+          companies: newsletter.key_players,
+          deals: newsletter.ma_activities?.map(m => `${m.acquirer} acquiring ${m.target}`).join("; ") || 
+                 newsletter.funding_rounds?.map(f => `${f.company} raised ${f.amount}`).join("; "),
+          themes: newsletter.themes?.map(t => t.theme)
+        }}
       />
     </div>
   );

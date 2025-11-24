@@ -197,6 +197,13 @@ export default function TopicPage() {
           type="topic"
           context={`${relevantNewsletters.length} recent items on "${topic.topic_name}" — identify targets, craft outreach angles, or build thought leadership.`}
           variant="compact"
+          contextData={{
+            title: topic.topic_name,
+            description: topic.description,
+            themes: Array.isArray(topic.keywords) ? topic.keywords : [topic.keywords],
+            companies: relatedCompanies.slice(0, 10).map(c => c.company),
+            summary: `Topic with ${relevantNewsletters.length} recent mentions. Key companies: ${relatedCompanies.slice(0, 5).map(c => c.company).join(", ")}`
+          }}
         />
       </div>
 

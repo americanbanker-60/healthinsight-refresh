@@ -233,6 +233,18 @@ export default function CompanyPage() {
           type="company"
           context={`${relevantNewsletters.length} mentions of ${company.company_name} — research decision-makers, draft an intro, or track for deal signals.`}
           variant="compact"
+          contextData={{
+            name: company.company_name,
+            description: company.description,
+            companies: [company.company_name, ...(company.known_aliases || [])],
+            deals: highlights.ma.length > 0 
+              ? highlights.ma.slice(0, 3).map(m => `${m.acquirer} → ${m.target}`).join("; ")
+              : highlights.funding.length > 0
+              ? highlights.funding.slice(0, 3).map(f => `${f.company} raised ${f.amount}`).join("; ")
+              : null,
+            themes: relatedTopics.slice(0, 5).map(t => t.name),
+            summary: `${relevantNewsletters.length} recent mentions. ${highlights.ma.length} M&A activities, ${highlights.funding.length} funding rounds.`
+          }}
         />
       </div>
 
