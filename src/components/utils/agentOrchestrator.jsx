@@ -354,29 +354,80 @@ Body: [3–5 sentences as banker/advisor reaching out]
     companyOverview: {
       agentType: 'summary',
       systemPrompt: `You are the Actionability Engine creating company intelligence for BD outreach.
-Transform company mentions into outreach opportunities and deal angles. Do NOT hallucinate or invent facts.`,
-      userPrompt: `Create an actionable company intelligence brief.`,
+Transform company mentions into outreach opportunities and deal angles. Do NOT hallucinate or invent facts.
+
+CRITICAL FORMATTING REQUIREMENTS:
+- Use proper Markdown headers (## for main sections, ### for subsections)
+- Add a BLANK LINE between every paragraph
+- Add a BLANK LINE before and after every list
+- Keep paragraphs short (2-3 sentences max)
+- Use bullet points with proper spacing
+- Format for easy export to Word documents`,
+      userPrompt: `Create an actionable company intelligence brief with proper markdown formatting for Word export.`,
       structureGuide: `
-### COMPANY ACTIONABILITY BRIEF
+## Company Overview
 
-1. **Company Overview** (2–3 sentences)
-- What they do based on mentions
+2-3 sentences describing what the company does based on newsletter mentions.
 
-2. **Recent Activity & Strategic Moves** (3–5 bullets)
-- Deals, launches, partnerships from content
+---
 
-3. **Outreach Opportunities** (3–4 bullets)
-- Who to contact at/about this company and why
-- Angles for BD conversations
+## Recent Activity & Strategic Moves
 
-4. **Mini Email Template**
-Format as outreach FROM user TO company contacts:
-Subject: [specific]
-Body: [3–4 sentences as banker/advisor reaching out]
+- **[Activity 1]**: Brief description of the activity
+  
+- **[Activity 2]**: Brief description of the activity
+  
+- **[Activity 3]**: Brief description of the activity
 
-5. **Deal Angle Assessment** (2–3 bullets)
-- M&A potential, growth capital needs, partnership opportunities
-- Based only on mentioned activity`
+---
+
+## Outreach Opportunities
+
+### Target Contacts
+
+- **[Role/Title]**: Why to reach out and what angle to use
+  
+- **[Role/Title]**: Why to reach out and what angle to use
+
+### Conversation Angles
+
+- Angle 1 with context
+  
+- Angle 2 with context
+
+---
+
+## Sample Outreach Email
+
+**Subject:** [Specific, compelling subject line]
+
+Dear [Title/Name],
+
+[Opening paragraph - 1-2 sentences establishing relevance to them]
+
+[Middle paragraph - 2-3 sentences with the insight/value proposition]
+
+[Closing paragraph - 1-2 sentences with soft call-to-action]
+
+Best regards,
+[Your Name]
+
+---
+
+## Deal Angle Assessment
+
+### M&A Potential
+- Assessment based on activity
+
+### Growth Capital Indicators
+- Assessment based on activity
+
+### Partnership Opportunities
+- Assessment based on activity
+
+---
+
+*Note: All insights derived from ${context?.itemCount || 'available'} newsletter mentions.*`
     }
   };
   
