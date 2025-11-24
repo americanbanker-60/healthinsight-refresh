@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+import { RoleGuard } from "../components/auth/RoleGuard";
+
 export default function Cleanup() {
   const [selectedSource, setSelectedSource] = useState("all");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -90,8 +92,9 @@ export default function Cleanup() {
   };
 
   return (
-    <div className="p-10 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Newsletter Cleanup Tool</h1>
+    <RoleGuard allowedRoles={["admin"]}>
+      <div className="p-10 max-w-5xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Newsletter Cleanup Tool</h1>
       
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2">Select Source</label>
@@ -180,6 +183,7 @@ export default function Cleanup() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

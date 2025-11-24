@@ -97,6 +97,16 @@ export function WalkthroughProvider({ children }) {
   const currentStepData = isActive && currentStep !== null ? walkthroughSteps[currentStep] : null;
   const shouldShowOnboarding = !progress || (!progress.completed && !progress.skipped);
 
+  // Auto-start walkthrough for first-time users
+  React.useEffect(() => {
+    if (shouldShowOnboarding && !isActive && progress !== null && progress !== undefined) {
+      const timer = setTimeout(() => {
+        startWalkthrough();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldShowOnboarding, isActive, progress]);
+
   return (
     <WalkthroughContext.Provider
       value={{

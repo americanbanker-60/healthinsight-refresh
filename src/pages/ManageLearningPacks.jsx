@@ -108,10 +108,10 @@ export default function ManageLearningPacks() {
   return (
     <RoleGuard allowedRoles={["admin"]}>
       <div className="p-6 md:p-10 max-w-6xl mx-auto">
-        <Link to={createPageUrl("AdminPanel")}>
+        <Link to={createPageUrl("AdminDashboard")}>
           <Button variant="ghost" size="sm" className="mb-4">
             <ChevronLeft className="w-4 h-4 mr-1" />
-            Back to Admin Panel
+            Back to Admin Dashboard
           </Button>
         </Link>
 

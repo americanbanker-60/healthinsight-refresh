@@ -114,9 +114,16 @@ export default function WatchedTopicsSection() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center py-8 text-slate-500">
-            You're not watching any topics yet. Visit a topic page to start watching.
-          </p>
+          <div className="text-center py-8">
+            <Bell className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+            <p className="text-sm text-slate-600 mb-3">You're not watching any topics yet.</p>
+            <div className="text-xs text-slate-500 space-y-1 max-w-sm mx-auto text-left">
+              <p>• Browse topics from the Topics Directory</p>
+              <p>• Click the "Watch" button on any topic page</p>
+              <p>• Get alerts when new content matches your watched topics</p>
+              <p>• Manage notification frequency in User Settings</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );

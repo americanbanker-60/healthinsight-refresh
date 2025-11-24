@@ -244,8 +244,13 @@ Write a short paragraph summarizing what this user has been learning about.`;
         <CardContent>
           <div className="text-center py-8 text-slate-600">
             <BarChart3 className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-            <p className="text-sm">Once you start exploring Learning Packs and running searches, your Insights will appear here.</p>
-            <p className="text-xs text-slate-500 mt-2">Try opening a pack or saving a search to get started!</p>
+            <p className="text-sm mb-3">Once you start exploring Learning Packs and running searches, your personalized insights will appear here.</p>
+            <div className="text-xs text-slate-500 space-y-1 max-w-sm mx-auto text-left">
+              <p>• Search for healthcare topics on the Explore page</p>
+              <p>• Open Learning Packs to discover curated content</p>
+              <p>• Save searches and summaries for future reference</p>
+              <p>• Your activity patterns will generate AI insights</p>
+            </div>
           </div>
         </CardContent>
       </Card>

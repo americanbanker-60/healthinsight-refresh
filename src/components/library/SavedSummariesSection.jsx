@@ -64,9 +64,15 @@ export default function SavedSummariesSection() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-slate-600">
+          <div className="text-center py-8">
             <FileText className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-            <p className="text-sm">Generate a summary on the Explore page, then save it to access it here.</p>
+            <p className="text-sm text-slate-600 mb-3">No saved summaries yet.</p>
+            <div className="text-xs text-slate-500 space-y-1 max-w-sm mx-auto text-left">
+              <p>• Go to Explore All Sources and select newsletters</p>
+              <p>• Click "Generate Summary" to create AI summaries</p>
+              <p>• Use the "Save Summary" button to keep it here</p>
+              <p>• Download as markdown or share with your team</p>
+            </div>
           </div>
         </CardContent>
       </Card>
