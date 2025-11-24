@@ -70,7 +70,7 @@ export default function WalkthroughTooltip({ step, stepNumber, totalSteps, onNex
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 pb-4">
+            <CardContent className="pt-6 pb-4 max-h-[60vh] overflow-y-auto">
               <div className="text-slate-700 leading-relaxed whitespace-pre-line mb-6">
                 {step.content}
               </div>
