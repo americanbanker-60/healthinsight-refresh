@@ -92,6 +92,14 @@ CONTEXT DATA:
 - Deal Activity: ${data.deals || "N/A"}
 - Key Themes: ${data.themes?.join(", ") || "N/A"}
 ${additional ? `\nADDITIONAL CONTEXT FROM USER: ${additional}` : ""}
+
+CRITICAL FORMATTING RULES:
+- Use TWO line breaks between paragraphs (blank line between each paragraph)
+- Use headers (##, ###) to separate major sections
+- Use bullet points or numbered lists where appropriate
+- Keep paragraphs short (2-3 sentences max)
+- Add a blank line before and after lists
+- Add a blank line before and after headers
 `;
 
     const typePrompts = {
@@ -99,18 +107,28 @@ ${additional ? `\nADDITIONAL CONTEXT FROM USER: ${additional}` : ""}
 ${baseContext}
 
 Generate a compelling PITCH ANGLE that I can use to approach prospects related to this intelligence.
-Include:
-1. A hook that grabs attention
-2. Why this is relevant NOW (timing/urgency)
-3. How our services could help them capitalize or respond
-4. A soft call-to-action
 
-Keep it concise but powerful. Format in markdown.`,
+Structure your response with these sections (use ### headers):
+
+### The Hook
+A compelling opening that grabs attention
+
+### Why Now
+The timing/urgency factor
+
+### Our Value
+How our services could help them capitalize or respond
+
+### The Ask
+A soft call-to-action
+
+Keep each section concise but powerful. Remember to add blank lines between paragraphs.`,
 
       intro_email: `
 ${baseContext}
 
 Write a cold INTRO EMAIL to a decision-maker at a relevant company.
+
 The email should:
 1. Have a compelling subject line
 2. Open with something relevant to THEM (not about us)
@@ -118,32 +136,50 @@ The email should:
 4. Briefly mention how we could help
 5. End with a low-friction ask (15-min call, not a pitch meeting)
 
-Keep it under 150 words. Be human, not salesy. Format the body in markdown.`,
+Keep it under 150 words. Be human, not salesy.
+
+IMPORTANT: Format with clear paragraph breaks. Each paragraph should be separated by a blank line. The greeting, each body paragraph, and the sign-off should all be separate paragraphs.`,
 
       follow_up: `
 ${baseContext}
 
 Write a FOLLOW-UP EMAIL for someone I've previously contacted about this topic.
+
 The email should:
 1. Reference the previous conversation naturally
 2. Share a new insight or development as a reason for reaching out
 3. Provide value without asking for anything
 4. Gently suggest next steps
 
-Keep it under 100 words. Format in markdown.`,
+Keep it under 100 words.
+
+IMPORTANT: Format with clear paragraph breaks. Each paragraph should be separated by a blank line.`,
 
       talking_points: `
 ${baseContext}
 
 Create TALKING POINTS for a call or meeting about this topic.
-Include:
-1. Opening hook / conversation starter
-2. 3-4 key market insights to discuss
-3. Questions to ask them (to understand their situation)
-4. How to naturally transition to our services
-5. Potential objections and responses
 
-Format as a clear, scannable markdown list.`
+Use this structure with ### headers and bullet points:
+
+### Opening Hook
+- Conversation starter points
+
+### Key Market Insights
+- Insight 1
+- Insight 2
+- Insight 3
+
+### Discovery Questions
+- Questions to understand their situation
+
+### Transition to Services
+- How to naturally bring up our capabilities
+
+### Handling Objections
+- Common objection → Response
+
+Add blank lines between each section for readability.`
     };
 
     return typePrompts[type] || typePrompts.pitch_angle;
