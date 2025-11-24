@@ -4,10 +4,10 @@ import { createPageUrl } from "@/utils";
 import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, Newspaper, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { WalkthroughProvider } from "@/components/walkthrough/WalkthroughManager";
+import { WalkthroughProvider, useWalkthrough } from "@/components/walkthrough/WalkthroughManager";
 import { useUserRole } from "@/components/auth/RoleGuard";
 import { Badge } from "@/components/ui/badge";
-import { Shield } from "lucide-react";
+import { Shield, PlayCircle } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -97,6 +97,7 @@ const staticNavigationItems = [
 function LayoutContent({ children, currentPageName, location, sources }) {
   const { setOpen, isMobile } = useSidebar();
   const { role } = useUserRole();
+  const { startWalkthrough } = useWalkthrough();
 
   // Close sidebar on mobile when route changes
   React.useEffect(() => {
@@ -211,7 +212,16 @@ function LayoutContent({ children, currentPageName, location, sources }) {
             ))}
           </SidebarContent>
 
-          <SidebarFooter className="border-t border-slate-200/60 p-4">
+          <SidebarFooter className="border-t border-slate-200/60 p-4 space-y-3">
+            <Button
+              onClick={startWalkthrough}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+              size="sm"
+            >
+              <PlayCircle className="w-4 h-4 mr-2" />
+              Start Tutorial
+            </Button>
+
             <div className="flex items-center gap-3 px-2">
               <div className="w-9 h-9 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center">
                 <span className="text-slate-600 font-semibold text-sm">U</span>
