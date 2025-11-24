@@ -190,21 +190,20 @@ export default function DeepDiveResults() {
 
   const copyToClipboard = async () => {
     try {
-      const formatted = await formatSummaryAsMarkdown(deepDive.content);
-      await navigator.clipboard.writeText(formatted);
+      await navigator.clipboard.writeText(deepDive.content);
       toast.success("Copied to clipboard!");
     } catch (error) {
+      console.error("Copy error:", error);
       toast.error("Failed to copy");
     }
   };
 
   const downloadMarkdown = async () => {
     try {
-      const formatted = await formatSummaryAsMarkdown(deepDive.content);
-      
-      const sourcesList = relevantItems.slice(0, 20).map(n => {
+      const sourcesList = relevantItems.map(n => {
         const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-        return `- **${n.title}** – ${n.source_name} (${format(pubDate, "MMM d, yyyy")})`;
+        const sourceUrl = n.source_url ? ` - [View Source](${n.source_url})` : '';
+        return `- **${n.title}** – ${n.source_name} (${format(pubDate, "MMM d, yyyy")})${sourceUrl}`;
       }).join('\n');
 
       const markdown = `# Deep Dive: ${deepDive.title}
@@ -214,11 +213,11 @@ export default function DeepDiveResults() {
 
 ---
 
-${formatted}
+${deepDive.content}
 
 ---
 
-## Sources Referenced (Top 20)
+## Sources Analyzed (${relevantItems.length})
 
 ${sourcesList}
 `;
@@ -235,6 +234,7 @@ ${sourcesList}
       
       toast.success("Downloaded!");
     } catch (error) {
+      console.error("Download error:", error);
       toast.error("Failed to download");
     }
   };
