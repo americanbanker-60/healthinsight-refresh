@@ -79,10 +79,10 @@ export default function TopicQuickSummary({ topic, relevantNewsletters }) {
           </div>
         ) : (
           isExpanded && (
-            <div className="bg-white/60 p-4 rounded-lg">
-              <ReactMarkdown className="prose prose-sm prose-slate max-w-none prose-headings:font-bold prose-h2:text-base prose-h2:mt-3 prose-h2:mb-2 prose-h3:text-sm prose-h3:mt-2 prose-h3:mb-1 prose-p:text-slate-700 prose-p:leading-relaxed prose-li:text-slate-700 prose-li:my-1 prose-strong:text-slate-900 prose-strong:font-semibold">
-                {summary}
-              </ReactMarkdown>
+            <div className="bg-white/60 p-5 rounded-lg border border-slate-200">
+              <div className="prose prose-sm max-w-none prose-headings:text-slate-900 prose-headings:font-semibold prose-h2:text-base prose-h2:mt-6 prose-h2:mb-3 prose-h2:pb-1 prose-h2:border-b prose-h2:border-slate-200 prose-h3:text-sm prose-h3:mt-5 prose-h3:mb-2 prose-p:text-slate-700 prose-p:leading-relaxed prose-p:mb-4 prose-li:text-slate-700 prose-li:mb-2 prose-ul:mb-4 prose-ul:mt-2 prose-strong:text-slate-900 [&_ul]:space-y-2 [&_ol]:space-y-2">
+                <ReactMarkdown>{summary}</ReactMarkdown>
+              </div>
             </div>
           )
         )}
