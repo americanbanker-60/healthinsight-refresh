@@ -14,6 +14,7 @@ import { format, subDays, startOfYear } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import SummaryBuilder from "../components/explore/SummaryBuilder";
+import SmartSearchInput from "../components/search/SmartSearchInput";
 import SavedSearchesPanel from "../components/explore/SavedSearchesPanel";
 import RecommendedPacks from "../components/packs/RecommendedPacks";
 import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
@@ -338,15 +339,12 @@ export default function ExploreAllSources() {
         <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 mb-4 md:mb-6">
         <CardContent className="pt-4 md:pt-6 space-y-4 md:space-y-6">
           {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-4 h-4 md:w-5 md:h-5 text-slate-400" />
-            <Input
-              placeholder="Search titles, summaries, content..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10 text-base md:text-lg"
-            />
-          </div>
+          <SmartSearchInput
+            value={searchText}
+            onChange={setSearchText}
+            availableTopics={allTopics}
+            availableCompanies={Array.from(new Set(newsletters.flatMap(n => n.key_players || [])))}
+          />
 
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
