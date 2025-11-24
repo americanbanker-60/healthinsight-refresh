@@ -277,11 +277,11 @@ export default function CompaniesDirectory() {
                   </p>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-2 border-t border-slate-100">
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    className="flex-1"
+                    className="text-slate-500 hover:text-slate-700"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -289,18 +289,17 @@ export default function CompaniesDirectory() {
                     }}
                     disabled={scanningCompanyId === company.id}
                   >
-                    <Scan className="w-4 h-4 mr-2" />
-                    {scanningCompanyId === company.id ? "Scanning..." : "Scan"}
+                    <Scan className="w-4 h-4" />
                   </Button>
                   <Button
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 group-hover:shadow-lg transition-all"
+                    size="sm"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
                     onClick={(e) => {
                       e.stopPropagation();
                       openCompany(company);
                     }}
                   >
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    View
+                    View Details
                   </Button>
                 </div>
               </CardContent>
