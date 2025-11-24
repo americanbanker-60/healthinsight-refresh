@@ -152,39 +152,32 @@ export default function RecommendedPacks({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {recommendedPacks.map(pack => (
             <Card
               key={pack.id}
-              className="bg-white hover:shadow-md transition-all cursor-pointer group border-slate-200"
+              className="bg-white hover:shadow-md transition-all cursor-pointer group border-slate-200 flex flex-col"
               onClick={() => openPack(pack)}
             >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    {pack.icon && <div className="text-2xl">{pack.icon}</div>}
-                  </div>
-                  <div className="flex items-center gap-2">
+              <CardContent className="p-4 flex flex-col flex-1">
+                <div className="flex items-start justify-between mb-2 min-h-[32px]">
+                  {pack.icon && <div className="text-2xl flex-shrink-0">{pack.icon}</div>}
+                  <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
                     <div onClick={(e) => e.stopPropagation()}>
                       <FavoriteButton packId={pack.id} variant="icon" />
                     </div>
-                    {pack.category && (
-                      <Badge variant="outline" className="text-xs">
-                        {pack.category}
-                      </Badge>
-                    )}
                   </div>
                 </div>
-                <h4 className="font-semibold text-sm text-slate-900 mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">
+                <h4 className="font-semibold text-sm text-slate-900 mb-1 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[40px]">
                   {pack.pack_title}
                 </h4>
-                <p className="text-xs text-slate-600 mb-3 line-clamp-2">
+                <p className="text-xs text-slate-600 mb-3 line-clamp-2 flex-1">
                   {pack.description}
                 </p>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="w-full text-xs"
+                  className="w-full text-xs mt-auto"
                   onClick={(e) => {
                     e.stopPropagation();
                     openPack(pack);
