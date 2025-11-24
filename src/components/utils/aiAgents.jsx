@@ -56,16 +56,29 @@ export async function generateDeepDive(contextTitle, relevantItems, userVerbosit
 }
 
 /**
- * MarkdownFormatterAgent - Formats summaries as clean markdown
+ * MarkdownFormatterAgent - Formats summaries as clean markdown for Word/PDF export
  */
 export async function formatAsMarkdown(summaryContent) {
   const prompt = `SYSTEM:
-Format the provided summary into clean, professional Markdown suitable for use in a memo,
-email, or internal briefing. Preserve clarity and hierarchy.
+You are a document formatting specialist. Format the provided content into clean, professional 
+text suitable for export to Word or PDF documents.
+
+CRITICAL FORMATTING RULES:
+1. PARAGRAPHS: Use short paragraphs (2-3 sentences). Put ONE blank line between every paragraph.
+2. HEADINGS: Use clear heading hierarchy. Put a blank line before AND after every heading.
+3. LISTS: Put a blank line before and after every list. Each bullet on its own line.
+4. SPACING: Generous spacing is essential - when in doubt, add a blank line.
+5. STRUCTURE: Use sections like Overview, Key Points, Recommendations when helpful.
+
+DO NOT:
+- Create walls of text
+- Use decorative separators like ==== or ****
+- Join multiple bullets on the same line
+- Skip blank lines between sections
 
 USER:
-Reformat the following summary into Markdown. Preserve bullets, headings, indentation, and
-organization. Do NOT modify the content or add new insights.
+Reformat the following content for Word/PDF export. Preserve all information and meaning.
+Do NOT modify the actual content - only improve formatting and spacing.
 
 Content to format:
 ${summaryContent}`;
