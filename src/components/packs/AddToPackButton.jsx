@@ -1,220 +1,114 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, FolderPlus } from "lucide-react";
+import { BookOpen, Plus, Check } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
-export default function AddToPackButton({ newsletterId, variant = "default" }) {
-  const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState("existing");
-  const [selectedPackId, setSelectedPackId] = useState("");
-  const [newPackTitle, setNewPackTitle] = useState("");
-  const [newPackDescription, setNewPackDescription] = useState("");
-  const [note, setNote] = useState("");
-  
+export default function AddToPackButton({ newsletterId, variant = "default", size = "sm" }) {
+  const [showDialog, setShowDialog] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: customPacks = [] } = useQuery({
-    queryKey: ['userCustomPacks'],
-    queryFn: async () => {
-      const user = await base44.auth.me();
-      return await base44.entities.UserCustomPack.filter({ created_by: user.email }, "-created_date");
-    },
+  const { data: packs = [] } = useQuery({
+    queryKey: ['learningPacks'],
+    queryFn: () => base44.entities.LearningPack.list("pack_title"),
     initialData: [],
-    enabled: open,
   });
 
-  const addItemMutation = useMutation({
-    mutationFn: async ({ packId, itemId, note }) => {
-      const existing = await base44.entities.UserCustomPackItem.filter({
-        custom_pack_id: packId,
-        item_id: itemId
-      });
+  const addToPackMutation = useMutation({
+    mutationFn: async ({ packId, newsletterId }) => {
+      const pack = packs.find(p => p.id === packId);
+      const currentPinned = pack.pinned_newsletter_ids || [];
       
-      if (existing.length > 0) {
-        throw new Error("Item already in pack");
+      if (currentPinned.includes(newsletterId)) {
+        // Remove from pack
+        const updated = currentPinned.filter(id => id !== newsletterId);
+        await base44.entities.LearningPack.update(packId, {
+          pinned_newsletter_ids: updated
+        });
+        return { action: 'removed' };
+      } else {
+        // Add to pack
+        await base44.entities.LearningPack.update(packId, {
+          pinned_newsletter_ids: [...currentPinned, newsletterId]
+        });
+        return { action: 'added' };
       }
-
-      const items = await base44.entities.UserCustomPackItem.filter({ custom_pack_id: packId });
-      const maxOrder = items.length > 0 ? Math.max(...items.map(i => i.order_index || 0)) : 0;
-
-      return await base44.entities.UserCustomPackItem.create({
-        custom_pack_id: packId,
-        item_id: itemId,
-        order_index: maxOrder + 1,
-        note: note || ""
-      });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userCustomPacks'] });
-      queryClient.invalidateQueries({ queryKey: ['userCustomPackItems'] });
-      toast.success("Added to pack!");
-      handleClose();
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to add item");
-    }
-  });
-
-  const createPackMutation = useMutation({
-    mutationFn: async ({ title, description }) => {
-      return await base44.entities.UserCustomPack.create({
-        pack_title: title,
-        description: description || ""
-      });
-    },
-    onSuccess: (newPack) => {
-      queryClient.invalidateQueries({ queryKey: ['userCustomPacks'] });
-      addItemMutation.mutate({
-        packId: newPack.id,
-        itemId: newsletterId,
-        note
-      });
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['learningPacks'] });
+      toast.success(data.action === 'added' ? 'Added to pack' : 'Removed from pack');
     },
   });
 
-  const handleSubmit = () => {
-    if (mode === "existing") {
-      if (!selectedPackId) {
-        toast.error("Please select a pack");
-        return;
-      }
-      addItemMutation.mutate({
-        packId: selectedPackId,
-        itemId: newsletterId,
-        note
-      });
-    } else {
-      if (!newPackTitle.trim()) {
-        toast.error("Please enter a pack title");
-        return;
-      }
-      createPackMutation.mutate({
-        title: newPackTitle,
-        description: newPackDescription
-      });
-    }
+  const handlePackClick = (packId) => {
+    addToPackMutation.mutate({ packId, newsletterId });
   };
 
-  const handleClose = () => {
-    setOpen(false);
-    setMode("existing");
-    setSelectedPackId("");
-    setNewPackTitle("");
-    setNewPackDescription("");
-    setNote("");
+  const isInPack = (packId) => {
+    const pack = packs.find(p => p.id === packId);
+    return pack?.pinned_newsletter_ids?.includes(newsletterId);
   };
 
   return (
     <>
       <Button
-        variant={variant === "icon" ? "ghost" : "outline"}
-        size={variant === "icon" ? "icon" : "sm"}
-        onClick={() => setOpen(true)}
+        variant={variant}
+        size={size}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowDialog(true);
+        }}
       >
-        <Plus className="w-4 h-4" />
-        {variant !== "icon" && <span className="ml-2">Add to Pack</span>}
+        <Plus className="w-4 h-4 mr-2" />
+        Add to Pack
       </Button>
 
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add to Custom Pack</DialogTitle>
+            <DialogTitle>Add to Learning Pack</DialogTitle>
           </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <RadioGroup value={mode} onValueChange={setMode}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="existing" id="existing" />
-                <Label htmlFor="existing">Add to existing pack</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="new" id="new" />
-                <Label htmlFor="new">Create new pack</Label>
-              </div>
-            </RadioGroup>
-
-            {mode === "existing" ? (
-              <div>
-                <Label>Select Pack</Label>
-                {customPacks.length === 0 ? (
-                  <p className="text-sm text-slate-500 mt-2">No custom packs yet. Create one below.</p>
-                ) : (
-                  <RadioGroup value={selectedPackId} onValueChange={setSelectedPackId} className="mt-2">
-                    {customPacks.map(pack => (
-                      <div key={pack.id} className="flex items-center space-x-2">
-                        <RadioGroupItem value={pack.id} id={pack.id} />
-                        <Label htmlFor={pack.id} className="cursor-pointer">
-                          {pack.pack_title}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                )}
-              </div>
+          
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {packs.length === 0 ? (
+              <p className="text-sm text-slate-600 text-center py-8">No learning packs available</p>
             ) : (
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="title">Pack Title</Label>
-                  <Input
-                    id="title"
-                    placeholder="e.g., MA Market Prep Packet"
-                    value={newPackTitle}
-                    onChange={(e) => setNewPackTitle(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description (optional)</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="What's this pack about?"
-                    value={newPackDescription}
-                    onChange={(e) => setNewPackDescription(e.target.value)}
-                    rows={2}
-                  />
-                </div>
-              </div>
+              packs.map(pack => {
+                const isPinned = isInPack(pack.id);
+                return (
+                  <button
+                    key={pack.id}
+                    onClick={() => handlePackClick(pack.id)}
+                    className={`w-full text-left p-3 rounded-lg border transition-all ${
+                      isPinned 
+                        ? 'bg-blue-50 border-blue-300' 
+                        : 'bg-white border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          {pack.icon && <span className="text-lg">{pack.icon}</span>}
+                          <h4 className="font-semibold text-sm text-slate-900">{pack.pack_title}</h4>
+                        </div>
+                        {pack.category && (
+                          <Badge variant="outline" className="text-xs">
+                            {pack.category}
+                          </Badge>
+                        )}
+                      </div>
+                      {isPinned && (
+                        <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })
             )}
-
-            <div>
-              <Label htmlFor="note">Note (optional)</Label>
-              <Textarea
-                id="note"
-                placeholder="Add a note about why this item is important..."
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={2}
-              />
-            </div>
           </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSubmit}
-              disabled={addItemMutation.isPending || createPackMutation.isPending}
-            >
-              {mode === "new" ? (
-                <>
-                  <FolderPlus className="w-4 h-4 mr-2" />
-                  Create & Add
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add to Pack
-                </>
-              )}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

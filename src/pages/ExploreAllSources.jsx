@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,6 +22,9 @@ import RecommendedPacks from "../components/packs/RecommendedPacks";
 import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
 import FavoritePacks from "../components/packs/FavoritePacks";
 import { logPackView } from "../components/utils/packTracking";
+import PackInsights from "../components/packs/PackInsights";
+import AutoDiscoveryReview from "../components/packs/AutoDiscoveryReview";
+import { AdminOnlyButton } from "../components/admin/AdminOnlyButton";
 
 const dateRangePresets = [
   { label: "Last 7 days", value: "7d" },
@@ -33,6 +36,7 @@ const dateRangePresets = [
 
 export default function ExploreAllSources() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   const [searchText, setSearchText] = useState("");
   const [dateRangePreset, setDateRangePreset] = useState("30d");
@@ -124,8 +128,19 @@ export default function ExploreAllSources() {
     }
   };
 
+  const currentPack = useMemo(() => {
+    if (!activePack?.id || learningPacks.length === 0) return null;
+    return learningPacks.find(p => p.id === activePack.id);
+  }, [activePack, learningPacks]);
+
   const filteredResults = useMemo(() => {
     let results = newsletters;
+
+    // Include pinned newsletters from the active pack
+    const pinnedIds = currentPack?.pinned_newsletter_ids || [];
+    const pinnedNewsletters = pinnedIds.length > 0 
+      ? newsletters.filter(n => pinnedIds.includes(n.id))
+      : [];
 
     // Date filter
     const { start, end } = getDateRange();
@@ -165,8 +180,12 @@ export default function ExploreAllSources() {
       });
     }
 
-    return results;
-  }, [newsletters, searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics, availableSources]);
+    // Merge pinned newsletters (always show) with filtered results
+    const resultIds = new Set(results.map(n => n.id));
+    const uniquePinned = pinnedNewsletters.filter(n => !resultIds.has(n.id));
+    
+    return [...uniquePinned, ...results];
+  }, [newsletters, searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics, availableSources, currentPack]);
 
   // Log search activity when filters are applied
   React.useEffect(() => {
@@ -320,8 +339,27 @@ export default function ExploreAllSources() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 w-full">
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
+          {activePack && currentPack && (
+            <>
+              <PackInsights 
+                pack={currentPack} 
+                newsletters={filteredResults}
+                onInsightsGenerated={() => {
+                  queryClient.invalidateQueries({ queryKey: ['learningPacks'] });
+                }}
+              />
+
+              <AdminOnlyButton>
+                <AutoDiscoveryReview 
+                  pack={currentPack} 
+                  newsletters={newsletters}
+                />
+              </AdminOnlyButton>
+            </>
+          )}
+
           <FavoritePacks variant="compact" maxItems={5} />
-          
+
           <RecentlyViewedPacks variant="compact" maxItems={5} />
 
           <RecommendedPacks
@@ -502,15 +540,20 @@ export default function ExploreAllSources() {
                     />
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-lg font-semibold text-slate-900">{newsletter.title}</h3>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDetailNewsletterId(newsletter.id)}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
+                        <h3 className="text-lg font-semibold text-slate-900 flex-1">{newsletter.title}</h3>
+                        <div className="flex gap-2">
+                          {currentPack?.pinned_newsletter_ids?.includes(newsletter.id) && (
+                            <Badge className="bg-blue-100 text-blue-700 border-blue-300">Pinned</Badge>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDetailNewsletterId(newsletter.id)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                        </div>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-slate-600 mb-3">
                         <Badge variant="outline">{newsletter.source_name}</Badge>
