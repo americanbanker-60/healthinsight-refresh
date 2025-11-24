@@ -93,13 +93,32 @@ CONTEXT DATA:
 - Key Themes: ${data.themes?.join(", ") || "N/A"}
 ${additional ? `\nADDITIONAL CONTEXT FROM USER: ${additional}` : ""}
 
-CRITICAL FORMATTING RULES:
-- Use TWO line breaks between paragraphs (blank line between each paragraph)
-- Use headers (##, ###) to separate major sections
-- Use bullet points or numbered lists where appropriate
-- Keep paragraphs short (2-3 sentences max)
-- Add a blank line before and after lists
-- Add a blank line before and after headers
+CRITICAL FORMATTING RULES FOR WORD EXPORT:
+1. ALWAYS put TWO newlines (a blank line) between EVERY paragraph
+2. ALWAYS put TWO newlines before and after EVERY header (##, ###)
+3. ALWAYS put TWO newlines before and after EVERY bullet list
+4. Keep paragraphs SHORT - 2-3 sentences maximum
+5. Use markdown headers with ## or ### for sections
+6. Separate bullet points with a blank line between them for readability
+7. Think of this as a Word document - generous spacing is ESSENTIAL
+
+Example of correct formatting:
+
+## Section Header
+
+First paragraph goes here. Keep it short and punchy.
+
+Second paragraph with more detail. Still concise.
+
+### Subsection
+
+- Bullet point one
+
+- Bullet point two
+
+- Bullet point three
+
+Another paragraph after the list.
 `;
 
     const typePrompts = {
@@ -108,78 +127,114 @@ ${baseContext}
 
 Generate a compelling PITCH ANGLE that I can use to approach prospects related to this intelligence.
 
-Structure your response with these sections (use ### headers):
+Structure your response EXACTLY like this (with blank lines as shown):
 
-### The Hook
-A compelling opening that grabs attention
+## The Hook
 
-### Why Now
-The timing/urgency factor
+A compelling opening paragraph that grabs attention. Keep it to 2-3 sentences.
 
-### Our Value
-How our services could help them capitalize or respond
+## Why Now
 
-### The Ask
-A soft call-to-action
+The timing/urgency paragraph. What makes this moment critical?
 
-Keep each section concise but powerful. Remember to add blank lines between paragraphs.`,
+Add another paragraph if needed for emphasis.
+
+## Our Value
+
+How our services could help them capitalize or respond. Be specific.
+
+## The Ask
+
+A soft call-to-action. What's the next step?
+
+REMEMBER: Put a blank line between EVERY paragraph and before/after EVERY header.`,
 
       intro_email: `
 ${baseContext}
 
 Write a cold INTRO EMAIL to a decision-maker at a relevant company.
 
-The email should:
-1. Have a compelling subject line
-2. Open with something relevant to THEM (not about us)
-3. Reference the market intelligence naturally
-4. Briefly mention how we could help
-5. End with a low-friction ask (15-min call, not a pitch meeting)
+Format it EXACTLY like this:
 
-Keep it under 150 words. Be human, not salesy.
+**Subject:** [Compelling subject line]
 
-IMPORTANT: Format with clear paragraph breaks. Each paragraph should be separated by a blank line. The greeting, each body paragraph, and the sign-off should all be separate paragraphs.`,
+Dear [Title/Name],
+
+Opening paragraph - something relevant to THEM, not about us.
+
+Middle paragraph - reference the market intelligence naturally.
+
+Brief mention of how we could help.
+
+Soft close with a low-friction ask (15-min call).
+
+Best regards,
+[Your Name]
+
+Keep it under 150 words. Be human, not salesy. PUT BLANK LINES BETWEEN EVERY PARAGRAPH.`,
 
       follow_up: `
 ${baseContext}
 
 Write a FOLLOW-UP EMAIL for someone I've previously contacted about this topic.
 
-The email should:
-1. Reference the previous conversation naturally
-2. Share a new insight or development as a reason for reaching out
-3. Provide value without asking for anything
-4. Gently suggest next steps
+Format it EXACTLY like this:
 
-Keep it under 100 words.
+**Subject:** [Re: Previous topic or new angle]
 
-IMPORTANT: Format with clear paragraph breaks. Each paragraph should be separated by a blank line.`,
+Hi [Name],
+
+Opening - reference the previous conversation naturally.
+
+New insight paragraph - share value, not an ask.
+
+Optional: Another supporting point.
+
+Soft close with gentle next steps.
+
+Best,
+[Your Name]
+
+Keep it under 100 words. PUT BLANK LINES BETWEEN EVERY PARAGRAPH.`,
 
       talking_points: `
 ${baseContext}
 
 Create TALKING POINTS for a call or meeting about this topic.
 
-Use this structure with ### headers and bullet points:
+Format it EXACTLY like this:
 
-### Opening Hook
-- Conversation starter points
+## Opening Hook
 
-### Key Market Insights
-- Insight 1
-- Insight 2
-- Insight 3
+- Conversation starter point one
 
-### Discovery Questions
-- Questions to understand their situation
+- Conversation starter point two
 
-### Transition to Services
-- How to naturally bring up our capabilities
+## Key Market Insights
 
-### Handling Objections
-- Common objection → Response
+- Insight 1: Brief explanation
 
-Add blank lines between each section for readability.`
+- Insight 2: Brief explanation
+
+- Insight 3: Brief explanation
+
+## Discovery Questions
+
+- Question to understand their situation?
+
+- Question about their priorities?
+
+## Transition to Services
+
+- Natural bridge to mentioning capabilities
+
+## Handling Objections
+
+- **Objection 1:** Response approach
+
+- **Objection 2:** Response approach
+
+PUT BLANK LINES BETWEEN EVERY BULLET POINT AND SECTION.`
     };
 
     return typePrompts[type] || typePrompts.pitch_angle;
@@ -308,8 +363,10 @@ Add blank lines between each section for readability.`
                 </div>
               </div>
               <Card className="bg-white border-slate-200">
-                <CardContent className="p-4 prose prose-sm max-w-none">
-                  <ReactMarkdown>{generatedContent}</ReactMarkdown>
+                <CardContent className="p-5">
+                  <div className="prose prose-sm max-w-none prose-headings:text-slate-900 prose-headings:font-semibold prose-h2:text-base prose-h2:mt-6 prose-h2:mb-3 prose-h2:pb-1 prose-h2:border-b prose-h2:border-slate-200 prose-h3:text-sm prose-h3:mt-5 prose-h3:mb-2 prose-p:text-slate-700 prose-p:leading-relaxed prose-p:mb-4 prose-li:text-slate-700 prose-li:mb-2 prose-ul:mb-4 prose-ul:mt-2 prose-strong:text-slate-900 [&_ul]:space-y-2 [&_ol]:space-y-2">
+                    <ReactMarkdown>{generatedContent}</ReactMarkdown>
+                  </div>
                 </CardContent>
               </Card>
             </div>
