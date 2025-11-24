@@ -39,12 +39,6 @@ const staticNavigationItems = [
     roles: ["admin", "power", "standard"],
   },
   {
-    title: "Admin Dashboard",
-    url: createPageUrl("AdminDashboard"),
-    icon: Shield,
-    roles: ["admin"],
-  },
-  {
     title: "Explore All Sources",
     url: createPageUrl("ExploreAllSources"),
     icon: TrendingUp,
@@ -91,6 +85,12 @@ const staticNavigationItems = [
     url: createPageUrl("UserSettings"),
     icon: Settings,
     roles: ["admin", "power", "standard"],
+  },
+  {
+    title: "Admin Dashboard",
+    url: createPageUrl("AdminDashboard"),
+    icon: Shield,
+    roles: ["admin"],
   },
 ];
 
