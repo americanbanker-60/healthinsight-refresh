@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Users, BarChart3, Newspaper } from "lucide-react";
+import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Users, BarChart3, Newspaper, Calendar } from "lucide-react";
 import { RoleGuard, useUserRole } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import SourceScraperPanel from "../components/admin/SourceScraperPanel";
@@ -217,6 +217,21 @@ export default function AdminDashboard() {
               <Button className="w-full" variant="outline" disabled>
                 Coming Soon
               </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader className="flex-1">
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-purple-600" />
+                Publication Date Migration
+              </CardTitle>
+              <CardDescription>Extract actual publication dates from newsletters</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to={createPageUrl("PublicationDateMigration")}>
+                <Button className="w-full">Manage Dates</Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
