@@ -3,11 +3,12 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, ExternalLink, ChevronRight, TrendingUp, Briefcase } from "lucide-react";
+import { Calendar, ExternalLink, ChevronRight, TrendingUp, Briefcase, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import AddToPackButton from "../packs/AddToPackButton";
+import { BDInsightBadge } from "../bd/BDActionPrompt";
 
 const sentimentColors = {
   positive: "bg-green-100 text-green-800 border-green-200",
@@ -78,6 +79,9 @@ export default function NewsletterCard({ newsletter, index }) {
                 <Briefcase className="w-4 h-4 text-green-600" />
                 <span className="text-slate-600">{newsletter.ma_activities.length} M&A deals</span>
               </div>
+            )}
+            {(newsletter.ma_activities?.length > 0 || newsletter.funding_rounds?.length > 0) && (
+              <BDInsightBadge text="Deal Signal" />
             )}
           </div>
 

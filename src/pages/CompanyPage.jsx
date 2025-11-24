@@ -13,6 +13,7 @@ import CompanyOverview from "../components/company/CompanyOverview";
 import CompanyTimeline from "../components/company/CompanyTimeline";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import BackButton from "../components/navigation/BackButton";
+import BDActionPrompt from "../components/bd/BDActionPrompt";
 
 export default function CompanyPage() {
   const navigate = useNavigate();
@@ -224,6 +225,15 @@ export default function CompanyPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* BD Action Prompt */}
+      <div className="mb-6">
+        <BDActionPrompt 
+          type="company"
+          context={`${relevantNewsletters.length} mentions of ${company.company_name} — research decision-makers, draft an intro, or track for deal signals.`}
+          variant="compact"
+        />
       </div>
 
       {/* AI Overview */}

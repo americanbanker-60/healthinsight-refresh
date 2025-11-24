@@ -14,6 +14,7 @@ import TopicTimeline from "../components/topics/TopicTimeline";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import WatchTopicButton from "../components/topics/WatchTopicButton";
 import BackButton from "../components/navigation/BackButton";
+import BDActionPrompt from "../components/bd/BDActionPrompt";
 
 export default function TopicPage() {
   const navigate = useNavigate();
@@ -188,6 +189,15 @@ export default function TopicPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* BD Action Prompt */}
+      <div className="mb-6">
+        <BDActionPrompt 
+          type="topic"
+          context={`${relevantNewsletters.length} recent items on "${topic.topic_name}" — identify targets, craft outreach angles, or build thought leadership.`}
+          variant="compact"
+        />
       </div>
 
       {/* Quick Summary */}

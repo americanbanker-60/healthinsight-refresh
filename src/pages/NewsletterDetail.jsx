@@ -22,6 +22,7 @@ import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import EnhanceSummaryButton from "../components/newsletter/EnhanceSummaryButton";
 import EditableNewsletterSection from "../components/newsletter/EditableNewsletterSection";
+import BDActionPrompt, { BDInsightBadge } from "../components/bd/BDActionPrompt";
 
 export default function NewsletterDetail() {
   const navigate = useNavigate();
@@ -292,7 +293,7 @@ export default function NewsletterDetail() {
       )}
 
       {newsletter.key_players && newsletter.key_players.length > 0 && (
-        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60">
+        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 mb-6">
           <CardHeader className="border-b border-slate-200/60">
             <CardTitle className="flex items-center gap-2">
               <Building2 className="w-5 h-5 text-orange-600" />
@@ -310,6 +311,18 @@ export default function NewsletterDetail() {
           </CardContent>
         </Card>
       )}
+
+      {/* BD Action Prompt */}
+      <BDActionPrompt 
+        type={newsletter.ma_activities?.length > 0 || newsletter.funding_rounds?.length > 0 ? "deal" : "newsletter"}
+        context={
+          newsletter.ma_activities?.length > 0 
+            ? `${newsletter.ma_activities.length} M&A deal(s) detected. Consider reaching out to involved parties or tracking these companies.`
+            : newsletter.funding_rounds?.length > 0
+            ? `${newsletter.funding_rounds.length} funding event(s) identified. These companies may need advisory services.`
+            : `This newsletter contains ${newsletter.key_takeaways?.length || 0} insights that could support client conversations or outreach.`
+        }
+      />
     </div>
   );
 }
