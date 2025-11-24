@@ -79,7 +79,19 @@ export default function DeepDiveResults() {
 
       setRelevantItems(items);
 
+      if (items.length === 0) {
+        toast.error("No matching content found for this pack. Try adjusting the pack keywords.");
+        setIsGenerating(false);
+        return;
+      }
+
+      console.log(`Generating deep dive for: ${contextTitle} with ${items.length} items`);
+      
       const result = await generateDeepDive(contextTitle, items);
+
+      if (!result || result.length < 100) {
+        throw new Error("Generated content is too short or empty");
+      }
 
       setDeepDive({
         title: contextTitle,
@@ -88,11 +100,11 @@ export default function DeepDiveResults() {
         itemsAnalyzed: items.length
       });
 
-      toast.success("Deep dive generated!");
+      toast.success(`Deep dive generated! Analyzed ${items.length} newsletters.`);
     } catch (error) {
       const errorMessage = error?.message || "Failed to generate deep dive";
-      toast.error(errorMessage);
-      console.error("Deep dive error:", error);
+      toast.error(`Deep dive generation failed: ${errorMessage}`);
+      console.error("Deep dive error details:", error);
       setDeepDive(null);
     } finally {
       setIsGenerating(false);
