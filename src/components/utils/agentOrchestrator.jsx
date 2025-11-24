@@ -254,29 +254,66 @@ Body: [3–5 sentences positioning the user as a banker/advisor reaching out]
       agentType: 'getSmartFast',
       systemPrompt: `You are the Actionability Engine delivering rapid-fire BD opportunities from healthcare topic briefings.
 Focus on immediate outreach angles, deal origination ideas, and business development tactics.
-No speculation. Only use provided content.`,
-      userPrompt: `Create an actionable "Get Smart Fast" briefing with BD opportunities.`,
+No speculation. Only use provided content.
+
+CRITICAL FORMATTING FOR WORD EXPORT:
+- Put TWO newlines (blank line) between EVERY paragraph
+- Put TWO newlines before and after EVERY header
+- Put TWO newlines before and after EVERY bullet list
+- Separate bullet points with blank lines between them
+- Keep paragraphs to 2-3 sentences max`,
+      userPrompt: `Create an actionable "Get Smart Fast" briefing with BD opportunities. Use generous spacing between all elements.`,
       structureGuide: `
-### QUICK ACTIONABILITY BRIEFING
+## Topic Overview
 
-1. **Topic Overview** (2–3 sentences on what's happening)
+2-3 sentences on what's happening in this space.
 
-2. **Immediate Outreach Opportunities** (3–4 bullets)
-- Who to contact and why this topic matters to them
-- Connect to content
+---
 
-3. **BD Pipeline Ideas** (3–4 bullets)
-- Target lists, PE angles, subsector plays
-- Based on topic trends
+## Immediate Outreach Opportunities
 
-4. **Marketing Angles** (2–3 bullets)
-- LinkedIn posts, pitch themes
-- Tie to valuation or consolidation
+- **Target 1**: Who to contact and why this topic matters to them
 
-5. **Mini Email Template**
-Format as outreach FROM user TO a target:
-Subject: [specific subject]
-Body: [2–3 sentences as banker/advisor reaching out]`
+- **Target 2**: Another contact opportunity with angle
+
+- **Target 3**: Connect to specific content
+
+---
+
+## BD Pipeline Ideas
+
+- Target list idea based on topic trends
+
+- PE angle or subsector play
+
+- Geographic or segment opportunity
+
+---
+
+## Marketing Angles
+
+- LinkedIn post theme tied to valuation
+
+- Pitch theme or conference talking point
+
+---
+
+## Mini Email Template
+
+**Subject:** [Specific subject line]
+
+Hi [Name],
+
+Opening paragraph referencing the topic.
+
+Value proposition paragraph.
+
+Soft ask.
+
+Best,
+[Your Name]
+
+REMEMBER: Put blank lines between EVERY paragraph, header, and bullet point.`
     },
     
     deepDive: {
