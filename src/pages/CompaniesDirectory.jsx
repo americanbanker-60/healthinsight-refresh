@@ -37,6 +37,12 @@ export default function CompaniesDirectory() {
     initialData: [],
   });
 
+  const { data: newsletters = [] } = useQuery({
+    queryKey: ['newsletters'],
+    queryFn: () => base44.entities.Newsletter.list("-publication_date"),
+    initialData: [],
+  });
+
   const createCompanyMutation = useMutation({
     mutationFn: (companyData) => base44.entities.Company.create(companyData),
     onSuccess: () => {
