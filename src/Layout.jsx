@@ -23,6 +23,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 
 const staticNavigationItems = [
   {
@@ -262,6 +263,7 @@ function LayoutContent({ children, currentPageName, location, sources }) {
             location={location}
             sources={sources}
           />
+          <Toaster />
         </SidebarProvider>
       </WalkthroughProvider>
       );
