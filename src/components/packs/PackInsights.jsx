@@ -13,28 +13,48 @@ export default function PackInsights({ pack, newsletters, onInsightsGenerated })
   const generateInsights = async () => {
     setGenerating(true);
     try {
+      if (!newsletters || newsletters.length === 0) {
+        toast.error("No newsletters available to analyze");
+        setGenerating(false);
+        return;
+      }
+
       const contentSummary = newsletters.map(n => ({
         title: n.title,
+        source: n.source_name,
+        date: n.publication_date || n.created_date,
         tldr: n.tldr,
+        summary: n.summary?.substring(0, 500),
         themes: n.themes?.map(t => t.theme).join(", "),
-        key_takeaways: n.key_takeaways?.slice(0, 3)
+        key_takeaways: n.key_takeaways?.slice(0, 3),
+        key_players: n.key_players?.slice(0, 5)
       }));
 
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this Learning Pack titled "${pack.pack_title}" which contains ${newsletters.length} newsletters.
-        
+        prompt: `You are a healthcare strategy consultant analyzing content for C-suite executives.
+
+Analyze this Learning Pack: "${pack.pack_title}"
 Description: ${pack.description}
+Content: ${newsletters.length} newsletters
 
-Generate a comprehensive pack-level insight that includes:
-1. Overarching themes and trends across all content
-2. Key insights that emerge when viewing these articles together
-3. Strategic implications for healthcare executives
-4. Evolution of topics over time if applicable
+Provide a strategic analysis covering:
 
-Newsletter summaries:
+## Major Themes
+Identify 3-4 overarching themes across the content with specific examples
+
+## Key Insights
+What patterns, trends, or developments emerge? Include data points and company names
+
+## Strategic Implications
+What should healthcare executives know? What actions might they consider?
+
+## Market Movement
+Note any significant M&A, funding, or regulatory activity
+
+Content to analyze:
 ${JSON.stringify(contentSummary, null, 2)}
 
-Provide a well-structured markdown analysis (200-300 words).`,
+Format as markdown with clear sections. Be specific, cite examples, and focus on actionable insights. Aim for 300-400 words.`,
         response_json_schema: null
       });
 
@@ -46,6 +66,7 @@ Provide a well-structured markdown analysis (200-300 words).`,
       toast.success("Pack insights generated successfully");
       if (onInsightsGenerated) onInsightsGenerated();
     } catch (error) {
+      console.error("Insight generation error:", error);
       toast.error("Failed to generate insights: " + error.message);
     } finally {
       setGenerating(false);
