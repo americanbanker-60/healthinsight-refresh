@@ -5,7 +5,6 @@ import DashboardSettings from './pages/DashboardSettings';
 import SourcePage from './pages/SourcePage';
 import Cleanup from './pages/Cleanup';
 import ManageSources from './pages/ManageSources';
-import ExploreAllSources from './pages/ExploreAllSources';
 import LearningPacks from './pages/LearningPacks';
 import MyLibrary from './pages/MyLibrary';
 import KnowledgeHub from './pages/KnowledgeHub';
@@ -32,7 +31,6 @@ export const PAGES = {
     "SourcePage": SourcePage,
     "Cleanup": Cleanup,
     "ManageSources": ManageSources,
-    "ExploreAllSources": ExploreAllSources,
     "LearningPacks": LearningPacks,
     "MyLibrary": MyLibrary,
     "KnowledgeHub": KnowledgeHub,
