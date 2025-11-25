@@ -18,13 +18,7 @@ import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import SummaryBuilder from "../components/explore/SummaryBuilder";
 import SmartSearchInput from "../components/search/SmartSearchInput";
 import SavedSearchesPanel from "../components/explore/SavedSearchesPanel";
-import RecommendedPacks from "../components/packs/RecommendedPacks";
-import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
-import FavoritePacks from "../components/packs/FavoritePacks";
 import { logPackView } from "../components/utils/packTracking";
-import PackInsights from "../components/packs/PackInsights";
-import AutoDiscoveryReview from "../components/packs/AutoDiscoveryReview";
-import { AdminOnlyButton } from "../components/admin/AdminOnlyButton";
 
 const dateRangePresets = [
   { label: "Last 7 days", value: "7d" },
