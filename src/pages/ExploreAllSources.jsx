@@ -333,37 +333,6 @@ export default function ExploreAllSources() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 w-full">
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
-          {activePack && currentPack && (
-            <>
-              <PackInsights 
-                pack={currentPack} 
-                newsletters={filteredResults}
-                onInsightsGenerated={() => {
-                  queryClient.invalidateQueries({ queryKey: ['learningPacks'] });
-                }}
-              />
-
-              <AdminOnlyButton>
-                <AutoDiscoveryReview 
-                  pack={currentPack} 
-                  newsletters={newsletters}
-                />
-              </AdminOnlyButton>
-            </>
-          )}
-
-          <FavoritePacks variant="compact" maxItems={5} />
-
-          <RecentlyViewedPacks variant="compact" maxItems={5} />
-
-          <RecommendedPacks
-            currentPackId={activePack?.id}
-            searchKeywords={searchText}
-            selectedTopics={selectedTopics}
-            selectedNewsletters={selectedNewsletters}
-            newsletters={newsletters}
-          />
-
           <SavedSearchesPanel
             currentSearch={currentSearchState}
             onLoadSearch={loadSavedSearch}
