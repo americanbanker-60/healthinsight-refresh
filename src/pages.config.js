@@ -20,6 +20,7 @@ import LandingRouter from './pages/LandingRouter';
 import ManageLearningPacks from './pages/ManageLearningPacks';
 import AdminDashboard from './pages/AdminDashboard';
 import PublicationDateMigration from './pages/PublicationDateMigration';
+import ExploreAllSources from './pages/ExploreAllSources';
 import __Layout from './Layout.jsx';
 
 
@@ -46,6 +47,7 @@ export const PAGES = {
     "ManageLearningPacks": ManageLearningPacks,
     "AdminDashboard": AdminDashboard,
     "PublicationDateMigration": PublicationDateMigration,
+    "ExploreAllSources": ExploreAllSources,
 }
 
 export const pagesConfig = {
