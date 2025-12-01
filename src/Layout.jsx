@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, Newspaper, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen } from "lucide-react";
+import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, Newspaper, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen, Globe } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { WalkthroughProvider, useWalkthrough } from "@/components/walkthrough/WalkthroughManager";
@@ -55,11 +55,17 @@ const navigationGroups = [
         roles: ["admin", "power", "standard"],
       },
       {
-        title: "Companies",
-        url: createPageUrl("CompaniesDirectory"),
-        icon: Building2,
-        roles: ["admin", "power", "standard"],
-      },
+          title: "Companies",
+          url: createPageUrl("CompaniesDirectory"),
+          icon: Building2,
+          roles: ["admin", "power", "standard"],
+        },
+        {
+          title: "Various Sources",
+          url: createPageUrl("VariousSources"),
+          icon: Globe,
+          roles: ["admin", "power", "standard"],
+        },
     ]
   },
   {
