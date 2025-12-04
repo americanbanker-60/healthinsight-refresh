@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Plus, FileText, Settings } from "lucide-react";
+import { Plus, FileText, Settings, HelpCircle } from "lucide-react";
+import KeyFeaturesModal from "../components/dashboard/KeyFeaturesModal";
 import { motion } from "framer-motion";
 import NewsletterCard from "../components/dashboard/NewsletterCard";
 import NewsletterCardCompact from "../components/dashboard/NewsletterCardCompact";
@@ -28,6 +29,7 @@ const defaultUserConfig = {
 export default function Dashboard() {
   const [persistentFilters, setPersistentFilters] = React.useState(null);
   const [activeTab, setActiveTab] = React.useState("all");
+  const [showFeaturesModal, setShowFeaturesModal] = React.useState(false);
 
   const { data: newsletters, isLoading } = useQuery({
     queryKey: ['newsletters'],
@@ -138,12 +140,22 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        <Link to={createPageUrl("DashboardSettings")}>
-          <Button variant="outline" className="shadow-sm">
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="shadow-sm bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:border-blue-300"
+            onClick={() => setShowFeaturesModal(true)}
+          >
+            <HelpCircle className="w-4 h-4 mr-2 text-blue-600" />
+            What Can This App Do?
           </Button>
-        </Link>
+          <Link to={createPageUrl("DashboardSettings")}>
+            <Button variant="outline" className="shadow-sm">
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <StatsOverview 
@@ -229,6 +241,8 @@ export default function Dashboard() {
             ))
           )}
       </div>
+
+      <KeyFeaturesModal open={showFeaturesModal} onOpenChange={setShowFeaturesModal} />
     </div>
   );
 }
