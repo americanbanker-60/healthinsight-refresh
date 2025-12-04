@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { FolderOpen, Trash2, Edit2, Sparkles, Copy, Download, Loader2, Eye } from "lucide-react";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
@@ -28,12 +29,13 @@ export default function CustomPackDetail() {
   const [summary, setSummary] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [detailNewsletterId, setDetailNewsletterId] = useState(null);
+  const [deleteItemId, setDeleteItemId] = useState(null);
 
   const { data: pack, isLoading: packLoading } = useQuery({
     queryKey: ['userCustomPack', packId],
     queryFn: async () => {
-      const packs = await base44.entities.UserCustomPack.list();
-      return packs.find(p => p.id === packId);
+      const packs = await base44.entities.UserCustomPack.filter({ id: packId });
+      return packs[0];
     },
     enabled: !!packId,
   });
@@ -246,11 +248,7 @@ ${sourcesList}
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                  if (confirm("Remove this item?")) {
-                                    removeItemMutation.mutate(item.id);
-                                  }
-                                }}
+                                onClick={() => setDeleteItemId(item.id)}
                               >
                                 <Trash2 className="w-4 h-4 text-red-500" />
                               </Button>
@@ -362,6 +360,18 @@ ${sourcesList}
           </Card>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteItemId}
+        onOpenChange={(open) => !open && setDeleteItemId(null)}
+        title="Remove Item?"
+        description="Remove this newsletter from the pack?"
+        confirmText="Remove"
+        onConfirm={() => {
+          removeItemMutation.mutate(deleteItemId);
+          setDeleteItemId(null);
+        }}
+      />
 
       <Dialog open={editMode} onOpenChange={setEditMode}>
         <DialogContent>

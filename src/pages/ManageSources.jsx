@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit2, Trash2, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
 const categories = ["Investment Banking", "Technology", "Finance", "Operations", "Policy", "General", "Other"];
 
@@ -17,6 +18,7 @@ export default function ManageSources() {
   const [editingId, setEditingId] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState({ name: "", description: "", url: "", category: "General" });
+  const [deleteSourceId, setDeleteSourceId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: sources = [], isLoading } = useQuery({
@@ -213,7 +215,7 @@ export default function ManageSources() {
                             <Button variant="ghost" size="icon" onClick={() => startEdit(source)}>
                               <Edit2 className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(source.id)}>
+                            <Button variant="ghost" size="icon" onClick={() => setDeleteSourceId(source.id)}>
                               <Trash2 className="w-4 h-4 text-red-600" />
                             </Button>
                           </div>
@@ -227,6 +229,16 @@ export default function ManageSources() {
           );
         })}
       </div>
+      <ConfirmDialog
+        open={!!deleteSourceId}
+        onOpenChange={(open) => !open && setDeleteSourceId(null)}
+        title="Delete Source?"
+        description="This will hide the source from the sidebar. Existing newsletters will remain."
+        onConfirm={() => {
+          deleteMutation.mutate(deleteSourceId);
+          setDeleteSourceId(null);
+        }}
+      />
     </div>
     </RoleGuard>
   );

@@ -26,8 +26,8 @@ export default function CompanyPage() {
   const { data: company, isLoading: companyLoading } = useQuery({
     queryKey: ['company', companyId],
     queryFn: async () => {
-      const companies = await base44.entities.Company.list();
-      return companies.find(c => c.id === companyId);
+      const companies = await base44.entities.Company.filter({ id: companyId });
+      return companies[0];
     },
     enabled: !!companyId,
   });

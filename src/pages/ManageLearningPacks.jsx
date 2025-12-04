@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit2, Trash2, Check, X, BookOpen, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -19,6 +20,7 @@ const dateRanges = ["7d", "30d", "90d", "ytd", "custom"];
 export default function ManageLearningPacks() {
   const [editingId, setEditingId] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [deletePackId, setDeletePackId] = useState(null);
   const [formData, setFormData] = useState({
     pack_title: "",
     description: "",
@@ -286,7 +288,7 @@ export default function ManageLearningPacks() {
                       <Button variant="ghost" size="icon" onClick={() => startEdit(pack)}>
                         <Edit2 className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(pack.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => setDeletePackId(pack.id)}>
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
                     </div>
@@ -308,6 +310,16 @@ export default function ManageLearningPacks() {
             </Button>
           </Card>
         )}
+      <ConfirmDialog
+        open={!!deletePackId}
+        onOpenChange={(open) => !open && setDeletePackId(null)}
+        title="Delete Learning Pack?"
+        description="This will permanently delete this learning pack. This cannot be undone."
+        onConfirm={() => {
+          deleteMutation.mutate(deletePackId);
+          setDeletePackId(null);
+        }}
+      />
       </div>
     </RoleGuard>
   );

@@ -18,9 +18,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+const defaultUserConfig = {
+  visible_stats: ["newsletters", "ma_deals", "funding", "themes"],
+  investment_focus: [],
+  show_charts: true,
+  newsletter_display: "full"
+};
+
 export default function Dashboard() {
   const [persistentFilters, setPersistentFilters] = React.useState(null);
-  const [userConfig, setUserConfig] = React.useState(null);
   const [activeTab, setActiveTab] = React.useState("all");
 
   const { data: newsletters, isLoading } = useQuery({
@@ -35,29 +41,14 @@ export default function Dashboard() {
     initialData: [],
   });
 
-  React.useEffect(() => {
-    loadUserConfig();
-  }, []);
-
-  const loadUserConfig = async () => {
-    try {
+  const { data: userConfig = defaultUserConfig } = useQuery({
+    queryKey: ['dashboardUserConfig'],
+    queryFn: async () => {
       const user = await base44.auth.me();
-      const config = user.dashboard_config || {
-        visible_stats: ["newsletters", "ma_deals", "funding", "themes"],
-        investment_focus: [],
-        show_charts: true,
-        newsletter_display: "full"
-      };
-      setUserConfig(config);
-    } catch (err) {
-      setUserConfig({
-        visible_stats: ["newsletters", "ma_deals", "funding", "themes"],
-        investment_focus: [],
-        show_charts: true,
-        newsletter_display: "full"
-      });
-    }
-  };
+      return user.dashboard_config || defaultUserConfig;
+    },
+    initialData: defaultUserConfig,
+  });
 
   // Filter by active tab
   const tabFilteredNewsletters = React.useMemo(() => {
@@ -130,18 +121,6 @@ export default function Dashboard() {
     compact: NewsletterCardCompact,
     minimal: NewsletterCardMinimal
   }[userConfig?.newsletter_display || "full"];
-
-  if (!userConfig) {
-    return (
-      <div className="p-10 max-w-7xl mx-auto">
-        <Skeleton className="h-12 w-1/3 mb-8" />
-        <div className="grid gap-6">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-64" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 md:p-10 max-w-7xl mx-auto w-full overflow-x-hidden">

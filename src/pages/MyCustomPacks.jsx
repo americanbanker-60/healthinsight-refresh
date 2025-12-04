@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
 export default function MyCustomPacks() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function MyCustomPacks() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newPackTitle, setNewPackTitle] = useState("");
   const [newPackDescription, setNewPackDescription] = useState("");
+  const [deletePackId, setDeletePackId] = useState(null);
 
   const { data: customPacks = [], isLoading } = useQuery({
     queryKey: ['userCustomPacks'],
@@ -158,9 +160,7 @@ export default function MyCustomPacks() {
                       className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm("Delete this pack? This cannot be undone.")) {
-                          deletePackMutation.mutate(pack.id);
-                        }
+                        setDeletePackId(pack.id);
                       }}
                     >
                       <Trash2 className="w-4 h-4 text-red-500" />
@@ -196,6 +196,17 @@ export default function MyCustomPacks() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deletePackId}
+        onOpenChange={(open) => !open && setDeletePackId(null)}
+        title="Delete Pack?"
+        description="This will permanently delete the pack and all its items. This cannot be undone."
+        onConfirm={() => {
+          deletePackMutation.mutate(deletePackId);
+          setDeletePackId(null);
+        }}
+      />
 
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent>

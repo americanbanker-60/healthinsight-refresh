@@ -28,8 +28,8 @@ export default function TopicPage() {
   const { data: topic, isLoading: topicLoading } = useQuery({
     queryKey: ['topic', topicId],
     queryFn: async () => {
-      const topics = await base44.entities.Topic.list();
-      return topics.find(t => t.id === topicId);
+      const topics = await base44.entities.Topic.filter({ id: topicId });
+      return topics[0];
     },
     enabled: !!topicId,
   });
