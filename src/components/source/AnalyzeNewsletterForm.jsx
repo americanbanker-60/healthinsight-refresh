@@ -115,8 +115,7 @@ Be thorough and extract all relevant details.`;
     const result = await base44.integrations.Core.InvokeLLM({
       prompt,
       add_context_from_internet: true,
-      response_json_schema: jsonSchema,
-      file_urls: url
+      response_json_schema: jsonSchema
     });
 
     setIsAnalyzing(false);
