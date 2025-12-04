@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus, ExternalLink } from "lucide-react";
+import SortControl from "../components/common/SortControl";
 import PersistentFilters, { applyFilters } from "../components/filters/PersistentFilters";
 import { motion, AnimatePresence } from "framer-motion";
 import NewsletterCard from "../components/dashboard/NewsletterCard";
@@ -15,6 +16,7 @@ import BackButton from "../components/navigation/BackButton";
 export default function SourcePage() {
   const [showAnalyze, setShowAnalyze] = useState(false);
   const [persistentFilters, setPersistentFilters] = useState(null);
+  const [sortOrder, setSortOrder] = useState("newest");
   const [searchParams] = useSearchParams();
   const sourceName = searchParams.get('name');
 
@@ -55,9 +57,13 @@ export default function SourcePage() {
   }, [newsletters]);
 
   const filteredNewsletters = useMemo(() => {
-    if (!persistentFilters) return newsletters;
-    return applyFilters(newsletters, persistentFilters);
-  }, [newsletters, persistentFilters]);
+    let result = persistentFilters ? applyFilters(newsletters, persistentFilters) : newsletters;
+    return result.sort((a, b) => {
+      const dateA = new Date(a.publication_date || a.created_date || 0);
+      const dateB = new Date(b.publication_date || b.created_date || 0);
+      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+    });
+  }, [newsletters, persistentFilters, sortOrder]);
 
   if (sourceLoading) {
     return (
@@ -128,12 +134,15 @@ export default function SourcePage() {
         )}
       </AnimatePresence>
 
-      <PersistentFilters 
-        onFilterChange={setPersistentFilters}
-        availableThemes={availableThemes}
-        availableCompanies={availableCompanies}
-        showSourceFilter={false}
-      />
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
+        <PersistentFilters 
+          onFilterChange={setPersistentFilters}
+          availableThemes={availableThemes}
+          availableCompanies={availableCompanies}
+          showSourceFilter={false}
+        />
+        <SortControl sortOrder={sortOrder} onSortChange={setSortOrder} />
+      </div>
 
       <div className="grid gap-6">
         <AnimatePresence mode="wait">

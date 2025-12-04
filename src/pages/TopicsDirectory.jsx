@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Lightbulb, Search, TrendingUp, Plus, X } from "lucide-react";
+import { Lightbulb, Search, TrendingUp, Plus, X, ArrowUpDown } from "lucide-react";
+import SortControl from "../components/common/SortControl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { AdminOnlyButton } from "../components/admin/AdminOnlyButton";
@@ -19,6 +20,7 @@ export default function TopicsDirectory() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchText, setSearchText] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newTopic, setNewTopic] = useState({
     topic_name: "",
@@ -83,15 +85,21 @@ export default function TopicsDirectory() {
     createTopicMutation.mutate(newTopic);
   };
 
-  const filteredTopics = topics.filter(topic => {
-    if (!searchText.trim()) return true;
-    const search = searchText.toLowerCase();
-    return (
-      topic.topic_name?.toLowerCase().includes(search) ||
-      topic.description?.toLowerCase().includes(search) ||
-      topic.keywords?.some(k => k.toLowerCase().includes(search))
-    );
-  });
+  const filteredTopics = topics
+    .filter(topic => {
+      if (!searchText.trim()) return true;
+      const search = searchText.toLowerCase();
+      return (
+        topic.topic_name?.toLowerCase().includes(search) ||
+        topic.description?.toLowerCase().includes(search) ||
+        topic.keywords?.some(k => k.toLowerCase().includes(search))
+      );
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.created_date || 0);
+      const dateB = new Date(b.created_date || 0);
+      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+    });
 
   const openTopic = (topic) => {
     const params = new URLSearchParams({ id: topic.id });
@@ -122,9 +130,9 @@ export default function TopicsDirectory() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative max-w-xl">
+      {/* Search and Sort */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="relative max-w-xl flex-1 w-full">
           <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
           <Input
             placeholder="Search topics..."
@@ -133,6 +141,7 @@ export default function TopicsDirectory() {
             className="pl-10"
           />
         </div>
+        <SortControl sortOrder={sortOrder} onSortChange={setSortOrder} />
       </div>
 
       {/* Topics Grid */}

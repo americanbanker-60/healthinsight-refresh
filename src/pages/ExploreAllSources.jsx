@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarIcon, X, Eye, BookOpen, FileText } from "lucide-react";
+import SortControl from "../components/common/SortControl";
 import { format, subDays, startOfYear } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link, useNavigate } from "react-router-dom";
@@ -42,6 +43,7 @@ export default function ExploreAllSources() {
   const [selectedNewsletters, setSelectedNewsletters] = useState([]);
   const [detailNewsletterId, setDetailNewsletterId] = useState(null);
   const [activePack, setActivePack] = useState(null);
+  const [sortOrder, setSortOrder] = useState("newest");
 
   const { data: newsletters = [], isLoading } = useQuery({
     queryKey: ['all-newsletters'],
@@ -169,9 +171,15 @@ export default function ExploreAllSources() {
 
     const resultIds = new Set(results.map(n => n.id));
     const uniquePinned = pinnedNewsletters.filter(n => !resultIds.has(n.id));
-    
-    return [...uniquePinned, ...results];
-  }, [newsletters, searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics, availableSources, currentPack]);
+
+    const combined = [...uniquePinned, ...results];
+
+    return combined.sort((a, b) => {
+      const dateA = new Date(a.publication_date || a.created_date || 0);
+      const dateB = new Date(b.publication_date || b.created_date || 0);
+      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+    });
+    }, [newsletters, searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics, availableSources, currentPack, sortOrder]);
 
   React.useEffect(() => {
     const logActivity = async () => {
@@ -451,13 +459,14 @@ export default function ExploreAllSources() {
             </CardContent>
           </Card>
 
-          <div className="mb-4 flex justify-between items-center">
+          <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <p className="text-slate-600">
               <span className="font-semibold text-slate-900">{filteredResults.length}</span> results found
               {selectedNewsletters.length > 0 && (
                 <span className="ml-2">• <span className="font-semibold text-blue-600">{selectedNewsletters.length}</span> selected</span>
               )}
             </p>
+            <SortControl sortOrder={sortOrder} onSortChange={setSortOrder} />
           </div>
 
           <div className="space-y-3">
