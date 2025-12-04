@@ -21,7 +21,6 @@ import ManageLearningPacks from './pages/ManageLearningPacks';
 import AdminDashboard from './pages/AdminDashboard';
 import PublicationDateMigration from './pages/PublicationDateMigration';
 import ExploreAllSources from './pages/ExploreAllSources';
-import VariousSources from './pages/VariousSources';
 import __Layout from './Layout.jsx';
 
 
@@ -49,7 +48,6 @@ export const PAGES = {
     "AdminDashboard": AdminDashboard,
     "PublicationDateMigration": PublicationDateMigration,
     "ExploreAllSources": ExploreAllSources,
-    "VariousSources": VariousSources,
 }
 
 export const pagesConfig = {
