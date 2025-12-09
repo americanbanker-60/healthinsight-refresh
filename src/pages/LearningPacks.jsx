@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BookOpen, Sparkles, Calendar, Search, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import EmptyState from "../components/common/EmptyState";
 import RecommendedPacks from "../components/packs/RecommendedPacks";
 import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
 import FavoritePacks from "../components/packs/FavoritePacks";
@@ -191,17 +192,11 @@ export default function LearningPacks() {
       )}
 
       {!isLoading && filteredPacks.length === 0 && (
-        <Card className="bg-white/80 backdrop-blur-sm text-center py-16">
-          <BookOpen className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-700 mb-2">
-            {showOnlyFavorites ? "No Favorite Packs" : "No Learning Packs Yet"}
-          </h3>
-          <p className="text-slate-500">
-            {showOnlyFavorites
-              ? "Star some packs to see them here"
-              : "Learning packs will appear here once created"}
-          </p>
-        </Card>
+        <EmptyState
+          icon={BookOpen}
+          title={showOnlyFavorites ? "No Favorite Packs" : "No Learning Packs Yet"}
+          description={showOnlyFavorites ? "Star some packs to see them here" : "Learning packs will appear here once created"}
+        />
       )}
     </div>
   );

@@ -15,6 +15,7 @@ import SortControl from "../components/common/SortControl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { AdminOnlyButton } from "../components/admin/AdminOnlyButton";
+import EmptyState from "../components/common/EmptyState";
 
 export default function CompaniesDirectory() {
   const navigate = useNavigate();
@@ -237,15 +238,11 @@ export default function CompaniesDirectory() {
           ))}
         </div>
       ) : filteredCompanies.length === 0 ? (
-        <Card className="text-center py-16">
-          <Building2 className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-700 mb-2">
-            {searchText ? "No Companies Found" : "No Companies Yet"}
-          </h3>
-          <p className="text-slate-500">
-            {searchText ? "Try a different search term" : "Companies will appear here once created"}
-          </p>
-        </Card>
+        <EmptyState
+          icon={Building2}
+          title={searchText ? "No Companies Found" : "No Companies Yet"}
+          description={searchText ? "Try a different search term" : "Companies will appear here once created"}
+        />
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCompanies.map(company => (
