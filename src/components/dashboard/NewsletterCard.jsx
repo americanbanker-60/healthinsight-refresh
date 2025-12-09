@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, ExternalLink, ChevronRight, TrendingUp, Briefcase, Zap } from "lucide-react";
+import { Calendar, ExternalLink, ChevronRight, TrendingUp, Briefcase } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -17,7 +17,87 @@ const sentimentColors = {
   mixed: "bg-yellow-100 text-yellow-800 border-yellow-200"
 };
 
-export default function NewsletterCard({ newsletter, index }) {
+export default function NewsletterCard({ newsletter, index, variant = "full" }) {
+  if (variant === "minimal") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: index * 0.03 }}
+      >
+        <Link to={createPageUrl("NewsletterDetail") + "?id=" + newsletter.id}>
+          <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group">
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                {newsletter.title}
+              </h4>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
+              <Calendar className="w-3 h-3" />
+              {newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime())
+                ? format(new Date(newsletter.publication_date), "MMM d")
+                : "N/A"}
+            </div>
+          </div>
+        </Link>
+      </motion.div>
+    );
+  }
+
+  if (variant === "compact") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05 }}
+      >
+        <Card className="bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-200 border-slate-200/60 group">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors flex-1">
+                {newsletter.title}
+              </h3>
+              {newsletter.sentiment && (
+                <Badge className={`${sentimentColors[newsletter.sentiment]} border text-xs`}>
+                  {newsletter.sentiment}
+                </Badge>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-3 text-xs text-slate-600 mb-2">
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime())
+                  ? format(new Date(newsletter.publication_date), "MMM d, yyyy")
+                  : "N/A"}
+              </div>
+              {newsletter.key_takeaways && newsletter.key_takeaways.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" />
+                  {newsletter.key_takeaways.length} insights
+                </div>
+              )}
+              {newsletter.ma_activities && newsletter.ma_activities.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <Briefcase className="w-3 h-3" />
+                  {newsletter.ma_activities.length} M&A
+                </div>
+              )}
+            </div>
+
+            <Link to={createPageUrl("NewsletterDetail") + "?id=" + newsletter.id}>
+              <Button variant="ghost" size="sm" className="w-full justify-between group-hover:bg-blue-50 group-hover:text-blue-700 h-8 text-xs">
+                View Details
+                <ChevronRight className="w-3 h-3" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  // Full variant (default)
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

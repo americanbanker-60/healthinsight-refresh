@@ -8,8 +8,6 @@ import { Plus, FileText, Settings, HelpCircle } from "lucide-react";
 import KeyFeaturesModal from "../components/dashboard/KeyFeaturesModal";
 import { motion } from "framer-motion";
 import NewsletterCard from "../components/dashboard/NewsletterCard";
-import NewsletterCardCompact from "../components/dashboard/NewsletterCardCompact";
-import NewsletterCardMinimal from "../components/dashboard/NewsletterCardMinimal";
 import StatsOverview from "../components/dashboard/StatsOverview";
 import PersistentFilters, { applyFilters } from "../components/filters/PersistentFilters";
 import TrendChart from "../components/dashboard/TrendChart";
@@ -118,11 +116,7 @@ export default function Dashboard() {
   }, [focusFilteredNewsletters, persistentFilters]);
 
 
-  const NewsletterComponent = {
-    full: NewsletterCard,
-    compact: NewsletterCardCompact,
-    minimal: NewsletterCardMinimal
-  }[userConfig?.newsletter_display || "full"];
+  const displayVariant = userConfig?.newsletter_display || "full";
 
   return (
     <div className="p-4 md:p-10 max-w-7xl mx-auto w-full overflow-x-hidden">
@@ -194,7 +188,7 @@ export default function Dashboard() {
         availableSources={availableSources}
       />
 
-      <div className={userConfig.newsletter_display === "minimal" ? "space-y-2" : "grid gap-6"}>
+      <div className={displayVariant === "minimal" ? "space-y-2" : "grid gap-6"}>
           {isLoading ? (
             Array(3).fill(0).map((_, i) => (
               <div key={i} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-200/60">
@@ -227,7 +221,7 @@ export default function Dashboard() {
           ) : (
             filteredNewsletters.map((newsletter, index) => (
               <div key={newsletter.id}>
-                <NewsletterComponent newsletter={newsletter} index={index} />
+                <NewsletterCard newsletter={newsletter} index={index} variant={displayVariant} />
                 {newsletter.matchedFocusAreas && newsletter.matchedFocusAreas.length > 0 && (
                   <div className="flex gap-1 mt-2 ml-2">
                     {newsletter.matchedFocusAreas.map(focus => (
