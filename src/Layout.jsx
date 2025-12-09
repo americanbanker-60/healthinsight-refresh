@@ -9,6 +9,7 @@ import { useUserRole } from "@/components/auth/RoleGuard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, PlayCircle } from "lucide-react";
+import { AdminBadge } from "@/components/admin/AdminOnlyButton";
 import {
   Sidebar,
   SidebarContent,
@@ -193,11 +194,7 @@ function LayoutContent({ children, currentPageName, location, sources }) {
               <SidebarGroup key={group.label}>
                 <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-3 flex items-center justify-between">
                   <span>{group.label}</span>
-                  {group.adminOnly && (
-                    <Badge className="bg-red-100 text-red-700 border-red-300 text-[10px] px-1.5 py-0">
-                      Admin
-                    </Badge>
-                  )}
+                  {group.adminOnly && <AdminBadge size="xs" />}
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
