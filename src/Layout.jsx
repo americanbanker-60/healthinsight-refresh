@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, Newspaper, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen, Globe } from "lucide-react";
+import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, Newspaper, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen, Globe, Briefcase } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { WalkthroughProvider, useWalkthrough } from "@/components/walkthrough/WalkthroughManager";
@@ -35,6 +35,17 @@ const navigationGroups = [
         title: "Agent Workspace",
         url: createPageUrl("AgentWorkspace"),
         icon: Brain,
+        roles: ["admin", "power", "standard"],
+      },
+    ]
+  },
+  {
+    label: "Meeting Prep",
+    items: [
+      {
+        title: "PE Meeting Prep",
+        url: createPageUrl("PEMeetingPrep"),
+        icon: Briefcase,
         roles: ["admin", "power", "standard"],
       },
     ]
