@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Building2, TrendingUp, BookOpen, Calendar, Eye, Sparkles } from "lucide-react";
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
+import { useNewsletterFilters } from "@/hooks/useNewsletterFilters";
 import { Skeleton } from "@/components/ui/skeleton";
 import CompanyOverview from "../components/company/CompanyOverview";
 import CompanyTimeline from "../components/company/CompanyTimeline";
@@ -51,34 +52,20 @@ export default function CompanyPage() {
   });
 
   // Filter newsletters that mention the company
-  const relevantNewsletters = useMemo(() => {
+  const allKeywords = useMemo(() => {
     if (!company) return [];
-    
-    const allKeywords = [
+    return [
       company.company_name,
       ...(company.known_aliases || []),
       ...(company.primary_keywords || [])
     ];
-    
-    const cutoffDate = subDays(new Date(), timeRange);
-    
-    return newsletters.filter(n => {
-      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-      if (pubDate < cutoffDate) return false;
-      
-      const searchText = [
-        n.title,
-        n.summary,
-        n.tldr,
-        ...(n.key_takeaways || []),
-        ...(n.key_players || []),
-        ...(n.ma_activities?.map(ma => `${ma.acquirer} ${ma.target}`) || []),
-        ...(n.funding_rounds?.map(f => f.company) || []),
-      ].join(' ').toLowerCase();
-      
-      return allKeywords.some(keyword => searchText.includes(keyword.toLowerCase()));
-    });
-  }, [company, newsletters, timeRange]);
+  }, [company]);
+
+  const relevantNewsletters = useNewsletterFilters(newsletters, {
+    keywords: allKeywords,
+    timeRange,
+    searchFields: ['title', 'summary', 'tldr', 'key_takeaways', 'key_players', 'ma_activities', 'funding_rounds']
+  });
 
   // Extract highlights (MA, funding, partnerships)
   const highlights = useMemo(() => {

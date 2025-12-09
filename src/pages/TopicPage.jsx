@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Sparkles, TrendingUp, BookOpen, Calendar, Eye, ChevronDown, ChevronUp, FileText } from "lucide-react";
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
+import { useNewsletterFilters } from "@/hooks/useNewsletterFilters";
 import { Skeleton } from "@/components/ui/skeleton";
 import TopicQuickSummary from "../components/topics/TopicQuickSummary";
 import TopicTimeline from "../components/topics/TopicTimeline";
@@ -47,28 +48,16 @@ export default function TopicPage() {
   });
 
   // Filter newsletters that match topic keywords
-  const relevantNewsletters = useMemo(() => {
+  const keywords = useMemo(() => {
     if (!topic || !topic.keywords) return [];
-    
-    const keywords = Array.isArray(topic.keywords) ? topic.keywords : [topic.keywords];
-    const cutoffDate = subDays(new Date(), timeRange);
-    
-    return newsletters.filter(n => {
-      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-      if (pubDate < cutoffDate) return false;
-      
-      const searchText = [
-        n.title,
-        n.summary,
-        n.tldr,
-        ...(n.key_takeaways || []),
-        ...(n.themes?.map(t => t.theme) || []),
-        ...(n.themes?.map(t => t.description) || [])
-      ].join(' ').toLowerCase();
-      
-      return keywords.some(keyword => keyword && searchText.includes(keyword.toLowerCase()));
-    });
-  }, [topic, newsletters, timeRange]);
+    return Array.isArray(topic.keywords) ? topic.keywords : [topic.keywords];
+  }, [topic]);
+
+  const relevantNewsletters = useNewsletterFilters(newsletters, {
+    keywords,
+    timeRange,
+    searchFields: ['title', 'summary', 'tldr', 'key_takeaways', 'themes']
+  });
 
   // Get related Learning Packs
   const relatedPacks = useMemo(() => {
