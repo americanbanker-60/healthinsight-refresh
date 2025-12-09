@@ -8,13 +8,25 @@ export default function StatsOverview({ newsletters, isLoading, visibleStats = [
   const totalNewsletters = newsletters.length;
   const totalMADeals = newsletters.reduce((sum, n) => sum + (n.ma_activities?.length || 0), 0);
   const totalFunding = newsletters.reduce((sum, n) => sum + (n.funding_rounds?.length || 0), 0);
-  const totalThemes = newsletters.reduce((sum, n) => sum + (n.themes?.length || 0), 0);
+  
+  // Count unique themes across all newsletters (not total theme occurrences)
+  const uniqueThemes = React.useMemo(() => {
+    const themesSet = new Set();
+    newsletters.forEach(n => {
+      if (n.themes) {
+        n.themes.forEach(t => {
+          if (t.theme) themesSet.add(t.theme);
+        });
+      }
+    });
+    return themesSet.size;
+  }, [newsletters]);
 
   const stats = [
     { label: "Newsletters Analyzed", value: totalNewsletters, icon: FileText, color: "blue" },
     { label: "M&A Deals Tracked", value: totalMADeals, icon: Briefcase, color: "green" },
     { label: "Funding Rounds", value: totalFunding, icon: DollarSign, color: "emerald" },
-    { label: "Themes Identified", value: totalThemes, icon: TrendingUp, color: "purple" },
+    { label: "Unique Themes", value: uniqueThemes, icon: TrendingUp, color: "purple" },
   ];
 
   const colorClasses = {
