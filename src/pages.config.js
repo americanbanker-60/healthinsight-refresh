@@ -21,6 +21,8 @@ import PublicationDateMigration from './pages/PublicationDateMigration';
 import ExploreAllSources from './pages/ExploreAllSources';
 import VariousSources from './pages/VariousSources';
 import AgentWorkspace from './pages/AgentWorkspace';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import __Layout from './Layout.jsx';
 
 
@@ -48,6 +50,8 @@ export const PAGES = {
     "ExploreAllSources": ExploreAllSources,
     "VariousSources": VariousSources,
     "AgentWorkspace": AgentWorkspace,
+    "PrivacyPolicy": PrivacyPolicy,
+    "TermsOfService": TermsOfService,
 }
 
 export const pagesConfig = {
