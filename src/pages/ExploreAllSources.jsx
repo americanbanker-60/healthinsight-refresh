@@ -7,9 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, X, Eye, BookOpen, FileText } from "lucide-react";
+import { X, Eye, BookOpen, FileText } from "lucide-react";
+import DateRangePicker from "../components/common/DateRangePicker";
 import SortControl from "../components/common/SortControl";
 import { format, subDays, startOfYear } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -365,29 +364,13 @@ export default function ExploreAllSources() {
                   </div>
 
                   {dateRangePreset === "custom" && (
-                    <div className="mt-3 space-y-2">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-left">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {customStartDate ? format(customStartDate, 'MMM d, yyyy') : 'Start date'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar mode="single" selected={customStartDate} onSelect={setCustomStartDate} />
-                        </PopoverContent>
-                      </Popover>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-left">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {customEndDate ? format(customEndDate, 'MMM d, yyyy') : 'End date'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar mode="single" selected={customEndDate} onSelect={setCustomEndDate} />
-                        </PopoverContent>
-                      </Popover>
+                    <div className="mt-3">
+                      <DateRangePicker
+                        startDate={customStartDate}
+                        endDate={customEndDate}
+                        onStartDateChange={setCustomStartDate}
+                        onEndDateChange={setCustomEndDate}
+                      />
                     </div>
                   )}
                 </div>

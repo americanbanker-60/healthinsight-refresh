@@ -5,11 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Calendar as CalendarIcon, X, Filter, ChevronDown } from "lucide-react";
-import { format } from "date-fns";
+import { Search, X, Filter, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import DateRangePicker from "../common/DateRangePicker";
 
 const STORAGE_KEY = 'healthinsight_filters';
 
@@ -127,38 +125,12 @@ export default function PersistentFilters({
               {/* Date Range */}
               <div>
                 <Label className="text-sm font-semibold mb-2 block">Date Range</Label>
-                <div className="space-y-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {filters.startDate ? format(new Date(filters.startDate), 'MMM d, yyyy') : 'Start date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={filters.startDate ? new Date(filters.startDate) : undefined}
-                        onSelect={(date) => updateFilter('startDate', date?.toISOString())}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {filters.endDate ? format(new Date(filters.endDate), 'MMM d, yyyy') : 'End date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={filters.endDate ? new Date(filters.endDate) : undefined}
-                        onSelect={(date) => updateFilter('endDate', date?.toISOString())}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                <DateRangePicker
+                  startDate={filters.startDate}
+                  endDate={filters.endDate}
+                  onStartDateChange={(date) => updateFilter('startDate', date)}
+                  onEndDateChange={(date) => updateFilter('endDate', date)}
+                />
               </div>
 
               {/* Sentiment */}
