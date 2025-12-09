@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Sparkles, TrendingUp, BookOpen, Calendar, Eye, ChevronDown, ChevronUp, FileText } from "lucide-react";
 import { format } from "date-fns";
-import { useNewsletterFilters } from "@/hooks/useNewsletterFilters";
+import { useNewsletterFilters } from "../components/utils/useNewsletterFilters";
 import { Skeleton } from "@/components/ui/skeleton";
 import TopicQuickSummary from "../components/topics/TopicQuickSummary";
 import TopicTimeline from "../components/topics/TopicTimeline";
