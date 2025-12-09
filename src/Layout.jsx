@@ -29,6 +29,17 @@ import { Toaster } from "@/components/ui/sonner";
 
 const navigationGroups = [
   {
+    label: "AI Agents",
+    items: [
+      {
+        title: "Agent Workspace",
+        url: createPageUrl("AgentWorkspace"),
+        icon: Brain,
+        roles: ["admin", "power", "standard"],
+      },
+    ]
+  },
+  {
     label: "Discovery & Learning",
     items: [
       {
