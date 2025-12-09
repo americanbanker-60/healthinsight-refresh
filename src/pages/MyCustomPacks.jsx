@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+import EmptyState from "../components/common/EmptyState";
 
 export default function MyCustomPacks() {
   const navigate = useNavigate();
@@ -127,15 +128,14 @@ export default function MyCustomPacks() {
           ))}
         </div>
       ) : customPacks.length === 0 ? (
-        <Card className="text-center py-16">
-          <FolderOpen className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-700 mb-2">No Custom Packs Yet</h3>
-          <p className="text-slate-500 mb-4">Create your first intelligence bundle</p>
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Your First Pack
-          </Button>
-        </Card>
+        <EmptyState
+          icon={FolderOpen}
+          title="No Custom Packs Yet"
+          description="Create your first intelligence bundle"
+          actionLabel="Create Your First Pack"
+          actionIcon={Plus}
+          onAction={() => setShowCreateDialog(true)}
+        />
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {customPacks.map(pack => {
