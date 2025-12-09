@@ -15,7 +15,22 @@ export default function TrendDiscovery() {
     queryKey: ['aiTrendSuggestions'],
     queryFn: async () => {
       const all = await base44.entities.AITrendSuggestion.list("-created_date", 20);
-      return all.filter(s => s.status === "new");
+      // Client-side filter: only show trends with 5+ independent sources and status "new"
+      return all.filter(s => {
+        if (s.status !== "new") return false;
+        
+        const sourceCount = s.supporting_evidence?.length || 0;
+        const sourceNameCount = s.source_names?.length || 0;
+        
+        // Must have at least 5 sources
+        if (sourceCount < 5 || sourceNameCount < 5) return false;
+        
+        // Verify sources are distinct
+        const uniqueSources = new Set(s.source_names || []);
+        if (uniqueSources.size < 5) return false;
+        
+        return true;
+      });
     },
     initialData: [],
   });
@@ -354,9 +369,9 @@ If NO clusters meet the 5-source rule, return an empty trends array.`;
                           </span>
                         )}
                       </div>
-                      {suggestion.supporting_evidence && (
+                      {suggestion.supporting_evidence && suggestion.supporting_evidence.length >= 5 && (
                         <div className="text-xs text-slate-500">
-                          Based on {Array.isArray(suggestion.supporting_evidence) ? suggestion.supporting_evidence.length : 0} newsletter{(Array.isArray(suggestion.supporting_evidence) ? suggestion.supporting_evidence.length : 0) !== 1 ? 's' : ''}
+                          Verified across {suggestion.supporting_evidence.length} independent sources
                         </div>
                       )}
                     </div>
