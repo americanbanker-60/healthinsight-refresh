@@ -62,41 +62,58 @@ export default function TrendDiscovery() {
 YOUR JOB IS TO IDENTIFY ONLY **REAL, VERIFIED TRENDS** — NOT OPINIONS, NOT ONE-OFF INSIGHTS, AND NOT SINGLE-SOURCE IDEAS.
 
 ============================================================
+CRITICAL: MAXIMUM 3-5 TRENDS ONLY
+============================================================
+You are limited to returning a MAXIMUM of 3-5 trends total. Be extremely selective.
+Quality over quantity. Only the strongest, most validated multi-source patterns.
+
+============================================================
 STRICT TREND DEFINITION (MANDATORY)
 ============================================================
 A 'Trend' is defined as:
-1. A theme, pattern, behavior, or directional shift that appears in **3 or more independent sources** (newsletters, articles, reports, etc.).
-2. Sources must come from different authors or organizations (i.e., independent origin).
+1. A theme, pattern, behavior, or directional shift that appears in **5 or more independent sources** (increased from 3).
+2. Sources MUST come from different authors or organizations (i.e., truly independent origin - check the "source" field).
 3. All sources must show **meaningful conceptual alignment**, not just shared keywords.
-4. Any candidate theme with fewer than 3 independent sources MUST be excluded completely and NOT output in any form.
+4. Any candidate theme with fewer than 5 independent sources MUST be excluded completely and NOT output in any form.
+
+BEFORE OUTPUTTING ANY TREND:
+- Manually verify in the data that you have 5+ DISTINCT source names
+- Count them explicitly: Source 1 = X, Source 2 = Y, Source 3 = Z, Source 4 = A, Source 5 = B
+- If any "source" field repeats, it does NOT count as independent
+- Only proceed if you have 5+ truly different sources
 
 ============================================================
-WHAT TO IGNORE (MANDATORY)
+WHAT TO IGNORE (MANDATORY - EVEN MORE STRICT)
 ============================================================
 You must not output:
-- Single-source ideas
-- Two-source ideas
-- Editorial opinions
-- Unique announcements
+- Single-source ideas (obvious)
+- Two-source ideas (obvious)
+- Three-source ideas (TOO FEW)
+- Four-source ideas (TOO FEW)
+- Editorial opinions from single publications
+- Unique announcements (even if mentioned by multiple sources, if it's about ONE company's ONE event, it's not a trend)
 - One-off insights
 - Speculative patterns
+- Broad generic themes like "AI in healthcare" or "value-based care"
 - Any tier such as 'emerging trend', 'weak signal', or 'possible trend'
 
-ONLY fully validated, multi-source trends should be returned.
+ONLY fully validated, multi-source trends (5+ independent sources) should be returned, and NO MORE THAN 5 TRENDS TOTAL.
 
 ============================================================
 PROCESS REQUIREMENTS
 ============================================================
-Step 1 — Pull and normalize all available source content.
+Step 1 — Pull and normalize all available source content from the newsletters data.
 Step 2 — Extract candidate themes from the dataset.
 Step 3 — Cluster themes by semantic similarity across ALL sources (not just by keyword).
-Step 4 — Count distinct independent sources in each cluster.
-Step 5 — Automatically ELIMINATE any cluster with fewer than **3 independent sources**.
-Step 6 — For clusters that meet the threshold:
+Step 4 — Count DISTINCT INDEPENDENT sources in each cluster by checking the "source" field.
+Step 5 — Automatically ELIMINATE any cluster with fewer than **5 independent sources**.
+Step 6 — Rank remaining clusters by strength (number of sources × conceptual coherence).
+Step 7 — Select the TOP 3-5 strongest clusters only.
+Step 8 — For each selected cluster:
     - Identify the shared theme
     - Provide a clear and neutral explanation
-    - List exactly which sources contributed
-Step 7 — Output ONLY fully validated trends.
+    - List exactly which 5+ DISTINCT sources contributed (by name)
+Step 9 — Output ONLY the top 3-5 validated trends, NO MORE.
 
 ============================================================
 NEWSLETTERS DATA
@@ -106,7 +123,7 @@ ${JSON.stringify(newsletterSummary, null, 2)}
 ============================================================
 OUTPUT FORMAT
 ============================================================
-For each validated trend, provide:
+For each validated trend (MAXIMUM 3-5 trends total), provide:
 
 1. **suggestion_type**: "learning_pack" (if time-bound research area) OR "topic" (if ongoing strategic theme)
 
@@ -116,11 +133,11 @@ For each validated trend, provide:
 
 4. **keywords**: 4-7 specific, searchable keywords
 
-5. **confidence_score**: Set to 100 for all trends that meet the 3+ source threshold (since they are verified)
+5. **confidence_score**: Set to 100 for all trends that meet the 5+ source threshold (since they are verified)
 
-6. **supporting_evidence**: Array of **3 or more** newsletter IDs from independent sources that support this trend
+6. **supporting_evidence**: Array of **5 or more** newsletter IDs from independent sources that support this trend
 
-7. **source_names**: Array of **3 or more** distinct source names (e.g., ["Elion Health", "Morning Consult", "Axios"])
+7. **source_names**: Array of **5 or more** distinct source names (e.g., ["Elion Health", "Morning Consult", "Axios", "Healthcare Dive", "Becker's"])
 
 8. **icon_suggestion**: Relevant emoji
 
@@ -129,18 +146,26 @@ For each validated trend, provide:
 10. **strategic_implications**: 2-3 sentence summary of the strategic significance
 
 ============================================================
-ERROR PREVENTION
+ERROR PREVENTION & FINAL CHECK
 ============================================================
 You MUST NOT:
+- Output more than 5 trends (3-5 is the target)
+- Output any trend with fewer than 5 independent sources
 - Invent sources or inflate the number of sources
 - Overstate or fabricate consensus where none exists
 - Combine unrelated concepts into a forced or artificial trend
 - Use shallow keyword overlap as sufficient evidence
-- Output any trend with fewer than 3 independent sources
+- Count the same source twice (check "source" field for duplicates)
 
-If NO clusters meet the 3-source rule, return an empty trends array.
+FINAL VERIFICATION BEFORE OUTPUT:
+For each trend you're about to output, ask yourself:
+1. Do I have 5+ DISTINCT "source" names? (Count them)
+2. Is this a genuine pattern, not a single event?
+3. Is this one of the TOP 3-5 strongest patterns in the data?
 
-Your ONLY job is to produce a fresh, accurate set of multi-source trends based solely on the current dataset.`;
+If any answer is NO, DO NOT OUTPUT that trend.
+
+If NO clusters meet the 5-source rule, return an empty trends array.`;
 
       const result = await base44.integrations.Core.InvokeLLM({
         prompt,
@@ -169,13 +194,25 @@ Your ONLY job is to produce a fresh, accurate set of multi-source trends based s
         }
       });
 
-      // Validate and save trends (ensure 3+ sources minimum)
+      // Validate and save trends (ensure 5+ sources minimum, max 5 trends)
       if (result.trends && result.trends.length > 0) {
         const validatedTrends = result.trends.filter(trend => {
           const sourceCount = trend.supporting_evidence?.length || 0;
           const sourceNameCount = trend.source_names?.length || 0;
-          return sourceCount >= 3 && sourceNameCount >= 3;
-        });
+          
+          // Must have 5+ sources from both arrays
+          if (sourceCount < 5 || sourceNameCount < 5) {
+            return false;
+          }
+          
+          // Verify sources are actually distinct (no duplicates)
+          const uniqueSources = new Set(trend.source_names);
+          if (uniqueSources.size < 5) {
+            return false;
+          }
+          
+          return true;
+        }).slice(0, 5); // Hard cap at 5 trends maximum
 
         if (validatedTrends.length > 0) {
           await base44.entities.AITrendSuggestion.bulkCreate(
@@ -184,13 +221,13 @@ Your ONLY job is to produce a fresh, accurate set of multi-source trends based s
               status: "new"
             }))
           );
-          toast.success(`Discovered ${validatedTrends.length} verified multi-source trend${validatedTrends.length > 1 ? 's' : ''}!`);
+          toast.success(`Discovered ${validatedTrends.length} high-confidence trend${validatedTrends.length > 1 ? 's' : ''} (5+ independent sources each)`);
           queryClient.invalidateQueries({ queryKey: ['aiTrendSuggestions'] });
         } else {
-          toast.info("No qualifying trends found in the current dataset.");
+          toast.info("No qualifying trends found. Trends require 5+ independent sources.");
         }
       } else {
-        toast.info("No qualifying trends found in the current dataset.");
+        toast.info("No qualifying trends found. Trends require 5+ independent sources.");
       }
     } catch (error) {
       console.error("Trend discovery error:", error);
