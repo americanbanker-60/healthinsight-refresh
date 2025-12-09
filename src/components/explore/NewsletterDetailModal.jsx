@@ -14,9 +14,7 @@ const sentimentColors = {
 };
 
 export default function NewsletterDetailModal({ newsletter, onClose }) {
-  const pubDate = newsletter.publication_date 
-    ? new Date(newsletter.publication_date) 
-    : new Date(newsletter.created_date);
+  const pubDate = new Date(newsletter.publication_date);
 
   return (
     <Dialog open={true} onOpenChange={onClose}>

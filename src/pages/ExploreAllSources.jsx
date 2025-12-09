@@ -482,9 +482,7 @@ export default function ExploreAllSources() {
               ))
             ) : (
               filteredResults.map(newsletter => {
-                const pubDate = newsletter.publication_date 
-                  ? new Date(newsletter.publication_date) 
-                  : new Date(newsletter.created_date);
+                const pubDate = new Date(newsletter.publication_date);
                 
                 return (
                   <Card key={newsletter.id} className="bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow border-slate-200/60">

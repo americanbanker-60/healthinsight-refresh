@@ -90,8 +90,6 @@ export default function NewsletterDetail() {
                 <Calendar className="w-4 h-4" />
                 {newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime()) 
                   ? format(new Date(newsletter.publication_date), "MMM d, yyyy") 
-                  : newsletter.created_date && !isNaN(new Date(newsletter.created_date).getTime())
-                  ? format(new Date(newsletter.created_date), "MMM d, yyyy")
                   : "Date not available"}
               </div>
               {newsletter.sentiment && (

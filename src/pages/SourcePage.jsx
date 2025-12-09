@@ -59,8 +59,8 @@ export default function SourcePage() {
   const filteredNewsletters = useMemo(() => {
     let result = persistentFilters ? applyFilters(newsletters, persistentFilters) : newsletters;
     return result.sort((a, b) => {
-      const dateA = new Date(a.publication_date || a.created_date || 0);
-      const dateB = new Date(b.publication_date || b.created_date || 0);
+      const dateA = new Date(a.publication_date || 0);
+      const dateB = new Date(b.publication_date || 0);
       return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
     });
   }, [newsletters, persistentFilters, sortOrder]);
