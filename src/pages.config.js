@@ -15,7 +15,6 @@ import MyCustomPacks from './pages/MyCustomPacks';
 import CustomPackDetail from './pages/CustomPackDetail';
 import DeepDiveResults from './pages/DeepDiveResults';
 import UserSettings from './pages/UserSettings';
-import LandingRouter from './pages/LandingRouter';
 import ManageLearningPacks from './pages/ManageLearningPacks';
 import AdminDashboard from './pages/AdminDashboard';
 import PublicationDateMigration from './pages/PublicationDateMigration';
@@ -42,7 +41,6 @@ export const PAGES = {
     "CustomPackDetail": CustomPackDetail,
     "DeepDiveResults": DeepDiveResults,
     "UserSettings": UserSettings,
-    "LandingRouter": LandingRouter,
     "ManageLearningPacks": ManageLearningPacks,
     "AdminDashboard": AdminDashboard,
     "PublicationDateMigration": PublicationDateMigration,
