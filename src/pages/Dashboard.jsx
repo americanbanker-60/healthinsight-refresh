@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Plus, FileText, Settings, HelpCircle } from "lucide-react";
 import KeyFeaturesModal from "../components/dashboard/KeyFeaturesModal";
-import { motion } from "framer-motion";
+import EmptyState from "../components/common/EmptyState";
 import NewsletterCard from "../components/dashboard/NewsletterCard";
 import StatsOverview from "../components/dashboard/StatsOverview";
 import PersistentFilters, { applyFilters } from "../components/filters/PersistentFilters";
@@ -203,21 +203,14 @@ export default function Dashboard() {
               </div>
             ))
           ) : filteredNewsletters.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-16"
-            >
-              <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-slate-700 mb-2">No newsletters found</h3>
-              <p className="text-slate-500 mb-6">Start analyzing healthcare newsletters to build your intelligence library</p>
-              <Link to={createPageUrl("AnalyzeNewsletter")}>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Analyze First Newsletter
-                </Button>
-              </Link>
-            </motion.div>
+            <EmptyState
+              icon={FileText}
+              title="No newsletters found"
+              description="Start analyzing healthcare newsletters to build your intelligence library"
+              actionLabel="Analyze First Newsletter"
+              actionIcon={Plus}
+              onAction={() => window.location.href = createPageUrl("AnalyzeNewsletter")}
+            />
           ) : (
             filteredNewsletters.map((newsletter, index) => (
               <div key={newsletter.id}>
