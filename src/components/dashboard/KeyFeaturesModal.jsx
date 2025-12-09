@@ -11,7 +11,9 @@ import {
   FileText, 
   FolderOpen,
   Globe,
-  Sparkles
+  Sparkles,
+  Briefcase,
+  Brain
 } from "lucide-react";
 
 const features = [
@@ -62,6 +64,18 @@ const features = [
     title: "Deep Dive Reports",
     description: "Generate comprehensive AI-powered research reports on any topic or learning pack with a single click.",
     color: "bg-orange-100 text-orange-600"
+  },
+  {
+    icon: Briefcase,
+    title: "PE Meeting Prep",
+    description: "Create PE-grade Initial Meeting Briefs for healthcare services and HCIT companies. AI generates 1-page briefs with business model analysis, key questions, and deal angles.",
+    color: "bg-indigo-100 text-indigo-600"
+  },
+  {
+    icon: Brain,
+    title: "AI Agent Workspace",
+    description: "Interact with specialized AI agents for insights analysis, strategic BD recommendations, and professional content formatting/export.",
+    color: "bg-purple-100 text-purple-600"
   }
 ];
 

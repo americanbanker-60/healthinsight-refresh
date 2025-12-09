@@ -92,9 +92,16 @@ export const walkthroughSteps = [
     page: "CompaniesDirectory",
   },
   {
+    id: "pe-meeting-prep",
+    title: "PE Meeting Prep",
+    content: "Generate PE-grade Initial Meeting Briefs for companies, sponsors, or counterparties. Enter a company name and URL, add sector tags, and our specialized AI agent creates a concise 1-page brief covering business model, market position, recent transactions, key questions, and risks—tailored for healthcare services and HCIT deals.",
+    placement: "center",
+    page: "PEMeetingPrep",
+  },
+  {
     id: "ai-agents",
     title: "AI Agents Powering Your Intelligence",
-    content: "Behind the scenes, specialized AI agents handle different tasks:\n\n• SummaryAgent - General briefings\n• PackSummaryAgent - Learning Pack synthesis\n• GetSmartFastAgent - Quick topic briefings\n• DeepDiveAgent - Comprehensive research reports\n• MarkdownFormatterAgent - Clean exports\n• InsightsNarrativeAgent - Activity summaries\n\nEach agent is optimized for its specific task.",
+    content: "Behind the scenes, specialized AI agents handle different tasks:\n\n• SummaryAgent - General briefings\n• PackSummaryAgent - Learning Pack synthesis\n• GetSmartFastAgent - Quick topic briefings\n• DeepDiveAgent - Comprehensive research reports\n• MarkdownFormatterAgent - Clean exports\n• InsightsNarrativeAgent - Activity summaries\n• PE Meeting Brief Agent - Deal preparation briefs\n\nEach agent is optimized for its specific task.",
     placement: "center",
     page: null,
   },
