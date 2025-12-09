@@ -128,49 +128,49 @@ export default function DeepDiveResults() {
     let sectionContent = [];
 
     for (const line of lines) {
-      if (line.match(/^\*\*Executive Summary\*\*/i)) {
+      if (line.match(/^##\s+Executive Summary/i) || line.match(/^\*\*Executive Summary\*\*/i)) {
         if (currentSection && sectionContent.length) {
           sections[currentSection] = sectionContent.join('\n');
         }
         currentSection = 'executive';
         sectionContent = [];
-      } else if (line.match(/^\*\*Market Overview\*\*/i)) {
+      } else if (line.match(/^##\s+Market Overview/i) || line.match(/^\*\*Market Overview\*\*/i)) {
         if (currentSection && sectionContent.length) {
           sections[currentSection] = sectionContent.join('\n');
         }
         currentSection = 'overview';
         sectionContent = [];
-      } else if (line.match(/^\*\*Key Drivers/i)) {
+      } else if (line.match(/^##\s+Outreach Recommendations/i) || line.match(/^\*\*Outreach Recommendations/i)) {
         if (currentSection && sectionContent.length) {
           sections[currentSection] = sectionContent.join('\n');
         }
         currentSection = 'drivers';
         sectionContent = [];
-      } else if (line.match(/^\*\*Landscape Map\*\*/i)) {
+      } else if (line.match(/^##\s+BD Pipeline Applications/i) || line.match(/^\*\*BD Pipeline Applications/i)) {
         if (currentSection && sectionContent.length) {
           sections[currentSection] = sectionContent.join('\n');
         }
         currentSection = 'landscape';
         sectionContent = [];
-      } else if (line.match(/^\*\*Recent Timeline\*\*/i)) {
+      } else if (line.match(/^##\s+Mini Email Templates/i) || line.match(/^\*\*Mini Email Templates/i)) {
         if (currentSection && sectionContent.length) {
           sections[currentSection] = sectionContent.join('\n');
         }
         currentSection = 'timeline';
         sectionContent = [];
-      } else if (line.match(/^\*\*Major News/i)) {
+      } else if (line.match(/^##\s+Thought Leadership/i) || line.match(/^\*\*Thought Leadership/i)) {
         if (currentSection && sectionContent.length) {
           sections[currentSection] = sectionContent.join('\n');
         }
         currentSection = 'highlights';
         sectionContent = [];
-      } else if (line.match(/^\*\*Most Important Excerpts\*\*/i)) {
+      } else if (line.match(/^##\s+Collateral Creation/i) || line.match(/^\*\*Collateral Creation/i)) {
         if (currentSection && sectionContent.length) {
           sections[currentSection] = sectionContent.join('\n');
         }
         currentSection = 'excerpts';
         sectionContent = [];
-      } else if (line.match(/^\*\*Consolidated Summary\*\*/i)) {
+      } else if (line.match(/^##\s+(Consolidated Action Plan|Valuation Tie-Ins)/i) || line.match(/^\*\*(Consolidated Action Plan|Valuation Tie-Ins)/i)) {
         if (currentSection && sectionContent.length) {
           sections[currentSection] = sectionContent.join('\n');
         }
@@ -297,12 +297,12 @@ ${sourcesList}
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="executive">Summary</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="drivers">Drivers</TabsTrigger>
-          <TabsTrigger value="landscape">Landscape</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="highlights">News</TabsTrigger>
-          <TabsTrigger value="excerpts">Excerpts</TabsTrigger>
-          <TabsTrigger value="summary">Conclusion</TabsTrigger>
+          <TabsTrigger value="drivers">Outreach</TabsTrigger>
+          <TabsTrigger value="landscape">Pipeline</TabsTrigger>
+          <TabsTrigger value="timeline">Templates</TabsTrigger>
+          <TabsTrigger value="highlights">Marketing</TabsTrigger>
+          <TabsTrigger value="excerpts">Collateral</TabsTrigger>
+          <TabsTrigger value="summary">Actions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all">
@@ -344,7 +344,7 @@ ${sourcesList}
         <TabsContent value="drivers">
           <Card>
             <CardHeader>
-              <CardTitle>Key Drivers & Forces</CardTitle>
+              <CardTitle>Outreach Recommendations</CardTitle>
             </CardHeader>
             <CardContent>
               <ReactMarkdown className="prose prose-slate max-w-none prose-li:text-slate-700 prose-li:my-2 prose-strong:text-slate-900 prose-strong:font-semibold">
@@ -357,7 +357,7 @@ ${sourcesList}
         <TabsContent value="landscape">
           <Card>
             <CardHeader>
-              <CardTitle>Landscape Map</CardTitle>
+              <CardTitle>BD Pipeline Applications</CardTitle>
             </CardHeader>
             <CardContent>
               <ReactMarkdown className="prose prose-slate max-w-none prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2 prose-li:text-slate-700 prose-strong:text-slate-900 prose-strong:font-semibold">
@@ -370,7 +370,7 @@ ${sourcesList}
         <TabsContent value="timeline">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Timeline</CardTitle>
+              <CardTitle>Mini Email Templates</CardTitle>
             </CardHeader>
             <CardContent>
               <ReactMarkdown className="prose prose-slate max-w-none prose-li:text-slate-700 prose-li:my-1 prose-strong:text-slate-900 prose-strong:font-semibold">
@@ -383,7 +383,7 @@ ${sourcesList}
         <TabsContent value="highlights">
           <Card>
             <CardHeader>
-              <CardTitle>Major News Highlights</CardTitle>
+              <CardTitle>Thought Leadership & Marketing</CardTitle>
             </CardHeader>
             <CardContent>
               <ReactMarkdown className="prose prose-slate max-w-none prose-li:text-slate-700 prose-li:my-2 prose-strong:text-slate-900 prose-strong:font-semibold prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2">
@@ -396,7 +396,7 @@ ${sourcesList}
         <TabsContent value="excerpts">
           <Card>
             <CardHeader>
-              <CardTitle>Most Important Excerpts</CardTitle>
+              <CardTitle>Collateral Creation Priorities</CardTitle>
             </CardHeader>
             <CardContent>
               <ReactMarkdown className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:leading-relaxed prose-strong:text-slate-900 prose-strong:font-semibold prose-li:my-2">
@@ -409,7 +409,7 @@ ${sourcesList}
         <TabsContent value="summary">
           <Card>
             <CardHeader>
-              <CardTitle>Consolidated Summary</CardTitle>
+              <CardTitle>Consolidated Action Plan</CardTitle>
             </CardHeader>
             <CardContent>
               <ReactMarkdown className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:leading-relaxed prose-strong:text-slate-900 prose-strong:font-semibold">

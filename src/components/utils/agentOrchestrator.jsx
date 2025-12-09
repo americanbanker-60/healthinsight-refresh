@@ -331,42 +331,63 @@ REMEMBER: Put blank lines between EVERY paragraph, header, and bullet point.`
       agentType: 'deepDive',
       systemPrompt: `You are the Actionability Engine creating comprehensive BD strategy briefings for healthcare investment bankers.
 Transform deep-dive research into concrete business development actions: outreach lists, deal origination strategies, thought leadership angles, and pipeline opportunities.
-Focus on U.S. healthcare services sectors. Use ONLY the provided content - no speculation.`,
-      userPrompt: `Create a detailed actionability-focused deep-dive briefing with BD strategies.`,
-      structureGuide: `
-CRITICAL: Use these EXACT section headers:
+Focus on U.S. healthcare services sectors. Use ONLY the provided content - no speculation.
 
-**Executive Summary**
+CRITICAL HEADER FORMATTING:
+- Use ## for main section headers (H2)
+- Use ### for subsections (H3)
+- Put a blank line before and after EVERY header
+- Never use bold (**text**) for headers`,
+      userPrompt: `Create a detailed actionability-focused deep-dive briefing with BD strategies using proper markdown header hierarchy.`,
+      structureGuide: `
+CRITICAL: Use this EXACT header structure and hierarchy:
+
+## Executive Summary
+
 6-8 sentences covering: What's happening, BD implications, target opportunities, outreach angles, valuation dynamics, consolidation potential.
 
-**Market Overview**
+## Market Overview
+
 3-4 paragraphs: Current state, key players, strategic moves, deal activity, valuation multiples, payer dynamics. Focus on actionable intelligence.
 
-**Outreach Recommendations**
+## Outreach Recommendations
+
 8-12 specific outreach opportunities organized by target type (PE firms, operators, founders, platforms, management teams).
 For each: Who to contact, why this matters to them, what angle to use, how to reference the insights.
 
-**BD Pipeline Applications**
+## BD Pipeline Applications
+
 6-10 deal origination and pipeline ideas: Target lists, subsector theses, geo expansion opportunities, follow-up strategies, PE outreach angles.
 Connect each directly to market insights.
 
-**Mini Email Templates** (2–3 options)
-Format each as outreach emails FROM the user (banker/advisor) TO potential targets (executives, PE firms, operators):
+## Mini Email Templates
+
+2–3 options formatted as outreach emails FROM the user (banker/advisor) TO potential targets (executives, PE firms, operators):
+
+### Template 1
 Subject: [specific subject line]
 Body: [4–5 professional sentences positioning the sender as a banker/advisor with relevant market insights]
 
-**Thought Leadership & Marketing**
+### Template 2
+Subject: [specific subject line]
+Body: [4–5 professional sentences]
+
+## Thought Leadership & Marketing
+
 8-12 content ideas: LinkedIn posts, pitch meeting themes, conference talking points, client memos, one-pager topics.
 Tie each to valuation drivers, regulatory shifts, reimbursement dynamics, or consolidation themes.
 
-**Collateral Creation Priorities**
+## Collateral Creation Priorities
+
 5-8 deliverable suggestions: Sector snapshots, valuation analyses, legislative timelines, competitive matrices, roll-up maps.
 Specify exact focus and why it's timely.
 
-**Valuation Tie-Ins**
+## Valuation Tie-Ins
+
 4-6 bullets on: Multiple expansion/compression factors, revenue durability signals, payer mix implications, scalability indicators, roll-up potential markers.
 
-**Consolidated Action Plan**
+## Consolidated Action Plan
+
 5-7 sentences synthesizing: Top 3 immediate actions, priority outreach targets, key messaging themes, timeline considerations.`
     },
     
