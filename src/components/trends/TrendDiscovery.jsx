@@ -36,69 +36,111 @@ export default function TrendDiscovery() {
   const discoverTrends = async () => {
     setIsAnalyzing(true);
     try {
+      // Clear old trend outputs only (keep all source data intact)
+      const oldTrends = await base44.entities.AITrendSuggestion.list("", 1000);
+      if (oldTrends.length > 0) {
+        for (const trend of oldTrends) {
+          await base44.entities.AITrendSuggestion.delete(trend.id);
+        }
+      }
+
       // Prepare newsletter data for AI analysis
       const recentNewsletters = newsletters.slice(0, 500);
       const newsletterSummary = recentNewsletters.map(n => ({
         id: n.id,
         title: n.title,
         source: n.source_name,
+        author: n.source_name, // Track independent sources
         date: n.publication_date || n.created_date,
         themes: n.themes?.map(t => t.theme) || [],
         takeaways: n.key_takeaways || [],
+        summary: n.summary || n.tldr || '',
         sentiment: n.sentiment
       }));
 
-      const prompt = `You are a healthcare market intelligence analyst identifying emerging trends for C-suite executives.
-Analyze these newsletters to discover 4-6 high-value emerging trends that warrant strategic attention.
+      const prompt = `YOU ARE THE TREND DISCOVERY ENGINE FOR THIS APPLICATION.
+YOUR JOB IS TO IDENTIFY ONLY **REAL, VERIFIED TRENDS** — NOT OPINIONS, NOT ONE-OFF INSIGHTS, AND NOT SINGLE-SOURCE IDEAS.
 
-ANALYSIS FRAMEWORK:
-Look for patterns across these dimensions:
-1. **Competitive Intelligence**: New market entrants, strategic partnerships, M&A activity, market share shifts
-2. **Regulatory & Policy**: New regulations, enforcement trends, reimbursement changes, compliance requirements
-3. **Technology & Innovation**: Platform plays, AI/ML applications, digital health adoption, interoperability
-4. **Care Models**: VBC evolution, site-of-care shifts, care delivery innovations, network strategies
-5. **Financial Dynamics**: Funding patterns, valuation trends, capital allocation, margin pressures
-6. **Consumer Behavior**: Patient preferences, access patterns, utilization trends
+============================================================
+STRICT TREND DEFINITION (MANDATORY)
+============================================================
+A 'Trend' is defined as:
+1. A theme, pattern, behavior, or directional shift that appears in **3 or more independent sources** (newsletters, articles, reports, etc.).
+2. Sources must come from different authors or organizations (i.e., independent origin).
+3. All sources must show **meaningful conceptual alignment**, not just shared keywords.
+4. Any candidate theme with fewer than 3 independent sources MUST be excluded completely and NOT output in any form.
 
-EVIDENCE REQUIREMENTS:
-- Minimum 3 newsletter mentions with specific examples
-- Must show either: (a) increasing frequency over time, (b) involvement of major players, or (c) significant capital/regulatory momentum
-- Include specific company names, deal values, or policy details as evidence
+============================================================
+WHAT TO IGNORE (MANDATORY)
+============================================================
+You must not output:
+- Single-source ideas
+- Two-source ideas
+- Editorial opinions
+- Unique announcements
+- One-off insights
+- Speculative patterns
+- Any tier such as 'emerging trend', 'weak signal', or 'possible trend'
 
-Newsletters data:
+ONLY fully validated, multi-source trends should be returned.
+
+============================================================
+PROCESS REQUIREMENTS
+============================================================
+Step 1 — Pull and normalize all available source content.
+Step 2 — Extract candidate themes from the dataset.
+Step 3 — Cluster themes by semantic similarity across ALL sources (not just by keyword).
+Step 4 — Count distinct independent sources in each cluster.
+Step 5 — Automatically ELIMINATE any cluster with fewer than **3 independent sources**.
+Step 6 — For clusters that meet the threshold:
+    - Identify the shared theme
+    - Provide a clear and neutral explanation
+    - List exactly which sources contributed
+Step 7 — Output ONLY fully validated trends.
+
+============================================================
+NEWSLETTERS DATA
+============================================================
 ${JSON.stringify(newsletterSummary, null, 2)}
 
-For each emerging trend you identify, provide:
+============================================================
+OUTPUT FORMAT
+============================================================
+For each validated trend, provide:
 
 1. **suggestion_type**: "learning_pack" (if time-bound research area) OR "topic" (if ongoing strategic theme)
 
-2. **title**: Compelling, specific title (e.g., "AI-Powered Prior Authorization Platforms" not "Healthcare AI")
+2. **title**: 5-10 words, concise and professional (e.g., "AI-Powered Prior Authorization Platforms")
 
-3. **description**: 3-4 sentences explaining:
-   - What's emerging and why now
-   - Strategic significance (market size, competitive implications, regulatory drivers)
-   - Who's moving (specific companies/organizations)
-   - Key risk or opportunity
+3. **description**: 2-3 sentences, strictly factual, no hype or speculation. Explain what is happening and why it matters at a high level.
 
 4. **keywords**: 4-7 specific, searchable keywords
 
-5. **confidence_score**: 0-100 based on:
-   - Frequency of mentions (30 points)
-   - Recency/momentum (30 points)  
-   - Involvement of major players (20 points)
-   - Regulatory or capital significance (20 points)
+5. **confidence_score**: Set to 100 for all trends that meet the 3+ source threshold (since they are verified)
 
-6. **supporting_evidence**: Array of newsletter IDs that contain evidence, with brief reason for each
+6. **supporting_evidence**: Array of **3 or more** newsletter IDs from independent sources that support this trend
 
-7. **icon_suggestion**: Relevant emoji
+7. **source_names**: Array of **3 or more** distinct source names (e.g., ["Elion Health", "Morning Consult", "Axios"])
 
-8. **category**: One of: Care Models, Payor Topics, Technology, Provider Operations, Policy & Regulation
+8. **icon_suggestion**: Relevant emoji
 
-9. **key_players**: Array of 3-5 specific company names or organizations driving this trend
+9. **category**: One of: Care Models, Payor Topics, Technology, Provider Operations, Policy & Regulation
 
-10. **strategic_implications**: 2-3 sentence summary of why executives should care
+10. **strategic_implications**: 2-3 sentence summary of the strategic significance
 
-Output ONLY trends with confidence_score >= 60. Prioritize competitive intelligence and regulatory shifts.`;
+============================================================
+ERROR PREVENTION
+============================================================
+You MUST NOT:
+- Invent sources or inflate the number of sources
+- Overstate or fabricate consensus where none exists
+- Combine unrelated concepts into a forced or artificial trend
+- Use shallow keyword overlap as sufficient evidence
+- Output any trend with fewer than 3 independent sources
+
+If NO clusters meet the 3-source rule, return an empty trends array.
+
+Your ONLY job is to produce a fresh, accurate set of multi-source trends based solely on the current dataset.`;
 
       const result = await base44.integrations.Core.InvokeLLM({
         prompt,
@@ -116,9 +158,9 @@ Output ONLY trends with confidence_score >= 60. Prioritize competitive intellige
                   keywords: { type: "array", items: { type: "string" } },
                   confidence_score: { type: "number" },
                   supporting_evidence: { type: "array", items: { type: "string" } },
+                  source_names: { type: "array", items: { type: "string" } },
                   icon_suggestion: { type: "string" },
                   category: { type: "string" },
-                  key_players: { type: "array", items: { type: "string" } },
                   strategic_implications: { type: "string" }
                 }
               }
@@ -127,18 +169,28 @@ Output ONLY trends with confidence_score >= 60. Prioritize competitive intellige
         }
       });
 
-      // Save suggestions to database
+      // Validate and save trends (ensure 3+ sources minimum)
       if (result.trends && result.trends.length > 0) {
-        await base44.entities.AITrendSuggestion.bulkCreate(
-          result.trends.map(trend => ({
-            ...trend,
-            status: "new"
-          }))
-        );
-        toast.success(`Discovered ${result.trends.length} emerging trends!`);
-        queryClient.invalidateQueries({ queryKey: ['aiTrendSuggestions'] });
+        const validatedTrends = result.trends.filter(trend => {
+          const sourceCount = trend.supporting_evidence?.length || 0;
+          const sourceNameCount = trend.source_names?.length || 0;
+          return sourceCount >= 3 && sourceNameCount >= 3;
+        });
+
+        if (validatedTrends.length > 0) {
+          await base44.entities.AITrendSuggestion.bulkCreate(
+            validatedTrends.map(trend => ({
+              ...trend,
+              status: "new"
+            }))
+          );
+          toast.success(`Discovered ${validatedTrends.length} verified multi-source trend${validatedTrends.length > 1 ? 's' : ''}!`);
+          queryClient.invalidateQueries({ queryKey: ['aiTrendSuggestions'] });
+        } else {
+          toast.info("No qualifying trends found in the current dataset.");
+        }
       } else {
-        toast.info("No new trends identified at this time");
+        toast.info("No qualifying trends found in the current dataset.");
       }
     } catch (error) {
       console.error("Trend discovery error:", error);
@@ -258,9 +310,10 @@ Output ONLY trends with confidence_score >= 60. Prioritize competitive intellige
                             {suggestion.category}
                           </Badge>
                         )}
-                        {suggestion.key_players && suggestion.key_players.length > 0 && (
+                        {suggestion.source_names && suggestion.source_names.length > 0 && (
                           <span className="text-xs text-slate-500">
-                            Key players: {suggestion.key_players.slice(0, 3).join(", ")}
+                            Sources: {suggestion.source_names.slice(0, 3).join(", ")}
+                            {suggestion.source_names.length > 3 && ` +${suggestion.source_names.length - 3} more`}
                           </span>
                         )}
                       </div>
