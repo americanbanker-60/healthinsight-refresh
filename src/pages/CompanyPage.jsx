@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Building2, TrendingUp, BookOpen, Calendar, Eye, Sparkles } from "lucide-react";
 import { format } from "date-fns";
-import { useNewsletterFilters } from "../components/utils/useNewsletterFilters";
+import { useNewsletterFilters } from "@/components/utils/useNewsletterFilters";
 import { Skeleton } from "@/components/ui/skeleton";
 import CompanyOverview from "../components/company/CompanyOverview";
 import CompanyTimeline from "../components/company/CompanyTimeline";

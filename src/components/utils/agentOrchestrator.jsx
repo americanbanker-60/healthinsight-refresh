@@ -31,10 +31,12 @@ export async function orchestrateAgent(config) {
   });
   
   // Execute with retries
+  let currentPrompt = fullPrompt;
+  
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const result = await securedInvokeLLM({
-        prompt: fullPrompt,
+        prompt: currentPrompt,
         add_context_from_internet: false
       });
       
@@ -48,7 +50,7 @@ export async function orchestrateAgent(config) {
       // If invalid and retries remain, try again with stricter prompt
       if (attempt < maxRetries) {
         console.warn(`Attempt ${attempt + 1} validation failed:`, validation.issues);
-        fullPrompt = addStricterInstructions(fullPrompt, validation.issues);
+        currentPrompt = addStricterInstructions(currentPrompt, validation.issues);
         continue;
       }
       
