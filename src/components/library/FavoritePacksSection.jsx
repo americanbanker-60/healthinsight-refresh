@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Star, Sparkles } from "lucide-react";
 import { logPackView } from "../utils/packTracking";
+import EmptyState from "../common/EmptyState";
 
 export default function FavoritePacksSection() {
   const navigate = useNavigate();
@@ -55,11 +56,11 @@ export default function FavoritePacksSection() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-slate-600">
-            <Star className="w-12 h-12 mx-auto mb-3 text-yellow-300" />
-            <p className="text-sm">You haven't starred any Learning Packs yet.</p>
-            <p className="text-xs text-slate-500 mt-1">Tap the ☆ on a pack to add it here.</p>
-          </div>
+          <EmptyState
+            icon={Star}
+            title="No Favorite Packs Yet"
+            description="Star Learning Packs to quickly access them here"
+          />
         </CardContent>
       </Card>
     );

@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Search, Play, Trash2, Calendar, Filter } from "lucide-react";
 import { toast } from "sonner";
+import EmptyState from "../common/EmptyState";
 
 export default function SavedSearchesSection() {
   const navigate = useNavigate();
@@ -55,11 +56,11 @@ export default function SavedSearchesSection() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-slate-600">
-            <Search className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-            <p className="text-sm">Save searches here for quick access.</p>
-            <p className="text-xs text-slate-500 mt-1">Run a search and click 'Save This Search' to get started.</p>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="No Saved Searches"
+            description="Run a search and click 'Save This Search' to get started"
+          />
         </CardContent>
       </Card>
     );
