@@ -12,7 +12,9 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Lightbulb, Search, TrendingUp, Plus, X, ArrowUpDown } from "lucide-react";
 import SortControl from "../components/common/SortControl";
-import { Skeleton } from "@/components/ui/skeleton";
+import { GridCardSkeleton } from "../components/common/CardSkeleton";
+import { StyledCard } from "../components/common/StyledCard";
+import { PrimaryButton } from "../components/common/PrimaryButton";
 import { toast } from "sonner";
 import { AdminOnlyButton } from "../components/admin/AdminOnlyButton";
 import EmptyState from "../components/common/EmptyState";
@@ -147,18 +149,7 @@ export default function TopicsDirectory() {
 
       {/* Topics Grid */}
       {isLoading ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array(6).fill(0).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <GridCardSkeleton count={6} />
       ) : filteredTopics.length === 0 ? (
         <EmptyState
           icon={Lightbulb}
@@ -168,9 +159,8 @@ export default function TopicsDirectory() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTopics.map(topic => (
-            <Card
+            <StyledCard
               key={topic.id}
-              className="bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-slate-200/60 group cursor-pointer"
               onClick={() => openTopic(topic)}
             >
               <CardHeader className="pb-3">
@@ -205,8 +195,8 @@ export default function TopicsDirectory() {
                   </div>
                 )}
 
-                <Button
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 group-hover:shadow-lg transition-all"
+                <PrimaryButton
+                  className="w-full group-hover:shadow-lg"
                   onClick={(e) => {
                     e.stopPropagation();
                     openTopic(topic);
@@ -214,9 +204,9 @@ export default function TopicsDirectory() {
                 >
                   <TrendingUp className="w-4 h-4 mr-2" />
                   Explore Topic
-                </Button>
+                </PrimaryButton>
               </CardContent>
-            </Card>
+            </StyledCard>
           ))}
         </div>
       )}

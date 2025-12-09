@@ -12,7 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Building2, Search, TrendingUp, Plus, X, Scan, ArrowUpDown } from "lucide-react";
 import SortControl from "../components/common/SortControl";
-import { Skeleton } from "@/components/ui/skeleton";
+import { GridCardSkeleton } from "../components/common/CardSkeleton";
+import { StyledCard } from "../components/common/StyledCard";
 import { toast } from "sonner";
 import { AdminOnlyButton } from "../components/admin/AdminOnlyButton";
 import EmptyState from "../components/common/EmptyState";
@@ -225,18 +226,7 @@ export default function CompaniesDirectory() {
 
       {/* Companies Grid */}
       {isLoading ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array(6).fill(0).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <GridCardSkeleton count={6} />
       ) : filteredCompanies.length === 0 ? (
         <EmptyState
           icon={Building2}
@@ -246,9 +236,8 @@ export default function CompaniesDirectory() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCompanies.map(company => (
-            <Card
+            <StyledCard
               key={company.id}
-              className="bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-slate-200/60 group cursor-pointer"
               onClick={() => openCompany(company)}
             >
               <CardHeader className="pb-3">
@@ -309,7 +298,7 @@ export default function CompaniesDirectory() {
                   </Button>
                 </div>
               </CardContent>
-            </Card>
+            </StyledCard>
           ))}
         </div>
       )}

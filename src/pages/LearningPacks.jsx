@@ -7,7 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BookOpen, Sparkles, Calendar, Search, Star } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { GridCardSkeleton } from "../components/common/CardSkeleton";
+import { CategoryBadge } from "../components/common/CategoryBadge";
+import { StyledCard } from "../components/common/StyledCard";
+import { PrimaryButton } from "../components/common/PrimaryButton";
 import EmptyState from "../components/common/EmptyState";
 import RecommendedPacks from "../components/packs/RecommendedPacks";
 import RecentlyViewedPacks from "../components/packs/RecentlyViewedPacks";
@@ -102,18 +105,7 @@ export default function LearningPacks() {
       </div>
 
       {isLoading ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array(6).fill(0).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <GridCardSkeleton count={6} />
       ) : (
         <div className="space-y-8">
           {Object.keys(groupedPacks).sort().map(category => (
@@ -125,9 +117,8 @@ export default function LearningPacks() {
               
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {groupedPacks[category].map(pack => (
-                  <Card
+                  <StyledCard
                     key={pack.id}
-                    className="bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 border-slate-200/60 group cursor-pointer"
                     onClick={() => openPack(pack)}
                   >
                     <CardHeader className="pb-3">
@@ -141,11 +132,7 @@ export default function LearningPacks() {
                           <div onClick={(e) => e.stopPropagation()}>
                             <FavoriteButton packId={pack.id} variant="icon" />
                           </div>
-                          {pack.category && (
-                            <Badge className={categoryColors[pack.category] || "bg-slate-100 text-slate-700"}>
-                              {pack.category}
-                            </Badge>
-                          )}
+                          {pack.category && <CategoryBadge category={pack.category} />}
                         </div>
                       </div>
                       <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
@@ -172,8 +159,8 @@ export default function LearningPacks() {
                         )}
                       </div>
 
-                      <Button
-                        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 group-hover:shadow-lg transition-all"
+                      <PrimaryButton
+                        className="w-full group-hover:shadow-lg"
                         onClick={(e) => {
                           e.stopPropagation();
                           openPack(pack);
@@ -181,9 +168,9 @@ export default function LearningPacks() {
                       >
                         <Sparkles className="w-4 h-4 mr-2" />
                         Open Pack
-                      </Button>
+                      </PrimaryButton>
                     </CardContent>
-                  </Card>
+                  </StyledCard>
                 ))}
               </div>
             </div>

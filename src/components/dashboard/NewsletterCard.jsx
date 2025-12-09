@@ -3,19 +3,13 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, ExternalLink, ChevronRight, TrendingUp, Briefcase } from "lucide-react";
+import { ExternalLink, ChevronRight, TrendingUp, Briefcase } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import AddToPackButton from "../packs/AddToPackButton";
 import { BDInsightBadge } from "../bd/BDActionPrompt";
-
-const sentimentColors = {
-  positive: "bg-green-100 text-green-800 border-green-200",
-  neutral: "bg-slate-100 text-slate-800 border-slate-200",
-  negative: "bg-red-100 text-red-800 border-red-200",
-  mixed: "bg-yellow-100 text-yellow-800 border-yellow-200"
-};
+import NewsletterMetadata from "../newsletter/NewsletterMetadata";
 
 export default function NewsletterCard({ newsletter, index, variant = "full" }) {
   if (variant === "minimal") {
@@ -32,8 +26,7 @@ export default function NewsletterCard({ newsletter, index, variant = "full" }) 
                 {newsletter.title}
               </h4>
             </div>
-            <div className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
-              <Calendar className="w-3 h-3" />
+            <div className="text-xs text-slate-500 shrink-0">
               {newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime())
                 ? format(new Date(newsletter.publication_date), "MMM d")
                 : "N/A"}
@@ -57,20 +50,11 @@ export default function NewsletterCard({ newsletter, index, variant = "full" }) 
               <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors flex-1">
                 {newsletter.title}
               </h3>
-              {newsletter.sentiment && (
-                <Badge className={`${sentimentColors[newsletter.sentiment]} border text-xs`}>
-                  {newsletter.sentiment}
-                </Badge>
-              )}
+              <NewsletterMetadata newsletter={newsletter} className="text-xs" />
             </div>
             
+            <NewsletterMetadata newsletter={newsletter} className="text-xs mb-2" />
             <div className="flex items-center gap-3 text-xs text-slate-600 mb-2">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime())
-                  ? format(new Date(newsletter.publication_date), "MMM d, yyyy")
-                  : "N/A"}
-              </div>
               {newsletter.key_takeaways && newsletter.key_takeaways.length > 0 && (
                 <div className="flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
@@ -111,21 +95,7 @@ export default function NewsletterCard({ newsletter, index, variant = "full" }) 
               <CardTitle className="text-xl mb-2 group-hover:text-blue-600 transition-colors">
                 {newsletter.title}
               </CardTitle>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                <div className="flex items-center gap-1 shrink-0">
-                  <Calendar className="w-4 h-4" />
-                  <span className="whitespace-nowrap">
-                    {newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime())
-                      ? format(new Date(newsletter.publication_date), "MMM d, yyyy")
-                      : "Date not available"}
-                  </span>
-                </div>
-                {newsletter.sentiment && (
-                  <Badge className={`${sentimentColors[newsletter.sentiment]} border font-medium`}>
-                    {newsletter.sentiment}
-                  </Badge>
-                )}
-              </div>
+              <NewsletterMetadata newsletter={newsletter} />
             </div>
             <a
               href={newsletter.source_url}

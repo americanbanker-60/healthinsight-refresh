@@ -1,21 +1,11 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { ExternalLink, Calendar, TrendingUp, Briefcase, DollarSign } from "lucide-react";
-import { format } from "date-fns";
+import { TrendingUp, Briefcase, DollarSign } from "lucide-react";
 import AddToPackButton from "../packs/AddToPackButton";
-
-const sentimentColors = {
-  positive: "bg-green-100 text-green-800 border-green-200",
-  neutral: "bg-slate-100 text-slate-800 border-slate-200",
-  negative: "bg-red-100 text-red-800 border-red-200",
-  mixed: "bg-yellow-100 text-yellow-800 border-yellow-200"
-};
+import NewsletterMetadata from "../newsletter/NewsletterMetadata";
 
 export default function NewsletterDetailModal({ newsletter, onClose }) {
-  const pubDate = new Date(newsletter.publication_date);
-
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -23,29 +13,7 @@ export default function NewsletterDetailModal({ newsletter, onClose }) {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <DialogTitle className="text-2xl mb-3">{newsletter.title}</DialogTitle>
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                <Badge variant="outline">{newsletter.source_name}</Badge>
-                <div className="flex items-center gap-1 text-slate-600">
-                  <Calendar className="w-4 h-4" />
-                  {format(pubDate, "MMMM d, yyyy")}
-                </div>
-                {newsletter.sentiment && (
-                  <Badge className={sentimentColors[newsletter.sentiment]}>
-                    {newsletter.sentiment}
-                  </Badge>
-                )}
-                {newsletter.source_url && (
-                  <a
-                    href={newsletter.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Source
-                  </a>
-                )}
-              </div>
+              <NewsletterMetadata newsletter={newsletter} showLink={true} />
             </div>
             <AddToPackButton newsletterId={newsletter.id} variant="icon" />
           </div>

@@ -13,7 +13,7 @@ import PersistentFilters, { applyFilters } from "../components/filters/Persisten
 import TrendChart from "../components/dashboard/TrendChart";
 import FeaturedPacks from "../components/dashboard/FeaturedPacks";
 import TrendDiscovery from "../components/trends/TrendDiscovery";
-import { Skeleton } from "@/components/ui/skeleton";
+import { GridCardSkeleton } from "../components/common/CardSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -189,20 +189,9 @@ export default function Dashboard() {
       />
 
       <div className={displayVariant === "minimal" ? "space-y-2" : "grid gap-6"}>
-          {isLoading ? (
-            Array(3).fill(0).map((_, i) => (
-              <div key={i} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-200/60">
-                <Skeleton className="h-8 w-2/3 mb-4" />
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-5/6 mb-4" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-6 w-20" />
-                  <Skeleton className="h-6 w-20" />
-                  <Skeleton className="h-6 w-20" />
-                </div>
-              </div>
-            ))
-          ) : filteredNewsletters.length === 0 ? (
+        {isLoading ? (
+          <GridCardSkeleton count={3} />
+        ) : filteredNewsletters.length === 0 ? (
             <EmptyState
               icon={FileText}
               title="No newsletters found"
