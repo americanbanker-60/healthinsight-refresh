@@ -35,7 +35,7 @@ const navigationGroups = [
         title: "Agent Workspace",
         url: createPageUrl("AgentWorkspace"),
         icon: Brain,
-        roles: ["admin", "power", "standard"],
+        roles: ["admin", "power", "user"],
       },
     ]
   },
@@ -46,7 +46,7 @@ const navigationGroups = [
         title: "PE Meeting Prep",
         url: createPageUrl("PEMeetingPrep"),
         icon: Briefcase,
-        roles: ["admin", "power", "standard"],
+        roles: ["admin", "power", "user"],
       },
     ]
   },
@@ -57,37 +57,37 @@ const navigationGroups = [
         title: "Knowledge Hub",
         url: createPageUrl("KnowledgeHub"),
         icon: Compass,
-        roles: ["admin", "power", "standard"],
+        roles: ["admin", "power", "user"],
       },
       {
         title: "Explore All Sources",
         url: createPageUrl("ExploreAllSources"),
         icon: TrendingUp,
-        roles: ["admin", "power", "standard"],
+        roles: ["admin", "power", "user"],
       },
       {
         title: "Learning Packs",
         url: createPageUrl("LearningPacks"),
         icon: BookOpen,
-        roles: ["admin", "power", "standard"],
+        roles: ["admin", "power", "user"],
       },
       {
         title: "Topics",
         url: createPageUrl("TopicsDirectory"),
         icon: Lightbulb,
-        roles: ["admin", "power", "standard"],
+        roles: ["admin", "power", "user"],
       },
       {
           title: "Companies",
           url: createPageUrl("CompaniesDirectory"),
           icon: Building2,
-          roles: ["admin", "power", "standard"],
+          roles: ["admin", "power", "user"],
         },
         {
           title: "Various Sources",
           url: createPageUrl("VariousSources"),
           icon: Globe,
-          roles: ["admin", "power", "standard"],
+          roles: ["admin", "power", "user"],
         },
     ]
   },
@@ -98,19 +98,19 @@ const navigationGroups = [
         title: "Dashboard",
         url: createPageUrl("Dashboard"),
         icon: LayoutDashboard,
-        roles: ["admin", "power", "standard"],
+        roles: ["admin", "power", "user"],
       },
       {
         title: "My Library",
         url: createPageUrl("MyLibrary"),
         icon: Library,
-        roles: ["admin", "power", "standard"],
+        roles: ["admin", "power", "user"],
       },
       {
         title: "My Custom Packs",
         url: createPageUrl("MyCustomPacks"),
         icon: FolderOpen,
-        roles: ["admin", "power", "standard"],
+        roles: ["admin", "power", "user"],
       },
     ]
   },
@@ -121,7 +121,7 @@ const navigationGroups = [
         title: "User Settings",
         url: createPageUrl("UserSettings"),
         icon: Settings,
-        roles: ["admin", "power", "standard"],
+        roles: ["admin", "power", "user"],
       },
       {
         title: "Dashboard Settings",
@@ -287,7 +287,7 @@ function LayoutContent({ children, currentPageName, location, sources }) {
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="outline" className="text-xs px-2 py-0">
                     <Shield className="w-3 h-3 mr-1" />
-                    {role === "admin" ? "Admin" : role === "power" ? "Power" : "Standard"}
+                    {role === "admin" ? "Admin" : role === "power" ? "Power" : "User"}
                   </Badge>
                 </div>
               </div>
