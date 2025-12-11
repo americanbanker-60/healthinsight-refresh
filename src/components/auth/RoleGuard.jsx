@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
  * @param {React.Component} children - Content to render if authorized
  * @param {React.Component} fallback - Optional fallback for unauthorized users
  */
-export function RoleGuard({ allowedRoles = ["admin", "power", "standard"], children, fallback }) {
+export function RoleGuard({ allowedRoles = ["admin", "power", "user"], children, fallback }) {
   const { data: user, isLoading } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
@@ -21,7 +21,7 @@ export function RoleGuard({ allowedRoles = ["admin", "power", "standard"], child
     return null;
   }
 
-  const userRole = user?.role || "standard";
+  const userRole = user?.role || "user";
   const hasAccess = allowedRoles.includes(userRole);
 
   if (!hasAccess) {
@@ -57,14 +57,14 @@ export function useUserRole() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const role = user?.role || "standard";
+  const role = user?.role || "user";
   
   return {
     user,
     role,
     isAdmin: role === "admin",
     isPowerUser: role === "power",
-    isStandard: role === "standard",
+    isUser: role === "user",
     hasRole: (requiredRole) => role === requiredRole,
     hasAnyRole: (roles) => roles.includes(role),
   };
