@@ -143,20 +143,35 @@ Please research this counterparty using web search and the provided URLs, then g
 
       // Subscribe to get the response
       let briefMarkdown = "";
-      await new Promise((resolve) => {
-        base44.agents.subscribeToConversation(conversation.id, (data) => {
+      let unsubscribe;
+      
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          if (unsubscribe) unsubscribe();
+          reject(new Error("Brief generation timed out after 2 minutes"));
+        }, 120000); // 2 minute timeout
+
+        unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
           const lastMessage = data.messages[data.messages.length - 1];
-          if (lastMessage?.role === "assistant" && lastMessage?.content) {
-            briefMarkdown = lastMessage.content;
+          
+          if (lastMessage?.role === "assistant") {
+            if (lastMessage.content) {
+              briefMarkdown = lastMessage.content;
+            }
+            
             if (lastMessage.status === "completed") {
+              clearTimeout(timeout);
               resolve();
+            } else if (lastMessage.status === "error") {
+              clearTimeout(timeout);
+              reject(new Error("Agent encountered an error: " + (lastMessage.error || "Unknown error")));
             }
           }
         });
       });
 
-      if (!briefMarkdown) {
-        throw new Error("No brief content generated");
+      if (!briefMarkdown || briefMarkdown.trim().length < 100) {
+        throw new Error("Brief generation failed - no substantial content generated");
       }
 
       // Extract sources from the brief (look for ## 11. Sources Reviewed section)
@@ -185,7 +200,7 @@ Please research this counterparty using web search and the provided URLs, then g
 
     } catch (error) {
       console.error("Brief generation error:", error);
-      toast.error("Failed to generate brief. Please try again.");
+      toast.error(error.message || "Failed to generate brief. Please try again.");
     }
     setIsGenerating(false);
   };
