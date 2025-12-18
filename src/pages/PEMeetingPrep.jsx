@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Loader2, FileText, Calendar, Eye, Plus, X } from "lucide-react";
+import { Briefcase, Loader2, FileText, Calendar, Eye, X } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
-import { asArray, normalizeMeetingBrief, normalizeMeetingBriefList } from "@/components/utils/normalizeMeetingBrief";
 
 const SECTOR_OPTIONS = [
   "Healthcare Services - Provider Groups",
@@ -37,7 +36,7 @@ const SECTOR_OPTIONS = [
 export default function PEMeetingPrep() {
   const queryClient = useQueryClient();
   
-  // Form state
+  // Form state with safe defaults
   const [counterpartyType, setCounterpartyType] = useState("");
   const [counterpartyName, setCounterpartyName] = useState("");
   const [primaryUrl, setPrimaryUrl] = useState("");
@@ -46,21 +45,23 @@ export default function PEMeetingPrep() {
   const [rolePerspective, setRolePerspective] = useState("");
   const [meetingDatetime, setMeetingDatetime] = useState("");
   const [meetingContext, setMeetingContext] = useState("");
-  const [sectorInput, setSectorInput] = useState("");
   
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentBrief, setCurrentBrief] = useState(() => normalizeMeetingBrief(null));
   const [viewingBriefId, setViewingBriefId] = useState(null);
 
-  // Fetch brief history
-  const { data: briefs = [], isLoading } = useQuery({
+  // Fetch briefs with bulletproof error handling
+  const { data: savedBriefs = [], isLoading } = useQuery({
     queryKey: ['peMeetingBriefs'],
     queryFn: async () => {
       try {
         const user = await base44.auth.me();
-        const res = await base44.entities.PEMeetingBrief.filter({ created_by: user.email }, "-created_date", 50);
-        return normalizeMeetingBriefList(res);
+        const results = await base44.entities.PEMeetingBrief.filter(
+          { created_by: user.email }, 
+          "-created_date", 
+          50
+        );
+        return Array.isArray(results) ? results : [];
       } catch (e) {
         console.error("Failed to load briefs:", e);
         return [];
@@ -68,16 +69,6 @@ export default function PEMeetingPrep() {
     },
     initialData: [],
   });
-
-  const addSector = (sector) => {
-    if (sector && !asArray(selectedSectors).includes(sector)) {
-      setSelectedSectors([...asArray(selectedSectors), sector]);
-    }
-  };
-
-  const removeSector = (sector) => {
-    setSelectedSectors(asArray(selectedSectors).filter(s => s !== sector));
-  };
 
   const isValidUrl = (url) => {
     try {
@@ -89,39 +80,22 @@ export default function PEMeetingPrep() {
   };
 
   const isFormValid = () => {
-    return counterpartyName.trim() && 
-           counterpartyType && 
-           primaryUrl.trim() && 
-           isValidUrl(primaryUrl);
+    return counterpartyName.trim() && counterpartyType && primaryUrl.trim() && isValidUrl(primaryUrl);
   };
 
   const generateBrief = async () => {
     if (!isFormValid()) {
-      toast.error("Please fill in all required fields with valid data");
+      toast.error("Please fill in all required fields");
       return;
     }
 
     setIsGenerating(true);
     try {
-      // Parse additional URLs
-      const urlArray = String(additionalUrls || "")
+      const urlArray = (additionalUrls || "")
         .split('\n')
-        .map(u => (u || "").trim())
+        .map(u => u.trim())
         .filter(u => u && isValidUrl(u));
 
-      // Prepare context for the agent
-      const context = {
-        counterparty_name: counterpartyName,
-        counterparty_type: counterpartyType,
-        primary_url: primaryUrl,
-        additional_urls: asArray(urlArray),
-        sectors: asArray(selectedSectors),
-        role_perspective: rolePerspective || "PE Sponsor",
-        meeting_datetime: meetingDatetime || null,
-        meeting_context_notes: meetingContext || ""
-      };
-
-      // Call the agent to generate the brief
       const conversation = await base44.agents.createConversation({
         agent_name: "pe_meeting_brief_agent",
         metadata: {
@@ -135,8 +109,8 @@ export default function PEMeetingPrep() {
 **Counterparty Name:** ${counterpartyName}
 **Counterparty Type:** ${counterpartyType}
 **Primary Website:** ${primaryUrl}
-${asArray(urlArray).length > 0 ? `**Additional URLs:** ${asArray(urlArray).join(', ')}` : ''}
-${asArray(selectedSectors).length > 0 ? `**Sectors:** ${asArray(selectedSectors).join(', ')}` : ''}
+${urlArray.length > 0 ? `**Additional URLs:** ${urlArray.join(', ')}` : ''}
+${selectedSectors.length > 0 ? `**Sectors:** ${selectedSectors.join(', ')}` : ''}
 **Our Role:** ${rolePerspective || 'PE Sponsor'}
 ${meetingDatetime ? `**Meeting Date:** ${meetingDatetime}` : ''}
 ${meetingContext ? `**Meeting Context:** ${meetingContext}` : ''}
@@ -148,22 +122,19 @@ Please research this counterparty using web search and the provided URLs, then g
         content: prompt
       });
 
-      // Subscribe to get the response
       let briefMarkdown = "";
       let unsubscribe;
       
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
           if (unsubscribe) unsubscribe();
-          reject(new Error("Brief generation timed out after 2 minutes"));
-        }, 120000); // 2 minute timeout
+          reject(new Error("Brief generation timed out"));
+        }, 120000);
 
         unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
-          // Bulletproof: handle undefined/null data
-          if (!data) return;
+          if (!data || !data.messages || !Array.isArray(data.messages)) return;
           
-          // Ensure messages is always an array
-          const messages = asArray(data.messages || []);
+          const messages = data.messages;
           if (messages.length === 0) return;
           
           const lastMessage = messages[messages.length - 1];
@@ -179,66 +150,42 @@ Please research this counterparty using web search and the provided URLs, then g
               resolve();
             } else if (lastMessage.status === "error") {
               clearTimeout(timeout);
-              reject(new Error("Agent encountered an error: " + (lastMessage.error || "Unknown error")));
+              reject(new Error(lastMessage.error || "Agent error"));
             }
           }
         });
       });
 
       if (!briefMarkdown || briefMarkdown.trim().length < 100) {
-        throw new Error("Brief generation failed - no substantial content generated");
+        throw new Error("Brief generation failed - no content generated");
       }
 
-      // Extract sources from the brief (look for ## 11. Sources Reviewed section)
-      const sourcesMatch = briefMarkdown.match(/## 11\. Sources Reviewed\n([\s\S]*?)(?=\n## |$)/);
-      const sourcesList = (sourcesMatch && sourcesMatch[1])
-        ? String(sourcesMatch[1]).split('\n').filter(s => s && s.trim().startsWith('-')).map(s => s.replace(/^-\s*/, '').trim())
-        : [primaryUrl, ...asArray(urlArray)];
-
-      // Save the brief
       const savedBrief = await base44.entities.PEMeetingBrief.create({
         counterparty_name: counterpartyName,
         counterparty_type: counterpartyType,
         primary_url: primaryUrl,
-        additional_urls: asArray(urlArray),
-        sectors: asArray(selectedSectors),
+        additional_urls: urlArray,
+        sectors: selectedSectors,
         role_perspective: rolePerspective || "PE Sponsor",
         meeting_datetime: meetingDatetime || null,
         meeting_context_notes: meetingContext || "",
         brief_markdown: briefMarkdown,
-        sources_list: asArray(sourcesList)
+        sources_list: [primaryUrl, ...urlArray]
       });
 
-      const normalized = normalizeMeetingBrief(savedBrief);
-      setCurrentBrief(normalized);
-      setViewingBriefId(normalized.id);
+      setViewingBriefId(savedBrief.id);
       queryClient.invalidateQueries({ queryKey: ['peMeetingBriefs'] });
-      toast.success("Initial Meeting Brief generated successfully!");
+      toast.success("Brief generated successfully!");
 
     } catch (error) {
       console.error("Brief generation error:", error);
-      toast.error(error.message || "Failed to generate brief. Please try again.");
+      toast.error(error.message || "Failed to generate brief");
     }
     setIsGenerating(false);
   };
 
-  const viewBrief = (brief) => {
-    const normalized = normalizeMeetingBrief(brief);
-    setCurrentBrief(normalized);
-    setViewingBriefId(normalized.id);
-  };
-
-  // Bulletproof brief selection
-  const displayedBrief = React.useMemo(() => {
-    let selectedBrief = currentBrief;
-    
-    if (viewingBriefId) {
-      const found = asArray(briefs).find(b => b && b.id === viewingBriefId);
-      if (found) selectedBrief = found;
-    }
-    
-    return normalizeMeetingBrief(selectedBrief);
-  }, [viewingBriefId, briefs, currentBrief]);
+  // Safe brief lookup
+  const displayedBrief = savedBriefs.find(b => b && b.id === viewingBriefId) || null;
 
   return (
     <div className="p-6 md:p-10 max-w-[1800px] mx-auto">
@@ -250,8 +197,7 @@ Please research this counterparty using web search and the provided URLs, then g
           <div>
             <h1 className="text-4xl font-bold text-slate-900 tracking-tight">PE Meeting Prep</h1>
             <p className="text-slate-600 text-lg mt-1">
-              Create a concise, PE-grade Initial Meeting Brief for an upcoming meeting with a company, sponsor, or other counterparty. 
-              Focused on healthcare services and HCIT.
+              Generate a concise PE-grade Initial Meeting Brief for healthcare services and HCIT companies
             </p>
           </div>
         </div>
@@ -322,35 +268,38 @@ Please research this counterparty using web search and the provided URLs, then g
                   id="additionalUrls"
                   value={additionalUrls}
                   onChange={(e) => setAdditionalUrls(e.target.value)}
-                  placeholder="One URL per line (news, press releases, filings, etc.)"
+                  placeholder="One URL per line"
                   rows={3}
-                  className="text-sm"
                 />
               </div>
 
               <div>
                 <Label className="text-sm font-semibold mb-2 block">
-                  Sector / Focus Tags (Recommended)
+                  Sector Tags (Recommended)
                 </Label>
-                <div className="flex gap-2 mb-2">
-                  <Select value={sectorInput} onValueChange={(value) => {
-                    addSector(value);
-                    setSectorInput("");
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Add sector..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SECTOR_OPTIONS.filter(s => !asArray(selectedSectors).includes(s)).map(sector => (
-                        <SelectItem key={sector} value={sector}>{sector}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {asArray(selectedSectors).length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {asArray(selectedSectors).map(sector => (
-                      <Badge key={sector} variant="secondary" className="cursor-pointer" onClick={() => removeSector(sector)}>
+                <Select value="" onValueChange={(value) => {
+                  if (!selectedSectors.includes(value)) {
+                    setSelectedSectors([...selectedSectors, value]);
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Add sector..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SECTOR_OPTIONS.filter(s => !selectedSectors.includes(s)).map(sector => (
+                      <SelectItem key={sector} value={sector}>{sector}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedSectors.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedSectors.map(sector => (
+                      <Badge 
+                        key={sector} 
+                        variant="secondary" 
+                        className="cursor-pointer"
+                        onClick={() => setSelectedSectors(selectedSectors.filter(s => s !== sector))}
+                      >
                         {sector}
                         <X className="w-3 h-3 ml-1" />
                       </Badge>
@@ -361,7 +310,7 @@ Please research this counterparty using web search and the provided URLs, then g
 
               <div>
                 <Label htmlFor="rolePerspective" className="text-sm font-semibold">
-                  Our Role / Perspective (Optional)
+                  Our Role (Optional)
                 </Label>
                 <Select value={rolePerspective} onValueChange={setRolePerspective}>
                   <SelectTrigger id="rolePerspective">
@@ -393,22 +342,21 @@ Please research this counterparty using web search and the provided URLs, then g
 
               <div>
                 <Label htmlFor="meetingContext" className="text-sm font-semibold">
-                  Meeting Context / Objectives (Optional)
+                  Meeting Context (Optional)
                 </Label>
                 <Textarea
                   id="meetingContext"
                   value={meetingContext}
                   onChange={(e) => setMeetingContext(e.target.value)}
-                  placeholder="What we're trying to accomplish in this meeting..."
+                  placeholder="What we're trying to accomplish..."
                   rows={3}
-                  className="text-sm"
                 />
               </div>
 
               <Button
                 onClick={generateBrief}
                 disabled={!isFormValid() || isGenerating}
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                 size="lg"
               >
                 {isGenerating ? (
@@ -419,7 +367,7 @@ Please research this counterparty using web search and the provided URLs, then g
                 ) : (
                   <>
                     <FileText className="w-5 h-5 mr-2" />
-                    Generate Initial Meeting Brief
+                    Generate Meeting Brief
                   </>
                 )}
               </Button>
@@ -434,8 +382,8 @@ Please research this counterparty using web search and the provided URLs, then g
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Eye className="w-5 h-5" />
-                Initial Meeting Brief
-                {displayedBrief && (
+                Meeting Brief
+                {displayedBrief && displayedBrief.created_date && (
                   <Badge variant="outline" className="ml-auto">
                     {format(new Date(displayedBrief.created_date), "MMM d, yyyy 'at' h:mm a")}
                   </Badge>
@@ -443,12 +391,12 @@ Please research this counterparty using web search and the provided URLs, then g
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {!displayedBrief || !displayedBrief.id ? (
+              {!displayedBrief ? (
                 <div className="text-center py-12">
                   <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-600 mb-2">No brief generated yet</p>
+                  <p className="text-slate-600 mb-2">No brief selected</p>
                   <p className="text-sm text-slate-500">
-                    Fill in the form and click "Generate Initial Meeting Brief" to create your first brief.
+                    Generate a new brief or select one from history
                   </p>
                 </div>
               ) : (
@@ -472,7 +420,7 @@ Please research this counterparty using web search and the provided URLs, then g
                       strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
                     }}
                   >
-                    {displayedBrief.brief_markdown}
+                    {displayedBrief.brief_markdown || ""}
                   </ReactMarkdown>
                 </div>
               )}
@@ -490,52 +438,53 @@ Please research this counterparty using web search and the provided URLs, then g
             <CardContent>
               {isLoading ? (
                 <p className="text-sm text-slate-600">Loading history...</p>
-              ) : asArray(briefs).length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">No briefs generated yet</p>
+              ) : savedBriefs.length === 0 ? (
+                <p className="text-sm text-slate-500 text-center py-4">No briefs yet</p>
               ) : (
                 <div className="space-y-2">
-                  {asArray(briefs).filter(b => b && b.id).map((brief, index) => {
-                    const normalizedBrief = normalizeMeetingBrief(brief);
-                    if (!normalizedBrief || !normalizedBrief.id) return null;
+                  {savedBriefs.map(brief => {
+                    if (!brief || !brief.id) return null;
                     return (
-                    <div
-                      key={normalizedBrief.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                        viewingBriefId === normalizedBrief.id
-                          ? 'bg-indigo-50 border-indigo-300'
-                          : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-slate-50'
-                      }`}
-                      onClick={() => viewBrief(normalizedBrief)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-semibold text-slate-900 text-sm">{normalizedBrief.counterparty_name}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">{normalizedBrief.counterparty_type}</Badge>
-                            <span className="text-xs text-slate-500">
-                              {format(new Date(normalizedBrief.created_date), "MMM d, yyyy")}
-                            </span>
-                          </div>
-                          {asArray(normalizedBrief.sectors).length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {asArray(normalizedBrief.sectors).slice(0, 2).map((sector, idx) => (
-                                <Badge key={idx} variant="secondary" className="text-xs">
-                                  {(sector && sector.split ? sector.split(' - ')[1] : null) || sector}
-                                </Badge>
-                              ))}
-                              {asArray(normalizedBrief.sectors).length > 2 && (
-                                <Badge variant="secondary" className="text-xs">+{asArray(normalizedBrief.sectors).length - 2}</Badge>
+                      <div
+                        key={brief.id}
+                        className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                          viewingBriefId === brief.id
+                            ? 'bg-indigo-50 border-indigo-300'
+                            : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-slate-50'
+                        }`}
+                        onClick={() => setViewingBriefId(brief.id)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-slate-900 text-sm">{brief.counterparty_name}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">{brief.counterparty_type}</Badge>
+                              {brief.created_date && (
+                                <span className="text-xs text-slate-500">
+                                  {format(new Date(brief.created_date), "MMM d, yyyy")}
+                                </span>
                               )}
                             </div>
-                          )}
+                            {Array.isArray(brief.sectors) && brief.sectors.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {brief.sectors.slice(0, 2).map((sector, idx) => (
+                                  <Badge key={idx} variant="secondary" className="text-xs">
+                                    {sector.split(' - ')[1] || sector}
+                                  </Badge>
+                                ))}
+                                {brief.sectors.length > 2 && (
+                                  <Badge variant="secondary" className="text-xs">+{brief.sectors.length - 2}</Badge>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
                         </div>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="w-4 h-4" />
-                        </Button>
                       </div>
-                    </div>
                     );
-                    })}
+                  })}
                 </div>
               )}
             </CardContent>
