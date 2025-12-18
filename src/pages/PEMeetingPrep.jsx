@@ -50,7 +50,7 @@ export default function PEMeetingPrep() {
   
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentBrief, setCurrentBrief] = useState(null);
+  const [currentBrief, setCurrentBrief] = useState(() => normalizeMeetingBrief(null));
   const [viewingBriefId, setViewingBriefId] = useState(null);
 
   // Fetch brief history
@@ -206,6 +206,7 @@ Please research this counterparty using web search and the provided URLs, then g
 
       const normalized = normalizeMeetingBrief(savedBrief);
       setCurrentBrief(normalized);
+      setViewingBriefId(normalized.id);
       queryClient.invalidateQueries({ queryKey: ['peMeetingBriefs'] });
       toast.success("Initial Meeting Brief generated successfully!");
 
@@ -217,13 +218,16 @@ Please research this counterparty using web search and the provided URLs, then g
   };
 
   const viewBrief = (brief) => {
-    setCurrentBrief(brief);
-    setViewingBriefId(brief.id);
+    const normalized = normalizeMeetingBrief(brief);
+    setCurrentBrief(normalized);
+    setViewingBriefId(normalized.id);
   };
 
-  const displayedBrief = viewingBriefId 
-    ? asArray(briefs).find(b => b.id === viewingBriefId) 
-    : currentBrief;
+  const displayedBrief = normalizeMeetingBrief(
+    viewingBriefId 
+      ? asArray(briefs).find(b => b && b.id === viewingBriefId) 
+      : currentBrief
+  );
 
   return (
     <div className="p-6 md:p-10 max-w-[1800px] mx-auto">
@@ -428,7 +432,7 @@ Please research this counterparty using web search and the provided URLs, then g
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {!displayedBrief ? (
+              {!displayedBrief || !displayedBrief.id ? (
                 <div className="text-center py-12">
                   <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                   <p className="text-slate-600 mb-2">No brief generated yet</p>
@@ -479,34 +483,36 @@ Please research this counterparty using web search and the provided URLs, then g
                 <p className="text-sm text-slate-500 text-center py-4">No briefs generated yet</p>
               ) : (
                 <div className="space-y-2">
-                  {asArray(briefs).map(brief => (
+                  {asArray(briefs).filter(b => b && b.id).map(brief => {
+                    const normalizedBrief = normalizeMeetingBrief(brief);
+                    return (
                     <div
-                      key={brief.id}
+                      key={normalizedBrief.id}
                       className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                        viewingBriefId === brief.id
+                        viewingBriefId === normalizedBrief.id
                           ? 'bg-indigo-50 border-indigo-300'
                           : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-slate-50'
                       }`}
-                      onClick={() => viewBrief(brief)}
+                      onClick={() => viewBrief(normalizedBrief)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <p className="font-semibold text-slate-900 text-sm">{brief.counterparty_name}</p>
+                          <p className="font-semibold text-slate-900 text-sm">{normalizedBrief.counterparty_name}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">{brief.counterparty_type}</Badge>
+                            <Badge variant="outline" className="text-xs">{normalizedBrief.counterparty_type}</Badge>
                             <span className="text-xs text-slate-500">
-                              {format(new Date(brief.created_date), "MMM d, yyyy")}
+                              {format(new Date(normalizedBrief.created_date), "MMM d, yyyy")}
                             </span>
                           </div>
-                          {asArray(brief.sectors).length > 0 && (
+                          {asArray(normalizedBrief.sectors).length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
-                              {asArray(brief.sectors).slice(0, 2).map((sector, idx) => (
+                              {asArray(normalizedBrief.sectors).slice(0, 2).map((sector, idx) => (
                                 <Badge key={idx} variant="secondary" className="text-xs">
-                                  {sector.split(' - ')[1] || sector}
+                                  {(sector && sector.split ? sector.split(' - ')[1] : null) || sector}
                                 </Badge>
                               ))}
-                              {asArray(brief.sectors).length > 2 && (
-                                <Badge variant="secondary" className="text-xs">+{asArray(brief.sectors).length - 2}</Badge>
+                              {asArray(normalizedBrief.sectors).length > 2 && (
+                                <Badge variant="secondary" className="text-xs">+{asArray(normalizedBrief.sectors).length - 2}</Badge>
                               )}
                             </div>
                           )}
@@ -516,7 +522,8 @@ Please research this counterparty using web search and the provided URLs, then g
                         </Button>
                       </div>
                     </div>
-                  ))}
+                    );
+                    })}
                 </div>
               )}
             </CardContent>
