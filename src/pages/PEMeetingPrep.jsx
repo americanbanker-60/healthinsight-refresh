@@ -12,6 +12,7 @@ import { Briefcase, Loader2, FileText, Calendar, Eye, Plus, X } from "lucide-rea
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
+import { asArray, normalizeMeetingBrief, normalizeMeetingBriefList } from "@/utils/normalizeMeetingBrief";
 
 const SECTOR_OPTIONS = [
   "Healthcare Services - Provider Groups",
@@ -56,8 +57,14 @@ export default function PEMeetingPrep() {
   const { data: briefs = [], isLoading } = useQuery({
     queryKey: ['peMeetingBriefs'],
     queryFn: async () => {
-      const user = await base44.auth.me();
-      return await base44.entities.PEMeetingBrief.filter({ created_by: user.email }, "-created_date", 50);
+      try {
+        const user = await base44.auth.me();
+        const res = await base44.entities.PEMeetingBrief.filter({ created_by: user.email }, "-created_date", 50);
+        return normalizeMeetingBriefList(res);
+      } catch (e) {
+        console.error("Failed to load briefs:", e);
+        return [];
+      }
     },
     initialData: [],
   });
@@ -97,7 +104,7 @@ export default function PEMeetingPrep() {
     setIsGenerating(true);
     try {
       // Parse additional URLs
-      const urlArray = additionalUrls
+      const urlArray = (additionalUrls ?? "")
         .split('\n')
         .map(u => u.trim())
         .filter(u => u && isValidUrl(u));
@@ -194,7 +201,8 @@ Please research this counterparty using web search and the provided URLs, then g
         sources_list: sourcesList
       });
 
-      setCurrentBrief(savedBrief);
+      const normalized = normalizeMeetingBrief(savedBrief);
+      setCurrentBrief(normalized);
       queryClient.invalidateQueries({ queryKey: ['peMeetingBriefs'] });
       toast.success("Initial Meeting Brief generated successfully!");
 
@@ -211,7 +219,7 @@ Please research this counterparty using web search and the provided URLs, then g
   };
 
   const displayedBrief = viewingBriefId 
-    ? briefs.find(b => b.id === viewingBriefId) 
+    ? asArray(briefs).find(b => b.id === viewingBriefId) 
     : currentBrief;
 
   return (
@@ -315,15 +323,15 @@ Please research this counterparty using web search and the provided URLs, then g
                       <SelectValue placeholder="Add sector..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {SECTOR_OPTIONS.filter(s => !selectedSectors.includes(s)).map(sector => (
+                      {asArray(SECTOR_OPTIONS).filter(s => !asArray(selectedSectors).includes(s)).map(sector => (
                         <SelectItem key={sector} value={sector}>{sector}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                {selectedSectors.length > 0 && (
+                {asArray(selectedSectors).length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    {selectedSectors.map(sector => (
+                    {asArray(selectedSectors).map(sector => (
                       <Badge key={sector} variant="secondary" className="cursor-pointer" onClick={() => removeSector(sector)}>
                         {sector}
                         <X className="w-3 h-3 ml-1" />
@@ -464,11 +472,11 @@ Please research this counterparty using web search and the provided URLs, then g
             <CardContent>
               {isLoading ? (
                 <p className="text-sm text-slate-600">Loading history...</p>
-              ) : briefs.length === 0 ? (
+              ) : asArray(briefs).length === 0 ? (
                 <p className="text-sm text-slate-500 text-center py-4">No briefs generated yet</p>
               ) : (
                 <div className="space-y-2">
-                  {briefs.map(brief => (
+                  {asArray(briefs).map(brief => (
                     <div
                       key={brief.id}
                       className={`p-3 border rounded-lg cursor-pointer transition-all ${
@@ -487,15 +495,15 @@ Please research this counterparty using web search and the provided URLs, then g
                               {format(new Date(brief.created_date), "MMM d, yyyy")}
                             </span>
                           </div>
-                          {brief.sectors && brief.sectors.length > 0 && (
+                          {asArray(brief.sectors).length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
-                              {brief.sectors.slice(0, 2).map((sector, idx) => (
+                              {asArray(brief.sectors).slice(0, 2).map((sector, idx) => (
                                 <Badge key={idx} variant="secondary" className="text-xs">
                                   {sector.split(' - ')[1] || sector}
                                 </Badge>
                               ))}
-                              {brief.sectors.length > 2 && (
-                                <Badge variant="secondary" className="text-xs">+{brief.sectors.length - 2}</Badge>
+                              {asArray(brief.sectors).length > 2 && (
+                                <Badge variant="secondary" className="text-xs">+{asArray(brief.sectors).length - 2}</Badge>
                               )}
                             </div>
                           )}
