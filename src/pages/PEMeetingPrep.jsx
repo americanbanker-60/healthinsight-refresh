@@ -91,25 +91,26 @@ Research and generate a comprehensive brief.`
       
       await new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
-          unsub?.();
+          if (unsub) unsub();
           reject(new Error("Timeout"));
         }, 120000);
 
         unsub = base44.agents.subscribeToConversation(conv.id, (d) => {
-          if (!d?.messages) return;
-          const msgs = d.messages;
-          if (!Array.isArray(msgs) || msgs.length === 0) return;
+          if (!d || !d.messages || !Array.isArray(d.messages)) return;
+          if (d.messages.length === 0) return;
           
-          const last = msgs[msgs.length - 1];
+          const last = d.messages[d.messages.length - 1];
           if (!last || last.role !== "assistant") return;
           
           if (last.content) markdown = last.content;
           
           if (last.status === "completed") {
             clearTimeout(timer);
+            if (unsub) unsub();
             resolve();
           } else if (last.status === "error") {
             clearTimeout(timer);
+            if (unsub) unsub();
             reject(new Error("Generation failed"));
           }
         });
@@ -240,6 +241,10 @@ Research and generate a comprehensive brief.`
                     <SelectItem value="PE Sponsor">PE Sponsor</SelectItem>
                     <SelectItem value="Growth Equity">Growth Equity</SelectItem>
                     <SelectItem value="Lender">Lender</SelectItem>
+                    <SelectItem value="Investment Bank (Sell-side)">Investment Bank (Sell-side)</SelectItem>
+                    <SelectItem value="Investment Bank (Buy-side)">Investment Bank (Buy-side)</SelectItem>
+                    <SelectItem value="Strategic Corporate">Strategic Corporate</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
