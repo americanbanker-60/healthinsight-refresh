@@ -12,7 +12,7 @@ import { Briefcase, Loader2, FileText, Calendar, Eye, Plus, X } from "lucide-rea
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
-import { asArray, normalizeMeetingBrief, normalizeMeetingBriefList } from "@/utils/normalizeMeetingBrief";
+import { asArray, normalizeMeetingBrief, normalizeMeetingBriefList } from "@/components/utils/normalizeMeetingBrief";
 
 const SECTOR_OPTIONS = [
   "Healthcare Services - Provider Groups",
