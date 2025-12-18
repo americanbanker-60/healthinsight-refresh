@@ -70,13 +70,13 @@ export default function PEMeetingPrep() {
   });
 
   const addSector = (sector) => {
-    if (sector && !selectedSectors.includes(sector)) {
-      setSelectedSectors([...selectedSectors, sector]);
+    if (sector && !asArray(selectedSectors).includes(sector)) {
+      setSelectedSectors([...asArray(selectedSectors), sector]);
     }
   };
 
   const removeSector = (sector) => {
-    setSelectedSectors(selectedSectors.filter(s => s !== sector));
+    setSelectedSectors(asArray(selectedSectors).filter(s => s !== sector));
   };
 
   const isValidUrl = (url) => {
@@ -104,9 +104,9 @@ export default function PEMeetingPrep() {
     setIsGenerating(true);
     try {
       // Parse additional URLs
-      const urlArray = (additionalUrls ?? "")
+      const urlArray = String(additionalUrls || "")
         .split('\n')
-        .map(u => u.trim())
+        .map(u => (u || "").trim())
         .filter(u => u && isValidUrl(u));
 
       // Prepare context for the agent
@@ -114,8 +114,8 @@ export default function PEMeetingPrep() {
         counterparty_name: counterpartyName,
         counterparty_type: counterpartyType,
         primary_url: primaryUrl,
-        additional_urls: urlArray,
-        sectors: selectedSectors,
+        additional_urls: asArray(urlArray),
+        sectors: asArray(selectedSectors),
         role_perspective: rolePerspective || "PE Sponsor",
         meeting_datetime: meetingDatetime || null,
         meeting_context_notes: meetingContext || ""
@@ -135,8 +135,8 @@ export default function PEMeetingPrep() {
 **Counterparty Name:** ${counterpartyName}
 **Counterparty Type:** ${counterpartyType}
 **Primary Website:** ${primaryUrl}
-${urlArray.length > 0 ? `**Additional URLs:** ${urlArray.join(', ')}` : ''}
-${selectedSectors.length > 0 ? `**Sectors:** ${selectedSectors.join(', ')}` : ''}
+${asArray(urlArray).length > 0 ? `**Additional URLs:** ${asArray(urlArray).join(', ')}` : ''}
+${asArray(selectedSectors).length > 0 ? `**Sectors:** ${asArray(selectedSectors).join(', ')}` : ''}
 **Our Role:** ${rolePerspective || 'PE Sponsor'}
 ${meetingDatetime ? `**Meeting Date:** ${meetingDatetime}` : ''}
 ${meetingContext ? `**Meeting Context:** ${meetingContext}` : ''}
@@ -183,22 +183,22 @@ Please research this counterparty using web search and the provided URLs, then g
 
       // Extract sources from the brief (look for ## 11. Sources Reviewed section)
       const sourcesMatch = briefMarkdown.match(/## 11\. Sources Reviewed\n([\s\S]*?)(?=\n## |$)/);
-      const sourcesList = sourcesMatch 
-        ? sourcesMatch[1].split('\n').filter(s => s.trim().startsWith('-')).map(s => s.replace(/^-\s*/, '').trim())
-        : [primaryUrl, ...urlArray];
+      const sourcesList = (sourcesMatch && sourcesMatch[1])
+        ? String(sourcesMatch[1]).split('\n').filter(s => s && s.trim().startsWith('-')).map(s => s.replace(/^-\s*/, '').trim())
+        : [primaryUrl, ...asArray(urlArray)];
 
       // Save the brief
       const savedBrief = await base44.entities.PEMeetingBrief.create({
         counterparty_name: counterpartyName,
         counterparty_type: counterpartyType,
         primary_url: primaryUrl,
-        additional_urls: urlArray,
-        sectors: selectedSectors,
+        additional_urls: asArray(urlArray),
+        sectors: asArray(selectedSectors),
         role_perspective: rolePerspective || "PE Sponsor",
         meeting_datetime: meetingDatetime || null,
         meeting_context_notes: meetingContext || "",
         brief_markdown: briefMarkdown,
-        sources_list: sourcesList
+        sources_list: asArray(sourcesList)
       });
 
       const normalized = normalizeMeetingBrief(savedBrief);
@@ -323,7 +323,7 @@ Please research this counterparty using web search and the provided URLs, then g
                       <SelectValue placeholder="Add sector..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {asArray(SECTOR_OPTIONS).filter(s => !asArray(selectedSectors).includes(s)).map(sector => (
+                      {SECTOR_OPTIONS.filter(s => !asArray(selectedSectors).includes(s)).map(sector => (
                         <SelectItem key={sector} value={sector}>{sector}</SelectItem>
                       ))}
                     </SelectContent>
