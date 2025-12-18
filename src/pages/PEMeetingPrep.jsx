@@ -159,12 +159,17 @@ Please research this counterparty using web search and the provided URLs, then g
         }, 120000); // 2 minute timeout
 
         unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
-          const messages = asArray(data?.messages);
+          // Bulletproof: handle undefined/null data
+          if (!data) return;
+          
+          // Ensure messages is always an array
+          const messages = asArray(data.messages || []);
           if (messages.length === 0) return;
           
           const lastMessage = messages[messages.length - 1];
+          if (!lastMessage) return;
           
-          if (lastMessage?.role === "assistant") {
+          if (lastMessage.role === "assistant") {
             if (lastMessage.content) {
               briefMarkdown = lastMessage.content;
             }
@@ -223,11 +228,17 @@ Please research this counterparty using web search and the provided URLs, then g
     setViewingBriefId(normalized.id);
   };
 
-  const displayedBrief = normalizeMeetingBrief(
-    viewingBriefId 
-      ? asArray(briefs).find(b => b && b.id === viewingBriefId) 
-      : currentBrief
-  );
+  // Bulletproof brief selection
+  const displayedBrief = React.useMemo(() => {
+    let selectedBrief = currentBrief;
+    
+    if (viewingBriefId) {
+      const found = asArray(briefs).find(b => b && b.id === viewingBriefId);
+      if (found) selectedBrief = found;
+    }
+    
+    return normalizeMeetingBrief(selectedBrief);
+  }, [viewingBriefId, briefs, currentBrief]);
 
   return (
     <div className="p-6 md:p-10 max-w-[1800px] mx-auto">
