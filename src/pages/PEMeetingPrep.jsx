@@ -159,7 +159,10 @@ Please research this counterparty using web search and the provided URLs, then g
         }, 120000); // 2 minute timeout
 
         unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
-          const lastMessage = data.messages[data.messages.length - 1];
+          const messages = asArray(data?.messages);
+          if (messages.length === 0) return;
+          
+          const lastMessage = messages[messages.length - 1];
           
           if (lastMessage?.role === "assistant") {
             if (lastMessage.content) {
