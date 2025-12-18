@@ -483,8 +483,9 @@ Please research this counterparty using web search and the provided URLs, then g
                 <p className="text-sm text-slate-500 text-center py-4">No briefs generated yet</p>
               ) : (
                 <div className="space-y-2">
-                  {asArray(briefs).filter(b => b && b.id).map(brief => {
+                  {asArray(briefs).filter(b => b && b.id).map((brief, index) => {
                     const normalizedBrief = normalizeMeetingBrief(brief);
+                    if (!normalizedBrief || !normalizedBrief.id) return null;
                     return (
                     <div
                       key={normalizedBrief.id}
