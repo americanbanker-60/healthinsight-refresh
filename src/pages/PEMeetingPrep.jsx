@@ -8,10 +8,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Loader2, FileText, Calendar, Eye, X } from "lucide-react";
+import { Briefcase, Loader2, FileText, Plus, Trash2, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
+
+const MEETING_TYPES = ["intro", "diligence", "follow-up", "management", "other"];
+const ROLES = [
+  "PE Sponsor",
+  "Growth Equity",
+  "Lender",
+  "Investment Bank (Sell-side)",
+  "Investment Bank (Buy-side)",
+  "Strategic Corporate",
+  "Other"
+];
 
 const SECTORS = [
   "Healthcare Services - Provider Groups",
@@ -24,129 +35,318 @@ const SECTORS = [
   "Hybrid - Tech-Enabled Services"
 ];
 
+// Safe array helper
+const safeArray = (val) => Array.isArray(val) ? val : [];
+
+// Convert brief JSON to markdown
+const briefToMarkdown = (briefJson) => {
+  if (!briefJson || typeof briefJson !== 'object') return "# Brief not available";
+  
+  const meta = briefJson.meta || {};
+  const exec = briefJson.executiveSummary || {};
+  const snapshot = briefJson.companySnapshot || {};
+  const context = briefJson.investmentContext || {};
+  const sponsor = briefJson.sponsorPerspective || {};
+  const plan = briefJson.meetingPlan || {};
+  const questions = briefJson.questions || {};
+  const followups = briefJson.followUps || {};
+  const sources = safeArray(briefJson.sourcesUsed);
+
+  let md = `# ${meta.companyName || "Company"} — Meeting Prep Brief\n\n`;
+  
+  md += `## Executive Summary\n`;
+  md += `**One-liner:** ${exec.oneLiner || "N/A"}\n\n`;
+  if (safeArray(exec.keyPoints).length > 0) {
+    md += `**Key points:**\n`;
+    safeArray(exec.keyPoints).forEach(p => md += `- ${p}\n`);
+    md += `\n`;
+  }
+
+  md += `## Company Snapshot\n`;
+  md += `${snapshot.whatTheyDo || "No information available"}\n\n`;
+  if (snapshot.businessModel) md += `**Business model:** ${snapshot.businessModel}\n\n`;
+  if (snapshot.customers) md += `**Customers:** ${snapshot.customers}\n\n`;
+  if (snapshot.geography) md += `**Geography:** ${snapshot.geography}\n\n`;
+  if (safeArray(snapshot.sizeIndicators).length > 0) {
+    md += `**Size indicators:**\n`;
+    safeArray(snapshot.sizeIndicators).forEach(s => md += `- ${s}\n`);
+    md += `\n`;
+  }
+
+  md += `## Investment Context\n`;
+  if (safeArray(context.whyNow).length > 0) {
+    md += `### Why Now\n`;
+    safeArray(context.whyNow).forEach(w => md += `- ${w}\n`);
+    md += `\n`;
+  }
+  if (safeArray(context.marketTailwinds).length > 0) {
+    md += `### Tailwinds\n`;
+    safeArray(context.marketTailwinds).forEach(t => md += `- ${t}\n`);
+    md += `\n`;
+  }
+  if (safeArray(context.marketHeadwinds).length > 0) {
+    md += `### Headwinds\n`;
+    safeArray(context.marketHeadwinds).forEach(h => md += `- ${h}\n`);
+    md += `\n`;
+  }
+  if (safeArray(context.keyRisks).length > 0) {
+    md += `### Key Risks\n`;
+    safeArray(context.keyRisks).forEach(r => md += `- ${r}\n`);
+    md += `\n`;
+  }
+  if (safeArray(context.diligenceFocusAreas).length > 0) {
+    md += `### Diligence Focus Areas\n`;
+    safeArray(context.diligenceFocusAreas).forEach(d => md += `- ${d}\n`);
+    md += `\n`;
+  }
+
+  md += `## Sponsor Perspective\n`;
+  if (safeArray(sponsor.whatSponsorLikelyCaresAbout).length > 0) {
+    md += `**What they likely care about:**\n`;
+    safeArray(sponsor.whatSponsorLikelyCaresAbout).forEach(c => md += `- ${c}\n`);
+    md += `\n`;
+  }
+  if (safeArray(sponsor.questionsToAskSponsor).length > 0) {
+    md += `**Questions to ask sponsor:**\n`;
+    safeArray(sponsor.questionsToAskSponsor).forEach(q => md += `- ${q}\n`);
+    md += `\n`;
+  }
+
+  md += `## Meeting Plan\n`;
+  if (safeArray(plan.agenda).length > 0) {
+    md += `**Agenda:**\n`;
+    safeArray(plan.agenda).forEach(a => md += `- ${a}\n`);
+    md += `\n`;
+  }
+  if (safeArray(plan.yourGoals).length > 0) {
+    md += `**Your goals:**\n`;
+    safeArray(plan.yourGoals).forEach(g => md += `- ${g}\n`);
+    md += `\n`;
+  }
+  if (safeArray(plan.theirGoals).length > 0) {
+    md += `**Their goals:**\n`;
+    safeArray(plan.theirGoals).forEach(g => md += `- ${g}\n`);
+    md += `\n`;
+  }
+
+  md += `## Questions\n`;
+  if (safeArray(questions.mustAsk).length > 0) {
+    md += `### Must Ask\n`;
+    safeArray(questions.mustAsk).forEach(q => md += `- ${q}\n`);
+    md += `\n`;
+  }
+  if (safeArray(questions.niceToHave).length > 0) {
+    md += `### Nice to Have\n`;
+    safeArray(questions.niceToHave).forEach(q => md += `- ${q}\n`);
+    md += `\n`;
+  }
+  if (safeArray(questions.redFlags).length > 0) {
+    md += `### Red Flags\n`;
+    safeArray(questions.redFlags).forEach(q => md += `- ${q}\n`);
+    md += `\n`;
+  }
+
+  md += `## Follow-ups\n`;
+  if (safeArray(followups.dataRequests).length > 0) {
+    md += `### Data Requests\n`;
+    safeArray(followups.dataRequests).forEach(d => md += `- ${d}\n`);
+    md += `\n`;
+  }
+  if (followups.nextStepsEmailDraft) {
+    md += `### Next Steps Email Draft\n${followups.nextStepsEmailDraft}\n\n`;
+  }
+
+  if (sources.length > 0) {
+    md += `## Sources Used\n`;
+    sources.forEach(s => {
+      md += `- ${s.type || "source"}: ${s.title || s.ref || "N/A"}\n`;
+    });
+  }
+
+  return md;
+};
+
 export default function PEMeetingPrep() {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({
-    type: "",
-    name: "",
-    url: "",
-    urls: "",
+  
+  const [form, setForm] = useState({
+    companyName: "",
+    sponsorName: "",
+    meetingType: "intro",
+    meetingDate: "",
+    objective: "",
+    notes: "",
+    urls: [""],
     sectors: [],
-    role: "PE Sponsor",
-    datetime: "",
-    context: ""
+    role: "PE Sponsor"
   });
+  
   const [generating, setGenerating] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
+  const [viewingId, setViewingId] = useState(null);
 
   const { data: briefs = [] } = useQuery({
-    queryKey: ['briefs'],
+    queryKey: ['peMeetingBriefs'],
     queryFn: async () => {
-      const user = await base44.auth.me();
-      const res = await base44.entities.PEMeetingBrief.filter(
-        { created_by: user.email }, 
-        "-created_date", 
-        50
-      );
-      return Array.isArray(res) ? res : [];
+      const res = await base44.entities.PEMeetingBrief.list("-created_date", 50);
+      return safeArray(res);
     }
   });
 
-  const validUrl = (url) => {
-    if (!url || typeof url !== 'string') return false;
-    const trimmed = url.trim();
-    if (!trimmed) return false;
-    try { 
-      new URL(trimmed); 
-      return true; 
-    } catch { 
-      return false; 
-    }
+  const updateForm = (key, value) => {
+    setForm(prev => ({ ...prev, [key]: value }));
   };
 
-  const canGenerate = formData.name?.trim() && formData.type && formData.url?.trim() && validUrl(formData.url);
+  const addUrl = () => {
+    setForm(prev => ({ ...prev, urls: [...prev.urls, ""] }));
+  };
+
+  const updateUrl = (index, value) => {
+    setForm(prev => {
+      const newUrls = [...prev.urls];
+      newUrls[index] = value;
+      return { ...prev, urls: newUrls };
+    });
+  };
+
+  const removeUrl = (index) => {
+    setForm(prev => ({ ...prev, urls: prev.urls.filter((_, i) => i !== index) }));
+  };
+
+  const toggleSector = (sector) => {
+    setForm(prev => ({
+      ...prev,
+      sectors: prev.sectors.includes(sector)
+        ? prev.sectors.filter(s => s !== sector)
+        : [...prev.sectors, sector]
+    }));
+  };
+
+  const canGenerate = form.companyName.trim() && form.meetingType;
 
   const generate = async () => {
-    if (!canGenerate) return;
-    
+    if (!canGenerate || generating) return;
+
     setGenerating(true);
     try {
-      const extraUrls = formData.urls.split('\n').map(u => u.trim()).filter(u => u && validUrl(u));
-      
-      const conv = await base44.agents.createConversation({
-        agent_name: "pe_meeting_brief_agent",
-        metadata: { name: `Brief: ${formData.name}` }
+      const validUrls = form.urls.filter(u => {
+        const trimmed = u.trim();
+        if (!trimmed) return false;
+        try { new URL(trimmed); return true; } catch { return false; }
       });
 
-      await base44.agents.addMessage(conv, {
-        role: "user",
-        content: `Generate an Initial Meeting Brief:
+      const prompt = `Generate a comprehensive PE Meeting Prep brief in STRICT JSON format. Every property must exist. Use empty arrays [] or null where unknown.
 
-**Name:** ${formData.name}
-**Type:** ${formData.type}
-**Website:** ${formData.url}
-${extraUrls.length > 0 ? `**Additional URLs:** ${extraUrls.join(', ')}` : ''}
-${formData.sectors.length > 0 ? `**Sectors:** ${formData.sectors.join(', ')}` : ''}
-**Our Role:** ${formData.role}
-${formData.datetime ? `**Meeting:** ${formData.datetime}` : ''}
-${formData.context ? `**Context:** ${formData.context}` : ''}
+REQUEST:
+- companyName: ${form.companyName}
+- sponsorName: ${form.sponsorName || "N/A"}
+- meetingType: ${form.meetingType}
+- meetingDate: ${form.meetingDate || "N/A"}
+- objective: ${form.objective || "N/A"}
+- notes: ${form.notes || "N/A"}
+- sectors: ${form.sectors.join(", ") || "N/A"}
+- role: ${form.role}
+- urls: ${validUrls.join(", ") || "None"}
 
-Research and generate a comprehensive brief.`
-      });
+OUTPUT EXACTLY THIS JSON SCHEMA:
+{
+  "meta": {
+    "companyName": "string",
+    "sponsorName": "string|null",
+    "meetingType": "intro|diligence|follow-up|management|other",
+    "meetingDate": "YYYY-MM-DD|null",
+    "generatedAt": "ISO datetime string"
+  },
+  "executiveSummary": {
+    "oneLiner": "string",
+    "keyPoints": ["string", "string", "string"]
+  },
+  "companySnapshot": {
+    "whatTheyDo": "string",
+    "businessModel": "string",
+    "customers": "string|null",
+    "geography": "string|null",
+    "sizeIndicators": ["string"]
+  },
+  "investmentContext": {
+    "whyNow": ["string"],
+    "marketTailwinds": ["string"],
+    "marketHeadwinds": ["string"],
+    "keyRisks": ["string"],
+    "diligenceFocusAreas": ["string"]
+  },
+  "sponsorPerspective": {
+    "whatSponsorLikelyCaresAbout": ["string"],
+    "questionsToAskSponsor": ["string"]
+  },
+  "meetingPlan": {
+    "agenda": ["string"],
+    "yourGoals": ["string"],
+    "theirGoals": ["string"]
+  },
+  "questions": {
+    "mustAsk": ["string"],
+    "niceToHave": ["string"],
+    "redFlags": ["string"]
+  },
+  "followUps": {
+    "dataRequests": ["string"],
+    "nextStepsEmailDraft": "string"
+  },
+  "sourcesUsed": [
+    { "type": "url|note", "ref": "string", "title": "string|null" }
+  ]
+}
 
-      let markdown = "";
-      let unsub;
-      
-      await new Promise((resolve, reject) => {
-        const timer = setTimeout(() => {
-          if (unsub) unsub();
-          reject(new Error("Timeout"));
-        }, 120000);
+Research the company using available web search if URLs provided, or use the request info to create a professional brief. Output ONLY valid JSON matching this schema exactly. No markdown, no preamble.`;
 
-        unsub = base44.agents.subscribeToConversation(conv.id, (d) => {
-          if (!d || !d.messages || !Array.isArray(d.messages)) return;
-          if (d.messages.length === 0) return;
-          
-          const last = d.messages[d.messages.length - 1];
-          if (!last || last.role !== "assistant") return;
-          
-          if (last.content) markdown = last.content;
-          
-          if (last.status === "completed") {
-            clearTimeout(timer);
-            if (unsub) unsub();
-            resolve();
-          } else if (last.status === "error") {
-            clearTimeout(timer);
-            if (unsub) unsub();
-            reject(new Error("Generation failed"));
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: prompt,
+        add_context_from_internet: validUrls.length > 0,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            meta: { type: "object" },
+            executiveSummary: { type: "object" },
+            companySnapshot: { type: "object" },
+            investmentContext: { type: "object" },
+            sponsorPerspective: { type: "object" },
+            meetingPlan: { type: "object" },
+            questions: { type: "object" },
+            followUps: { type: "object" },
+            sourcesUsed: { type: "array" }
           }
-        });
+        }
       });
+
+      // Validate and normalize
+      const briefJson = result || {};
+      const markdown = briefToMarkdown(briefJson);
 
       const saved = await base44.entities.PEMeetingBrief.create({
-        counterparty_name: formData.name,
-        counterparty_type: formData.type,
-        primary_url: formData.url,
-        additional_urls: extraUrls,
-        sectors: formData.sectors,
-        role_perspective: formData.role,
-        meeting_datetime: formData.datetime || null,
-        meeting_context_notes: formData.context,
+        counterparty_name: form.companyName,
+        counterparty_type: form.sponsorName ? "Sponsor / PE" : "Company",
+        primary_url: validUrls[0] || "",
+        additional_urls: validUrls.slice(1),
+        sectors: form.sectors,
+        role_perspective: form.role,
+        meeting_datetime: form.meetingDate || null,
+        meeting_context_notes: form.objective + "\n\n" + form.notes,
         brief_markdown: markdown,
-        sources_list: [formData.url, ...extraUrls]
+        sources_list: validUrls
       });
 
-      setSelectedId(saved.id);
-      queryClient.invalidateQueries(['briefs']);
-      toast.success("Brief generated!");
+      setViewingId(saved.id);
+      queryClient.invalidateQueries(['peMeetingBriefs']);
+      toast.success("Brief generated successfully!");
+      
     } catch (err) {
+      console.error("Generation error:", err);
       toast.error(err.message || "Failed to generate brief");
     }
     setGenerating(false);
   };
 
-  const selected = briefs.find(b => b?.id === selectedId);
+  const viewing = briefs.find(b => b && b.id === viewingId);
 
   return (
     <div className="p-6 md:p-10 max-w-[1800px] mx-auto">
@@ -156,164 +356,178 @@ Research and generate a comprehensive brief.`
         </div>
         <div>
           <h1 className="text-4xl font-bold text-slate-900">PE Meeting Prep</h1>
-          <p className="text-slate-600 text-lg mt-1">Generate PE-grade meeting briefs</p>
+          <p className="text-slate-600 text-lg mt-1">Generate comprehensive meeting briefs</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <Card className="bg-white shadow-lg">
-            <CardHeader>
-              <CardTitle>Brief Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Type <span className="text-red-500">*</span></Label>
-                <Select value={formData.type} onValueChange={v => setFormData({...formData, type: v})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Company">Company</SelectItem>
-                    <SelectItem value="Sponsor / PE">Sponsor / PE</SelectItem>
-                    <SelectItem value="Lender">Lender</SelectItem>
-                    <SelectItem value="Strategic">Strategic</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <Card className="bg-white shadow-lg">
+          <CardHeader>
+            <CardTitle>Request Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Company Name <span className="text-red-500">*</span></Label>
+              <Input
+                value={form.companyName}
+                onChange={(e) => updateForm('companyName', e.target.value)}
+                placeholder="ABC Healthcare"
+              />
+            </div>
 
-              <div>
-                <Label>Name <span className="text-red-500">*</span></Label>
-                <Input 
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  placeholder="Company name"
-                />
-              </div>
+            <div>
+              <Label>Sponsor / PE Firm Name</Label>
+              <Input
+                value={form.sponsorName}
+                onChange={(e) => updateForm('sponsorName', e.target.value)}
+                placeholder="XYZ Capital"
+              />
+            </div>
 
-              <div>
-                <Label>Website URL <span className="text-red-500">*</span></Label>
-                <Input 
-                  value={formData.url}
-                  onChange={e => setFormData({...formData, url: e.target.value})}
-                  placeholder="https://example.com"
-                />
-              </div>
+            <div>
+              <Label>Meeting Type <span className="text-red-500">*</span></Label>
+              <Select value={form.meetingType} onValueChange={(v) => updateForm('meetingType', v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MEETING_TYPES.map(t => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div>
-                <Label>Additional URLs</Label>
-                <Textarea 
-                  value={formData.urls}
-                  onChange={e => setFormData({...formData, urls: e.target.value})}
-                  placeholder="One per line"
-                  rows={3}
-                />
-              </div>
+            <div>
+              <Label>Our Role</Label>
+              <Select value={form.role} onValueChange={(v) => updateForm('role', v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLES.map(r => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div>
-                <Label>Sectors</Label>
-                <Select value="" onValueChange={v => {
-                  if (!formData.sectors.includes(v)) {
-                    setFormData({...formData, sectors: [...formData.sectors, v]});
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Add sector..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SECTORS.filter(s => !formData.sectors.includes(s)).map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {formData.sectors.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {formData.sectors.map(s => (
-                      <Badge key={s} variant="secondary" className="cursor-pointer" onClick={() => 
-                        setFormData({...formData, sectors: formData.sectors.filter(x => x !== s)})
-                      }>
-                        {s} <X className="w-3 h-3 ml-1" />
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div>
+              <Label>Meeting Date</Label>
+              <Input
+                type="date"
+                value={form.meetingDate}
+                onChange={(e) => updateForm('meetingDate', e.target.value)}
+              />
+            </div>
 
-              <div>
-                <Label>Our Role</Label>
-                <Select value={formData.role} onValueChange={v => setFormData({...formData, role: v})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PE Sponsor">PE Sponsor</SelectItem>
-                    <SelectItem value="Growth Equity">Growth Equity</SelectItem>
-                    <SelectItem value="Lender">Lender</SelectItem>
-                    <SelectItem value="Investment Bank (Sell-side)">Investment Bank (Sell-side)</SelectItem>
-                    <SelectItem value="Investment Bank (Buy-side)">Investment Bank (Buy-side)</SelectItem>
-                    <SelectItem value="Strategic Corporate">Strategic Corporate</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label>Objective</Label>
+              <Textarea
+                value={form.objective}
+                onChange={(e) => updateForm('objective', e.target.value)}
+                placeholder="Meeting goals..."
+                rows={2}
+              />
+            </div>
 
-              <div>
-                <Label>Meeting Date</Label>
-                <Input 
-                  type="datetime-local"
-                  value={formData.datetime}
-                  onChange={e => setFormData({...formData, datetime: e.target.value})}
-                />
-              </div>
+            <div>
+              <Label>Additional Notes</Label>
+              <Textarea
+                value={form.notes}
+                onChange={(e) => updateForm('notes', e.target.value)}
+                placeholder="Context, background..."
+                rows={2}
+              />
+            </div>
 
-              <div>
-                <Label>Context</Label>
-                <Textarea 
-                  value={formData.context}
-                  onChange={e => setFormData({...formData, context: e.target.value})}
-                  placeholder="Meeting objectives..."
-                  rows={3}
-                />
-              </div>
-
-              <Button
-                onClick={generate}
-                disabled={!canGenerate || generating}
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600"
-                size="lg"
-              >
-                {generating ? (
-                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Generating...</>
-                ) : (
-                  <><FileText className="w-5 h-5 mr-2" />Generate Brief</>
-                )}
+            <div>
+              <Label>Source URLs</Label>
+              {form.urls.map((url, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <Input
+                    value={url}
+                    onChange={(e) => updateUrl(idx, e.target.value)}
+                    placeholder="https://example.com"
+                  />
+                  {form.urls.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeUrl(idx)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={addUrl}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add URL
               </Button>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+
+            <div>
+              <Label>Sectors</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {SECTORS.map(s => (
+                  <Badge
+                    key={s}
+                    variant={form.sectors.includes(s) ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => toggleSector(s)}
+                  >
+                    {s}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <Button
+              onClick={generate}
+              disabled={!canGenerate || generating}
+              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600"
+              size="lg"
+            >
+              {generating ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Generating Brief...
+                </>
+              ) : (
+                <>
+                  <FileText className="w-5 h-5 mr-2" />
+                  Generate Brief
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
 
         <div className="space-y-6">
           <Card className="bg-white shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Brief
-              </CardTitle>
+              <CardTitle>Brief Preview</CardTitle>
             </CardHeader>
             <CardContent>
-              {!selected ? (
+              {!viewing ? (
                 <div className="text-center py-12">
                   <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                   <p className="text-slate-600">No brief selected</p>
+                  <p className="text-sm text-slate-500 mt-2">Generate a brief to see it here</p>
                 </div>
               ) : (
                 <div className="prose prose-sm max-w-none">
-                  <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-4">
-                    <p className="text-xs font-semibold text-indigo-700">
-                      {selected.counterparty_name} ({selected.counterparty_type})
-                    </p>
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 mb-4 flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-indigo-900">{viewing.counterparty_name}</p>
+                      <p className="text-xs text-indigo-600 mt-1">
+                        Generated {format(new Date(viewing.created_date), "MMM d, yyyy 'at' h:mm a")}
+                      </p>
+                    </div>
                   </div>
-                  <ReactMarkdown>{selected.brief_markdown || ""}</ReactMarkdown>
+                  <ReactMarkdown>{viewing.brief_markdown || "Brief not available"}</ReactMarkdown>
                 </div>
               )}
             </CardContent>
@@ -321,29 +535,30 @@ Research and generate a comprehensive brief.`
 
           <Card className="bg-white shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                History
-              </CardTitle>
+              <CardTitle>History ({briefs.length})</CardTitle>
             </CardHeader>
             <CardContent>
               {briefs.length === 0 ? (
                 <p className="text-sm text-slate-500 text-center py-4">No briefs yet</p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-96 overflow-y-auto">
                   {briefs.map(b => {
-                    if (!b?.id) return null;
+                    if (!b || !b.id) return null;
                     return (
                       <div
                         key={b.id}
                         className={`p-3 border rounded-lg cursor-pointer transition ${
-                          selectedId === b.id ? 'bg-indigo-50 border-indigo-300' : 'hover:bg-slate-50'
+                          viewingId === b.id
+                            ? 'bg-indigo-50 border-indigo-300'
+                            : 'hover:bg-slate-50 border-slate-200'
                         }`}
-                        onClick={() => setSelectedId(b.id)}
+                        onClick={() => setViewingId(b.id)}
                       >
-                        <p className="font-semibold text-sm">{b.counterparty_name}</p>
+                        <p className="font-semibold text-sm">{b.counterparty_name || "Unnamed"}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">{b.counterparty_type}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {b.counterparty_type || "N/A"}
+                          </Badge>
                           {b.created_date && (
                             <span className="text-xs text-slate-500">
                               {format(new Date(b.created_date), "MMM d")}
