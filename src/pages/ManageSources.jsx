@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit2, Trash2, Check, X } from "lucide-react";
+import { Plus, Edit2, Trash2, Check, X, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 
@@ -19,6 +19,7 @@ export default function ManageSources() {
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState({ name: "", description: "", url: "", category: "General" });
   const [deleteSourceId, setDeleteSourceId] = useState(null);
+  const [showDeleted, setShowDeleted] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: sources = [], isLoading } = useQuery({
@@ -28,6 +29,7 @@ export default function ManageSources() {
   });
 
   const activeSources = sources.filter(s => s && typeof s === 'object' && !s.is_deleted && s.name && s.id);
+  const deletedSources = sources.filter(s => s && typeof s === 'object' && s.is_deleted && s.name && s.id);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Source.create(data),
@@ -53,6 +55,14 @@ export default function ManageSources() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sources'] });
       toast.success("Source deleted successfully");
+    },
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: (id) => base44.entities.Source.update(id, { is_deleted: false }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sources'] });
+      toast.success("Source restored successfully");
     },
   });
 
@@ -94,10 +104,20 @@ export default function ManageSources() {
           <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Manage Sources</h1>
           <p className="text-slate-600 text-lg">Organize and categorize your newsletter sources</p>
         </div>
-        <Button onClick={() => setIsAdding(true)} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Source
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant={showDeleted ? "default" : "outline"} 
+            onClick={() => setShowDeleted(!showDeleted)}
+            className={showDeleted ? "bg-amber-600 hover:bg-amber-700" : ""}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            {showDeleted ? "Hide" : "Show"} Deleted ({deletedSources.length})
+          </Button>
+          <Button onClick={() => setIsAdding(true)} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Source
+          </Button>
+        </div>
       </div>
 
       {isAdding && (
@@ -146,6 +166,49 @@ export default function ManageSources() {
       )}
 
       <div className="space-y-6">
+        {showDeleted && deletedSources.length > 0 && (
+          <div>
+            <h2 className="text-xl font-semibold text-amber-800 mb-3 flex items-center gap-2">
+              Deleted Sources
+              <Badge variant="outline" className="bg-amber-100">{deletedSources.length}</Badge>
+            </h2>
+            <div className="grid gap-4">
+              {deletedSources.map(source => (
+                <Card key={source.id} className="bg-amber-50 border-amber-200">
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-slate-900">{source.name}</h3>
+                        {source.description && (
+                          <p className="text-slate-600 text-sm mt-1">{source.description}</p>
+                        )}
+                        {source.url && (
+                          <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-sm hover:underline mt-1 inline-block">
+                            {source.url}
+                          </a>
+                        )}
+                        <div className="mt-2">
+                          <Badge variant="outline">{source.category || "General"}</Badge>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => restoreMutation.mutate(source.id)}
+                        disabled={restoreMutation.isPending}
+                        className="bg-green-600 text-white hover:bg-green-700"
+                      >
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Restore
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+        
         {categories.map(category => {
           const sourcesInCategory = sourcesByCategory[category] || [];
           if (sourcesInCategory.length === 0) return null;
