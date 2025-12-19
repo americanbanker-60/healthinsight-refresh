@@ -305,15 +305,84 @@ Research the company using available web search if URLs provided, or use the req
         response_json_schema: {
           type: "object",
           properties: {
-            meta: { type: "object" },
-            executiveSummary: { type: "object" },
-            companySnapshot: { type: "object" },
-            investmentContext: { type: "object" },
-            sponsorPerspective: { type: "object" },
-            meetingPlan: { type: "object" },
-            questions: { type: "object" },
-            followUps: { type: "object" },
-            sourcesUsed: { type: "array" }
+            meta: { 
+              type: "object",
+              properties: {
+                companyName: { type: "string" },
+                sponsorName: { type: "string" },
+                meetingType: { type: "string" },
+                meetingDate: { type: "string" },
+                generatedAt: { type: "string" }
+              }
+            },
+            executiveSummary: { 
+              type: "object",
+              properties: {
+                oneLiner: { type: "string" },
+                keyPoints: { type: "array", items: { type: "string" } }
+              }
+            },
+            companySnapshot: { 
+              type: "object",
+              properties: {
+                whatTheyDo: { type: "string" },
+                businessModel: { type: "string" },
+                customers: { type: "string" },
+                geography: { type: "string" },
+                sizeIndicators: { type: "array", items: { type: "string" } }
+              }
+            },
+            investmentContext: { 
+              type: "object",
+              properties: {
+                whyNow: { type: "array", items: { type: "string" } },
+                marketTailwinds: { type: "array", items: { type: "string" } },
+                marketHeadwinds: { type: "array", items: { type: "string" } },
+                keyRisks: { type: "array", items: { type: "string" } },
+                diligenceFocusAreas: { type: "array", items: { type: "string" } }
+              }
+            },
+            sponsorPerspective: { 
+              type: "object",
+              properties: {
+                whatSponsorLikelyCaresAbout: { type: "array", items: { type: "string" } },
+                questionsToAskSponsor: { type: "array", items: { type: "string" } }
+              }
+            },
+            meetingPlan: { 
+              type: "object",
+              properties: {
+                agenda: { type: "array", items: { type: "string" } },
+                yourGoals: { type: "array", items: { type: "string" } },
+                theirGoals: { type: "array", items: { type: "string" } }
+              }
+            },
+            questions: { 
+              type: "object",
+              properties: {
+                mustAsk: { type: "array", items: { type: "string" } },
+                niceToHave: { type: "array", items: { type: "string" } },
+                redFlags: { type: "array", items: { type: "string" } }
+              }
+            },
+            followUps: { 
+              type: "object",
+              properties: {
+                dataRequests: { type: "array", items: { type: "string" } },
+                nextStepsEmailDraft: { type: "string" }
+              }
+            },
+            sourcesUsed: { 
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  type: { type: "string" },
+                  ref: { type: "string" },
+                  title: { type: "string" }
+                }
+              }
+            }
           }
         }
       });
