@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit2, Trash2, Check, X, RotateCcw } from "lucide-react";
+import { Plus, Edit2, Trash2, Check, X, RotateCcw, Upload } from "lucide-react";
 import { toast } from "sonner";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 
@@ -20,6 +20,10 @@ export default function ManageSources() {
   const [formData, setFormData] = useState({ name: "", description: "", url: "", category: "General" });
   const [deleteSourceId, setDeleteSourceId] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [csvFile, setCsvFile] = useState(null);
+  const [csvPreview, setCsvPreview] = useState([]);
+  const [isProcessingCsv, setIsProcessingCsv] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: sources = [], isLoading } = useQuery({
@@ -65,6 +69,70 @@ export default function ManageSources() {
       toast.success("Source restored successfully");
     },
   });
+
+  const handleCsvUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target.result;
+      const rows = text.split('\n').map(row => row.split(',').map(cell => cell.trim()));
+      
+      // Assume first row is headers
+      const headers = rows[0];
+      const sourceColIndex = headers.findIndex(h => h.toLowerCase() === 'source');
+      const urlColIndex = headers.findIndex(h => h.toLowerCase() === 'url');
+
+      if (sourceColIndex === -1 || urlColIndex === -1) {
+        toast.error("CSV must have 'Source' and 'URL' columns");
+        return;
+      }
+
+      const preview = rows.slice(1, 6).map(row => ({
+        name: row[sourceColIndex],
+        url: row[urlColIndex]
+      })).filter(item => item.name && item.url);
+
+      setCsvPreview(preview);
+      setCsvFile(text);
+    };
+
+    reader.readAsText(file);
+  };
+
+  const processCsvUpload = async () => {
+    if (!csvFile) return;
+
+    setIsProcessingCsv(true);
+    try {
+      const rows = csvFile.split('\n').map(row => row.split(',').map(cell => cell.trim()));
+      const headers = rows[0];
+      const sourceColIndex = headers.findIndex(h => h.toLowerCase() === 'source');
+      const urlColIndex = headers.findIndex(h => h.toLowerCase() === 'url');
+
+      const sourcesToCreate = rows.slice(1)
+        .map(row => ({
+          name: row[sourceColIndex],
+          url: row[urlColIndex],
+          category: "General",
+          description: ""
+        }))
+        .filter(item => item.name && item.url);
+
+      await base44.entities.Source.bulkCreate(sourcesToCreate);
+      
+      queryClient.invalidateQueries({ queryKey: ['sources'] });
+      toast.success(`${sourcesToCreate.length} sources imported successfully`);
+      setShowBulkUpload(false);
+      setCsvFile(null);
+      setCsvPreview([]);
+    } catch (error) {
+      toast.error("Failed to import sources");
+      console.error(error);
+    }
+    setIsProcessingCsv(false);
+  };
 
   const startEdit = (source) => {
     setEditingId(source.id);
@@ -113,12 +181,81 @@ export default function ManageSources() {
             <Trash2 className="w-4 h-4 mr-2" />
             {showDeleted ? "Hide" : "Show"} Deleted ({deletedSources.length})
           </Button>
+          <Button onClick={() => setShowBulkUpload(true)} variant="outline">
+            <Upload className="w-4 h-4 mr-2" />
+            Bulk Upload CSV
+          </Button>
           <Button onClick={() => setIsAdding(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" />
             Add Source
           </Button>
         </div>
       </div>
+
+      {showBulkUpload && (
+        <Card className="mb-6 bg-purple-50 border-purple-200">
+          <CardHeader>
+            <CardTitle>Bulk Upload Sources from CSV</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-purple-100 p-3 rounded-lg text-sm text-purple-900">
+              <p className="font-semibold mb-1">CSV Format Required:</p>
+              <p>Your CSV must have two columns: <strong>Source</strong> and <strong>URL</strong></p>
+              <p className="text-xs mt-1 opacity-75">Example: Source,URL</p>
+            </div>
+            
+            <Input
+              type="file"
+              accept=".csv"
+              onChange={handleCsvUpload}
+              className="cursor-pointer"
+            />
+
+            {csvPreview.length > 0 && (
+              <div className="border rounded-lg p-3 bg-white">
+                <p className="text-sm font-semibold mb-2">Preview (first 5 rows):</p>
+                <div className="space-y-1">
+                  {csvPreview.map((item, idx) => (
+                    <div key={idx} className="text-xs flex gap-2">
+                      <span className="font-medium">{item.name}</span>
+                      <span className="text-slate-500">→</span>
+                      <span className="text-blue-600 truncate">{item.url}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button 
+                onClick={processCsvUpload} 
+                disabled={!csvFile || isProcessingCsv}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {isProcessingCsv ? (
+                  <>Processing...</>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Import Sources
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowBulkUpload(false);
+                  setCsvFile(null);
+                  setCsvPreview([]);
+                }}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {isAdding && (
         <Card className="mb-6 bg-blue-50 border-blue-200">
