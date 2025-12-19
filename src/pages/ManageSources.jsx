@@ -21,9 +21,13 @@ export default function ManageSources() {
   const [deleteSourceId, setDeleteSourceId] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showUrlPaste, setShowUrlPaste] = useState(false);
   const [csvFile, setCsvFile] = useState(null);
   const [csvPreview, setCsvPreview] = useState([]);
   const [isProcessingCsv, setIsProcessingCsv] = useState(false);
+  const [urlText, setUrlText] = useState("");
+  const [urlPreview, setUrlPreview] = useState([]);
+  const [isProcessingUrls, setIsProcessingUrls] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: sources = [], isLoading } = useQuery({
@@ -169,6 +173,81 @@ export default function ManageSources() {
     setIsProcessingCsv(false);
   };
 
+  const handleUrlPaste = (text) => {
+    setUrlText(text);
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+    const preview = lines.slice(0, 10).map(url => {
+      try {
+        const urlObj = new URL(url);
+        return { url, valid: true, name: urlObj.hostname.replace('www.', '') };
+      } catch {
+        return { url, valid: false, name: 'Invalid URL' };
+      }
+    });
+    setUrlPreview(preview);
+  };
+
+  const processUrlPaste = async () => {
+    if (!urlText.trim()) return;
+
+    setIsProcessingUrls(true);
+    try {
+      const lines = urlText.split('\n').map(line => line.trim()).filter(line => line);
+      
+      const validUrls = [];
+      for (const line of lines) {
+        try {
+          const urlObj = new URL(line);
+          validUrls.push({
+            name: urlObj.hostname.replace('www.', '').replace(/\..+$/, ''),
+            url: line,
+            category: "General",
+            description: ""
+          });
+        } catch {
+          // Skip invalid URLs
+        }
+      }
+
+      if (validUrls.length === 0) {
+        toast.error("No valid URLs found");
+        setIsProcessingUrls(false);
+        return;
+      }
+
+      let successCount = 0;
+      const errors = [];
+      
+      for (const source of validUrls) {
+        try {
+          await base44.entities.Source.create(source);
+          successCount++;
+        } catch (err) {
+          errors.push({ source: source.name, error: err.message });
+        }
+      }
+      
+      await queryClient.invalidateQueries({ queryKey: ['sources'] });
+      
+      if (successCount > 0) {
+        toast.success(`✓ ${successCount} sources created! Go to Admin Dashboard → Source Scraper to fetch newsletters.`);
+      }
+      
+      if (errors.length > 0) {
+        console.error("Failed sources:", errors);
+        toast.error(`Failed to create ${errors.length} sources. Check console.`);
+      }
+      
+      setShowUrlPaste(false);
+      setUrlText("");
+      setUrlPreview([]);
+    } catch (error) {
+      toast.error(`Upload failed: ${error.message}`);
+      console.error("URL Paste Error:", error);
+    }
+    setIsProcessingUrls(false);
+  };
+
   const startEdit = (source) => {
     setEditingId(source.id);
     setFormData({ name: source.name, description: source.description, url: source.url, category: source.category });
@@ -216,9 +295,13 @@ export default function ManageSources() {
             <Trash2 className="w-4 h-4 mr-2" />
             {showDeleted ? "Hide" : "Show"} Deleted ({deletedSources.length})
           </Button>
+          <Button onClick={() => setShowUrlPaste(true)} className="bg-green-600 hover:bg-green-700">
+            <Upload className="w-4 h-4 mr-2" />
+            Paste URLs
+          </Button>
           <Button onClick={() => setShowBulkUpload(true)} variant="outline">
             <Upload className="w-4 h-4 mr-2" />
-            Bulk Upload CSV
+            CSV Upload
           </Button>
           <Button onClick={() => setIsAdding(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" />
@@ -226,6 +309,89 @@ export default function ManageSources() {
           </Button>
         </div>
       </div>
+
+      {showUrlPaste && (
+        <Card className="mb-6 bg-green-50 border-green-200">
+          <CardHeader>
+            <CardTitle>Paste URLs (Easiest Method)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-green-100 p-3 rounded-lg text-sm text-green-900">
+              <p className="font-semibold mb-1">📋 Simple Instructions:</p>
+              <p>Just paste one URL per line below - we'll auto-extract source names from the domain</p>
+            </div>
+            
+            <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-900 border border-blue-200">
+              <p className="font-semibold mb-1">⚠️ Two-Step Process:</p>
+              <p className="text-xs">
+                1. This creates source records in the database<br/>
+                2. Go to <strong>Admin Dashboard → Source Scraper</strong> to fetch newsletters
+              </p>
+            </div>
+            
+            <Textarea
+              placeholder="https://example.com/newsletter&#10;https://another-site.com/blog&#10;https://third-site.com"
+              value={urlText}
+              onChange={(e) => handleUrlPaste(e.target.value)}
+              rows={8}
+              className="font-mono text-sm"
+            />
+
+            {urlPreview.length > 0 && (
+              <div className="border rounded-lg p-3 bg-white">
+                <p className="text-sm font-semibold mb-2">Preview (first 10):</p>
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {urlPreview.map((item, idx) => (
+                    <div key={idx} className="text-xs flex gap-2 items-center">
+                      {item.valid ? (
+                        <>
+                          <span className="text-green-600">✓</span>
+                          <span className="font-medium">{item.name}</span>
+                          <span className="text-slate-500">→</span>
+                          <span className="text-blue-600 truncate flex-1">{item.url}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-red-600">✗</span>
+                          <span className="text-red-600">{item.url}</span>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button 
+                onClick={processUrlPaste} 
+                disabled={!urlText.trim() || isProcessingUrls}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isProcessingUrls ? (
+                  <>Processing...</>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Create Sources
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowUrlPaste(false);
+                  setUrlText("");
+                  setUrlPreview([]);
+                }}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {showBulkUpload && (
         <Card className="mb-6 bg-purple-50 border-purple-200">
