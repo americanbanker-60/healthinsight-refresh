@@ -52,7 +52,7 @@ export default function MyCustomPacks() {
     },
     onSuccess: (newPack) => {
       queryClient.invalidateQueries({ queryKey: ['userCustomPacks'] });
-      toast.success("Pack created!");
+      toast.success("Folder created!");
       setShowCreateDialog(false);
       setNewPackTitle("");
       setNewPackDescription("");
@@ -69,7 +69,7 @@ export default function MyCustomPacks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userCustomPacks'] });
       queryClient.invalidateQueries({ queryKey: ['allUserCustomPackItems'] });
-      toast.success("Pack deleted");
+      toast.success("Folder deleted");
     },
   });
 
@@ -83,7 +83,7 @@ export default function MyCustomPacks() {
 
   const handleCreatePack = () => {
     if (!newPackTitle.trim()) {
-      toast.error("Please enter a pack title");
+      toast.error("Please enter a folder title");
       return;
     }
     createPackMutation.mutate({
@@ -101,15 +101,15 @@ export default function MyCustomPacks() {
               <FolderOpen className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-slate-900 tracking-tight">My Custom Packs</h1>
+              <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Research Folders</h1>
               <p className="text-slate-600 text-lg mt-1">
-                Your private intelligence bundles
+                Organize newsletters into focused research collections
               </p>
             </div>
           </div>
           <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
             <Plus className="w-4 h-4" />
-            New Pack
+            New Folder
           </Button>
         </div>
       </div>
@@ -130,9 +130,9 @@ export default function MyCustomPacks() {
       ) : customPacks.length === 0 ? (
         <EmptyState
           icon={FolderOpen}
-          title="No Custom Packs Yet"
-          description="Create your first intelligence bundle"
-          actionLabel="Create Your First Pack"
+          title="No Research Folders Yet"
+          description="Create your first folder to organize newsletters by company or topic"
+          actionLabel="Create Your First Folder"
           actionIcon={Plus}
           onAction={() => setShowCreateDialog(true)}
         />
@@ -188,7 +188,7 @@ export default function MyCustomPacks() {
                       openPack(pack);
                     }}
                   >
-                    Open Pack
+                    Open Folder
                   </Button>
                 </CardContent>
               </Card>
@@ -200,8 +200,8 @@ export default function MyCustomPacks() {
       <ConfirmDialog
         open={!!deletePackId}
         onOpenChange={(open) => !open && setDeletePackId(null)}
-        title="Delete Pack?"
-        description="This will permanently delete the pack and all its items. This cannot be undone."
+        title="Delete Folder?"
+        description="This will permanently delete the folder and all its items. This cannot be undone."
         onConfirm={() => {
           deletePackMutation.mutate(deletePackId);
           setDeletePackId(null);
@@ -211,14 +211,14 @@ export default function MyCustomPacks() {
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Pack</DialogTitle>
+            <DialogTitle>Create New Research Folder</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="title">Pack Title</Label>
+              <Label htmlFor="title">Folder Title</Label>
               <Input
                 id="title"
-                placeholder="e.g., MA Market Prep Packet"
+                placeholder="e.g., Epic Systems Research"
                 value={newPackTitle}
                 onChange={(e) => setNewPackTitle(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleCreatePack()}
@@ -228,7 +228,7 @@ export default function MyCustomPacks() {
               <Label htmlFor="description">Description (optional)</Label>
               <Textarea
                 id="description"
-                placeholder="What's this pack about?"
+                placeholder="What will you research in this folder?"
                 value={newPackDescription}
                 onChange={(e) => setNewPackDescription(e.target.value)}
                 rows={3}
@@ -241,7 +241,7 @@ export default function MyCustomPacks() {
             </Button>
             <Button onClick={handleCreatePack} disabled={createPackMutation.isPending}>
               <Plus className="w-4 h-4 mr-2" />
-              Create Pack
+              Create Folder
             </Button>
           </DialogFooter>
         </DialogContent>
