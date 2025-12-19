@@ -53,10 +53,18 @@ export default function PEMeetingPrep() {
   });
 
   const validUrl = (url) => {
-    try { new URL(url); return true; } catch { return false; }
+    if (!url || typeof url !== 'string') return false;
+    const trimmed = url.trim();
+    if (!trimmed) return false;
+    try { 
+      new URL(trimmed); 
+      return true; 
+    } catch { 
+      return false; 
+    }
   };
 
-  const canGenerate = formData.name && formData.type && formData.url && validUrl(formData.url);
+  const canGenerate = formData.name?.trim() && formData.type && formData.url?.trim() && validUrl(formData.url);
 
   const generate = async () => {
     if (!canGenerate) return;
