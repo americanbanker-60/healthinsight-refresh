@@ -66,18 +66,6 @@ const navigationGroups = [
         roles: ["admin", "power", "user"],
       },
       {
-        title: "Learning Packs",
-        url: createPageUrl("LearningPacks"),
-        icon: BookOpen,
-        roles: ["admin", "power", "user"],
-      },
-      {
-        title: "Topics",
-        url: createPageUrl("TopicsDirectory"),
-        icon: Lightbulb,
-        roles: ["admin", "power", "user"],
-      },
-      {
           title: "Companies",
           url: createPageUrl("CompaniesDirectory"),
           icon: Building2,
@@ -107,7 +95,7 @@ const navigationGroups = [
         roles: ["admin", "power", "user"],
       },
       {
-        title: "My Custom Packs",
+        title: "Research Folders",
         url: createPageUrl("MyCustomPacks"),
         icon: FolderOpen,
         roles: ["admin", "power", "user"],
