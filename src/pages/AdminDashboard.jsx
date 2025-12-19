@@ -16,25 +16,21 @@ export default function AdminDashboard() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['adminStats'],
     queryFn: async () => {
-      const [newsletters, packs, topics, companies, sources, users] = await Promise.all([
+      const [newsletters, companies, sources, users] = await Promise.all([
         base44.entities.Newsletter.list(),
-        base44.entities.LearningPack.list(),
-        base44.entities.Topic.list(),
         base44.entities.Company.list(),
         base44.entities.Source.list(),
         base44.entities.User.list()
       ]);
       return {
         newsletters: newsletters.length,
-        packs: packs.length,
-        topics: topics.length,
         companies: companies.length,
         sources: sources.filter(s => !s.is_deleted).length,
         users: users.length,
         admins: users.filter(u => u.role === 'admin').length
       };
     },
-    initialData: { newsletters: 0, packs: 0, topics: 0, companies: 0, sources: 0, users: 0, admins: 0 }
+    initialData: { newsletters: 0, companies: 0, sources: 0, users: 0, admins: 0 }
   });
 
   return (
@@ -90,10 +86,10 @@ export default function AdminDashboard() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-purple-900">Learning Packs</p>
-                    <p className="text-3xl font-bold text-purple-700">{stats.packs}</p>
+                    <p className="text-sm font-medium text-purple-900">Companies</p>
+                    <p className="text-3xl font-bold text-purple-700">{stats.companies}</p>
                   </div>
-                  <BookOpen className="w-8 h-8 text-purple-600 opacity-50" />
+                  <Building2 className="w-8 h-8 text-purple-600 opacity-50" />
                 </div>
               </CardContent>
             </Card>
@@ -141,36 +137,6 @@ export default function AdminDashboard() {
             <CardContent>
               <Link to={createPageUrl("ManageSources")}>
                 <Button className="w-full">Manage Sources</Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-purple-600" />
-                Learning Packs
-              </CardTitle>
-              <CardDescription>Manage global learning pack definitions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to={createPageUrl("ManageLearningPacks")}>
-                <Button className="w-full">Manage Global Packs</Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-amber-600" />
-                Topics
-              </CardTitle>
-              <CardDescription>Define and organize topic metadata</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to={createPageUrl("TopicsDirectory")}>
-                <Button className="w-full">Manage Topics</Button>
               </Link>
             </CardContent>
           </Card>
