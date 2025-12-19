@@ -141,6 +141,12 @@ const navigationGroups = [
         icon: Shield,
         roles: ["admin"],
       },
+      {
+        title: "Manage Sources",
+        url: createPageUrl("ManageSources"),
+        icon: Newspaper,
+        roles: ["admin"],
+      },
     ]
   },
 ];
