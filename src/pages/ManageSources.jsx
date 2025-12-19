@@ -108,11 +108,17 @@ export default function ManageSources() {
     try {
       const rows = csvFile.split('\n')
         .map(row => row.split(',').map(cell => cell.trim()))
-        .filter(row => row.some(cell => cell)); // Remove empty rows
+        .filter(row => row.some(cell => cell));
       
       const headers = rows[0];
       const sourceColIndex = headers.findIndex(h => h.toLowerCase() === 'source');
       const urlColIndex = headers.findIndex(h => h.toLowerCase() === 'url');
+
+      if (sourceColIndex === -1 || urlColIndex === -1) {
+        toast.error("CSV must have 'Source' and 'URL' columns");
+        setIsProcessingCsv(false);
+        return;
+      }
 
       const sourcesToCreate = rows.slice(1)
         .map(row => ({
@@ -123,20 +129,41 @@ export default function ManageSources() {
         }))
         .filter(item => item.name && item.url);
 
-      console.log("About to create sources:", sourcesToCreate);
+      if (sourcesToCreate.length === 0) {
+        toast.error("No valid sources found in CSV");
+        setIsProcessingCsv(false);
+        return;
+      }
+
+      // Create sources one by one to catch individual errors
+      let successCount = 0;
+      const errors = [];
       
-      const result = await base44.entities.Source.bulkCreate(sourcesToCreate);
-      console.log("BulkCreate result:", result);
+      for (const source of sourcesToCreate) {
+        try {
+          await base44.entities.Source.create(source);
+          successCount++;
+        } catch (err) {
+          errors.push({ source: source.name, error: err.message });
+        }
+      }
       
       await queryClient.invalidateQueries({ queryKey: ['sources'] });
-      await queryClient.refetchQueries({ queryKey: ['sources'] });
       
-      toast.success(`${sourcesToCreate.length} sources imported successfully! Refresh if you don't see them.`);
+      if (successCount > 0) {
+        toast.success(`✓ ${successCount} sources created! Note: Go to Admin Dashboard → Source Scraper to fetch newsletters.`);
+      }
+      
+      if (errors.length > 0) {
+        console.error("Failed sources:", errors);
+        toast.error(`Failed to create ${errors.length} sources. Check console.`);
+      }
+      
       setShowBulkUpload(false);
       setCsvFile(null);
       setCsvPreview([]);
     } catch (error) {
-      toast.error(`Failed to import sources: ${error.message}`);
+      toast.error(`Upload failed: ${error.message}`);
       console.error("CSV Upload Error:", error);
     }
     setIsProcessingCsv(false);
@@ -210,6 +237,14 @@ export default function ManageSources() {
               <p className="font-semibold mb-1">CSV Format Required:</p>
               <p>Your CSV must have two columns: <strong>Source</strong> and <strong>URL</strong></p>
               <p className="text-xs mt-1 opacity-75">Example: Source,URL</p>
+            </div>
+            
+            <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-900 border border-blue-200">
+              <p className="font-semibold mb-1">⚠️ Two-Step Process:</p>
+              <p className="text-xs">
+                1. This uploads source records to the database<br/>
+                2. Go to <strong>Admin Dashboard → Source Scraper</strong> to fetch newsletters from these sources
+              </p>
             </div>
             
             <Input
