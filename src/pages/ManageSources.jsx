@@ -106,7 +106,10 @@ export default function ManageSources() {
 
     setIsProcessingCsv(true);
     try {
-      const rows = csvFile.split('\n').map(row => row.split(',').map(cell => cell.trim()));
+      const rows = csvFile.split('\n')
+        .map(row => row.split(',').map(cell => cell.trim()))
+        .filter(row => row.some(cell => cell)); // Remove empty rows
+      
       const headers = rows[0];
       const sourceColIndex = headers.findIndex(h => h.toLowerCase() === 'source');
       const urlColIndex = headers.findIndex(h => h.toLowerCase() === 'url');
@@ -120,16 +123,21 @@ export default function ManageSources() {
         }))
         .filter(item => item.name && item.url);
 
-      await base44.entities.Source.bulkCreate(sourcesToCreate);
+      console.log("About to create sources:", sourcesToCreate);
       
-      queryClient.invalidateQueries({ queryKey: ['sources'] });
-      toast.success(`${sourcesToCreate.length} sources imported successfully`);
+      const result = await base44.entities.Source.bulkCreate(sourcesToCreate);
+      console.log("BulkCreate result:", result);
+      
+      await queryClient.invalidateQueries({ queryKey: ['sources'] });
+      await queryClient.refetchQueries({ queryKey: ['sources'] });
+      
+      toast.success(`${sourcesToCreate.length} sources imported successfully! Refresh if you don't see them.`);
       setShowBulkUpload(false);
       setCsvFile(null);
       setCsvPreview([]);
     } catch (error) {
-      toast.error("Failed to import sources");
-      console.error(error);
+      toast.error(`Failed to import sources: ${error.message}`);
+      console.error("CSV Upload Error:", error);
     }
     setIsProcessingCsv(false);
   };
