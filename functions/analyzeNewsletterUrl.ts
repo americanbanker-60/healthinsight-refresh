@@ -105,8 +105,8 @@ Extract:
     console.log('AI analysis complete:', result.title);
     console.log('Creating newsletter record...');
 
-    // Create newsletter
-    await base44.asServiceRole.entities.Newsletter.create(newsletterData);
+    // Create newsletter (use regular entities since user is already authenticated as admin)
+    await base44.entities.Newsletter.create(newsletterData);
 
     console.log('Newsletter created successfully');
 
