@@ -9,7 +9,6 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BarChart3, Tag, BookOpen, Newspaper, Activity, Sparkles, Star } from "lucide-react";
 import { subDays } from "date-fns";
-import { logPackView } from "../utils/packTracking";
 
 export default function InsightsSection() {
   const navigate = useNavigate();
@@ -219,7 +218,6 @@ Write a short paragraph summarizing what this user has been learning about.`;
   };
 
   const openPack = (pack) => {
-    logPackView(pack.id);
     const params = new URLSearchParams({
       pack_id: pack.id,
       pack_title: pack.pack_title
