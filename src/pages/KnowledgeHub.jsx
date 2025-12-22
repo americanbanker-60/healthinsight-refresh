@@ -2,8 +2,6 @@ import React from "react";
 import HeroSection from "../components/knowledge/HeroSection";
 import FeaturedTopicsSection from "../components/knowledge/FeaturedTopicsSection";
 import SourcesOverviewSection from "../components/knowledge/SourcesOverviewSection";
-import ContinueSection from "../components/knowledge/ContinueSection";
-import RecommendedSection from "../components/knowledge/RecommendedSection";
 import HelpSection from "../components/knowledge/HelpSection";
 
 export default function KnowledgeHub() {
@@ -18,14 +16,6 @@ export default function KnowledgeHub() {
 
         <section>
           <SourcesOverviewSection />
-        </section>
-
-        <section>
-          <ContinueSection />
-        </section>
-
-        <section>
-          <RecommendedSection />
         </section>
 
         <section>

@@ -1,8 +1,6 @@
 import React from "react";
 import { Library } from "lucide-react";
-import FavoritePacksSection from "../components/library/FavoritePacksSection";
 import SavedSearchesSection from "../components/library/SavedSearchesSection";
-import RecentlyViewedSection from "../components/library/RecentlyViewedSection";
 import SavedSummariesSection from "../components/library/SavedSummariesSection";
 import InsightsSection from "../components/library/InsightsSection";
 import WatchedTopicsSection from "../components/library/WatchedTopicsSection";
@@ -27,9 +25,7 @@ export default function MyLibrary() {
       <div className="space-y-6">
         <InsightsSection />
         <WatchedTopicsSection />
-        <FavoritePacksSection />
         <SavedSearchesSection />
-        <RecentlyViewedSection />
         <SavedSummariesSection />
       </div>
     </div>
