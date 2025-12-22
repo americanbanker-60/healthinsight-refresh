@@ -12,6 +12,7 @@ import { Plus, Edit2, Trash2, Check, X, RotateCcw, Upload } from "lucide-react";
 import { toast } from "sonner";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import SourceUploadTest from "../components/admin/SourceUploadTest";
+import SourceDiagnostic from "../components/admin/SourceDiagnostic";
 
 const categories = ["Investment Banking", "Technology", "Finance", "Operations", "Policy", "General", "Other"];
 
@@ -389,6 +390,7 @@ export default function ManageSources() {
         </div>
       </div>
 
+      <SourceDiagnostic />
       <SourceUploadTest />
 
       {showUrlPaste && (
