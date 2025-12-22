@@ -267,8 +267,10 @@ export default function ManageSources() {
       
       if (successCount > 0) {
         await queryClient.invalidateQueries({ queryKey: ['sources'] });
-        setTimeout(() => window.location.reload(), 1500);
-        toast.success(`✓ Created ${successCount} sources! Reloading...`);
+        toast.success(`✓ Created ${successCount} sources successfully!`);
+        setShowUrlPaste(false);
+        setUrlText("");
+        setUrlPreview([]);
       } else {
         toast.error("❌ No sources created - check browser console");
       }
@@ -280,9 +282,9 @@ export default function ManageSources() {
     } catch (error) {
       console.error("===== FATAL ERROR =====", error);
       toast.error(`Fatal error: ${error?.message || 'Unknown'}`);
+    } finally {
+      setIsProcessingUrls(false);
     }
-    
-    setIsProcessingUrls(false);
   };
 
   const startEdit = (source) => {
