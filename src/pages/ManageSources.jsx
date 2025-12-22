@@ -42,12 +42,17 @@ export default function ManageSources() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Source.create(data),
-    onSuccess: () => {
+    onSuccess: (createdSource) => {
+      console.log("✓ Source created successfully:", createdSource);
       queryClient.invalidateQueries({ queryKey: ['sources'] });
       setIsAdding(false);
       setFormData({ name: "", description: "", url: "", category: "General" });
-      toast.success("Source added successfully");
+      toast.success(`Source "${createdSource.name}" added successfully`);
     },
+    onError: (error) => {
+      console.error("✗ Failed to create source:", error);
+      toast.error(`Failed to create source: ${error.message}`);
+    }
   });
 
   const updateMutation = useMutation({
@@ -130,7 +135,8 @@ export default function ManageSources() {
           name: row[sourceColIndex],
           url: row[urlColIndex],
           category: "General",
-          description: ""
+          description: "",
+          is_deleted: false
         }))
         .filter(item => item.name && item.url);
 
@@ -307,7 +313,10 @@ export default function ManageSources() {
       toast.error("Source name is required");
       return;
     }
-    createMutation.mutate(formData);
+    createMutation.mutate({
+      ...formData,
+      is_deleted: false
+    });
   };
 
   const sourcesByCategory = activeSources.reduce((acc, source) => {
