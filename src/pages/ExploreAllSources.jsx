@@ -18,7 +18,6 @@ import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import SummaryBuilder from "../components/explore/SummaryBuilder";
 import SmartSearchInput from "../components/search/SmartSearchInput";
 import SavedSearchesPanel from "../components/explore/SavedSearchesPanel";
-import { logPackView } from "../components/utils/packTracking";
 
 const dateRangePresets = [
   { label: "Last 7 days", value: "7d" },
@@ -80,7 +79,6 @@ export default function ExploreAllSources() {
     if (packId && learningPacks.length > 0) {
       const pack = learningPacks.find(p => p.id === packId);
       if (pack) {
-        logPackView(packId);
         setSearchText(pack.keywords || "");
         setDateRangePreset(pack.date_range_type || "90d");
         setCustomStartDate(pack.custom_start_date ? new Date(pack.custom_start_date) : null);
