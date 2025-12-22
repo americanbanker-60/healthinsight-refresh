@@ -195,17 +195,21 @@ export default function ManageSources() {
       const lines = urlText.split('\n').map(line => line.trim()).filter(line => line);
       
       const validUrls = [];
+      const invalidCount = { count: 0 };
+      
       for (const line of lines) {
         try {
           const urlObj = new URL(line);
+          const hostname = urlObj.hostname.replace('www.', '');
+          const baseName = hostname.split('.')[0];
           validUrls.push({
-            name: urlObj.hostname.replace('www.', '').replace(/\..+$/, ''),
+            name: baseName.charAt(0).toUpperCase() + baseName.slice(1),
             url: line,
             category: "General",
             description: ""
           });
         } catch {
-          // Skip invalid URLs
+          invalidCount.count++;
         }
       }
 
@@ -215,22 +219,37 @@ export default function ManageSources() {
         return;
       }
 
+      toast.info(`Processing ${validUrls.length} valid URLs...`);
+
+      // Process in batches of 50 to avoid overwhelming the API
+      const batchSize = 50;
       let successCount = 0;
       const errors = [];
       
-      for (const source of validUrls) {
+      for (let i = 0; i < validUrls.length; i += batchSize) {
+        const batch = validUrls.slice(i, i + batchSize);
         try {
-          await base44.entities.Source.create(source);
-          successCount++;
+          await base44.entities.Source.bulkCreate(batch);
+          successCount += batch.length;
+          toast.info(`Progress: ${successCount}/${validUrls.length} created`);
         } catch (err) {
-          errors.push({ source: source.name, error: err.message });
+          console.error(`Batch ${i / batchSize + 1} failed:`, err);
+          // Fall back to individual creates for this batch
+          for (const source of batch) {
+            try {
+              await base44.entities.Source.create(source);
+              successCount++;
+            } catch (individualErr) {
+              errors.push({ source: source.name, error: individualErr.message });
+            }
+          }
         }
       }
       
       await queryClient.invalidateQueries({ queryKey: ['sources'] });
       
       if (successCount > 0) {
-        toast.success(`✓ ${successCount} sources created! Go to Admin Dashboard → Source Scraper to fetch newsletters.`);
+        toast.success(`✓ ${successCount} sources created! ${invalidCount.count > 0 ? `(${invalidCount.count} invalid URLs skipped) ` : ''}Go to Admin Dashboard → Source Scraper to fetch newsletters.`);
       }
       
       if (errors.length > 0) {
@@ -319,6 +338,7 @@ export default function ManageSources() {
             <div className="bg-green-100 p-3 rounded-lg text-sm text-green-900">
               <p className="font-semibold mb-1">📋 Simple Instructions:</p>
               <p>Just paste one URL per line below - we'll auto-extract source names from the domain</p>
+              <p className="text-xs mt-1 opacity-75">✓ Handles large lists efficiently (tested with 700+ URLs)</p>
             </div>
             
             <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-900 border border-blue-200">

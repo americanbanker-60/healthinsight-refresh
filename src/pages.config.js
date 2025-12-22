@@ -1,59 +1,63 @@
-import Dashboard from './pages/Dashboard';
-import NewsletterDetail from './pages/NewsletterDetail';
-import DashboardSettings from './pages/DashboardSettings';
-import SourcePage from './pages/SourcePage';
+import AdminDashboard from './pages/AdminDashboard';
+import AgentWorkspace from './pages/AgentWorkspace';
 import Cleanup from './pages/Cleanup';
-import ManageSources from './pages/ManageSources';
-import LearningPacks from './pages/LearningPacks';
-import MyLibrary from './pages/MyLibrary';
+import CompaniesDirectory from './pages/CompaniesDirectory';
+import CompanyPage from './pages/CompanyPage';
+import CustomPackDetail from './pages/CustomPackDetail';
+import Dashboard from './pages/Dashboard';
+import DashboardSettings from './pages/DashboardSettings';
+import DeepDiveResults from './pages/DeepDiveResults';
+import ExploreAllSources from './pages/ExploreAllSources';
+import Home from './pages/Home';
 import KnowledgeHub from './pages/KnowledgeHub';
+import LearningPacks from './pages/LearningPacks';
+import ManageLearningPacks from './pages/ManageLearningPacks';
+import ManageSources from './pages/ManageSources';
+import MyCustomPacks from './pages/MyCustomPacks';
+import MyLibrary from './pages/MyLibrary';
+import NewsletterDetail from './pages/NewsletterDetail';
+import PEMeetingPrep from './pages/PEMeetingPrep';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import PublicationDateMigration from './pages/PublicationDateMigration';
+import SourcePage from './pages/SourcePage';
+import TermsOfService from './pages/TermsOfService';
 import TopicPage from './pages/TopicPage';
 import TopicsDirectory from './pages/TopicsDirectory';
-import CompanyPage from './pages/CompanyPage';
-import CompaniesDirectory from './pages/CompaniesDirectory';
-import MyCustomPacks from './pages/MyCustomPacks';
-import CustomPackDetail from './pages/CustomPackDetail';
-import DeepDiveResults from './pages/DeepDiveResults';
+import Unauthorized from './pages/Unauthorized';
 import UserSettings from './pages/UserSettings';
-import ManageLearningPacks from './pages/ManageLearningPacks';
-import AdminDashboard from './pages/AdminDashboard';
-import PublicationDateMigration from './pages/PublicationDateMigration';
-import ExploreAllSources from './pages/ExploreAllSources';
 import VariousSources from './pages/VariousSources';
-import AgentWorkspace from './pages/AgentWorkspace';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfService from './pages/TermsOfService';
-import PEMeetingPrep from './pages/PEMeetingPrep';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "NewsletterDetail": NewsletterDetail,
-    "DashboardSettings": DashboardSettings,
-    "SourcePage": SourcePage,
+    "AdminDashboard": AdminDashboard,
+    "AgentWorkspace": AgentWorkspace,
     "Cleanup": Cleanup,
-    "ManageSources": ManageSources,
-    "LearningPacks": LearningPacks,
-    "MyLibrary": MyLibrary,
+    "CompaniesDirectory": CompaniesDirectory,
+    "CompanyPage": CompanyPage,
+    "CustomPackDetail": CustomPackDetail,
+    "Dashboard": Dashboard,
+    "DashboardSettings": DashboardSettings,
+    "DeepDiveResults": DeepDiveResults,
+    "ExploreAllSources": ExploreAllSources,
+    "Home": Home,
     "KnowledgeHub": KnowledgeHub,
+    "LearningPacks": LearningPacks,
+    "ManageLearningPacks": ManageLearningPacks,
+    "ManageSources": ManageSources,
+    "MyCustomPacks": MyCustomPacks,
+    "MyLibrary": MyLibrary,
+    "NewsletterDetail": NewsletterDetail,
+    "PEMeetingPrep": PEMeetingPrep,
+    "PrivacyPolicy": PrivacyPolicy,
+    "PublicationDateMigration": PublicationDateMigration,
+    "SourcePage": SourcePage,
+    "TermsOfService": TermsOfService,
     "TopicPage": TopicPage,
     "TopicsDirectory": TopicsDirectory,
-    "CompanyPage": CompanyPage,
-    "CompaniesDirectory": CompaniesDirectory,
-    "MyCustomPacks": MyCustomPacks,
-    "CustomPackDetail": CustomPackDetail,
-    "DeepDiveResults": DeepDiveResults,
+    "Unauthorized": Unauthorized,
     "UserSettings": UserSettings,
-    "ManageLearningPacks": ManageLearningPacks,
-    "AdminDashboard": AdminDashboard,
-    "PublicationDateMigration": PublicationDateMigration,
-    "ExploreAllSources": ExploreAllSources,
     "VariousSources": VariousSources,
-    "AgentWorkspace": AgentWorkspace,
-    "PrivacyPolicy": PrivacyPolicy,
-    "TermsOfService": TermsOfService,
-    "PEMeetingPrep": PEMeetingPrep,
 }
 
 export const pagesConfig = {
