@@ -8,7 +8,7 @@ import { createPageUrl } from "@/utils";
 import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Users, BarChart3, Newspaper, Calendar } from "lucide-react";
 import { RoleGuard, useUserRole } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
-import SourceScraperPanel from "../components/admin/SourceScraperPanel";
+import EnhancedSourceScraper from "../components/admin/EnhancedSourceScraper";
 
 export default function AdminDashboard() {
   const { user } = useUserRole();
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
 
         {/* Source Scraper */}
         <div className="mb-8">
-          <SourceScraperPanel />
+          <EnhancedSourceScraper />
         </div>
 
         {/* Admin Actions */}
