@@ -206,7 +206,8 @@ export default function ManageSources() {
             name: baseName.charAt(0).toUpperCase() + baseName.slice(1),
             url: line,
             category: "General",
-            description: ""
+            description: "",
+            is_deleted: false
           });
         } catch {
           invalidCount++;
