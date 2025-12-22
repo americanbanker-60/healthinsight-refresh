@@ -15,16 +15,26 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'URL required' }, { status: 400 });
     }
 
-    // Fetch the webpage
-    const htmlResponse = await fetch(url);
+    console.log('Fetching URL:', url);
+
+    // Fetch the webpage with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    const htmlResponse = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
     if (!htmlResponse.ok) {
-      throw new Error(`Failed to fetch (${htmlResponse.status})`);
+      throw new Error(`Failed to fetch URL: ${htmlResponse.status} ${htmlResponse.statusText}`);
     }
     const htmlContent = await htmlResponse.text();
+    console.log('Fetched content length:', htmlContent.length);
 
     // Extract domain for source name
     const urlObj = new URL(url);
     const domain = urlObj.hostname.replace('www.', '');
+
+    console.log('Analyzing with AI...');
 
     // Analyze with AI
     const result = await base44.integrations.Core.InvokeLLM({
@@ -33,19 +43,19 @@ Deno.serve(async (req) => {
 URL: ${url}
 Domain: ${domain}
 
-HTML Content (truncated):
+HTML Content (truncated to first 15000 chars):
 ${htmlContent.substring(0, 15000)}
 
 Extract:
 - title: Clear article title
 - source_name: Publication name (use domain "${domain}" as fallback)
-- publication_date: Date in YYYY-MM-DD format (estimate if unclear)
+- publication_date: Date in YYYY-MM-DD format (today is 2025-12-22, estimate based on content)
 - tldr: 2-3 sentence executive summary
 - summary: 3-4 paragraph detailed summary
 - key_takeaways: 3-5 main points as array
-- key_statistics: Array of notable figures with context
-- themes: Major topics covered
-- key_players: Companies/organizations mentioned
+- key_statistics: Array of notable figures with context (can be empty array if none)
+- themes: Major topics covered (can be empty array if none)
+- key_players: Companies/organizations mentioned (can be empty array if none)
 - sentiment: Overall tone (positive/neutral/negative/mixed)`,
       response_json_schema: {
         type: "object",
@@ -92,8 +102,13 @@ Extract:
       publication_date_notes: "Direct upload via admin panel"
     };
 
+    console.log('AI analysis complete:', result.title);
+    console.log('Creating newsletter record...');
+
     // Create newsletter
     await base44.asServiceRole.entities.Newsletter.create(newsletterData);
+
+    console.log('Newsletter created successfully');
 
     return Response.json({
       success: true,
@@ -102,10 +117,11 @@ Extract:
     });
 
   } catch (error) {
-    console.error('Analysis error:', error);
+    console.error('ERROR:', error.message);
+    console.error('Stack:', error.stack);
     return Response.json({
       success: false,
-      error: error.message
+      error: error.message || 'Unknown error occurred'
     }, { status: 500 });
   }
 });
