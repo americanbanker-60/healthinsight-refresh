@@ -35,24 +35,28 @@ export default function DirectNewsletterUpload() {
 
     for (const url of urlList) {
       try {
-        // Fetch the webpage content
+        // First, fetch the actual webpage content
+        const htmlResponse = await fetch(url);
+        if (!htmlResponse.ok) {
+          throw new Error(`Failed to fetch URL (status ${htmlResponse.status})`);
+        }
+        const htmlContent = await htmlResponse.text();
+        
+        // Extract domain for source name
+        const urlObj = new URL(url);
+        const domain = urlObj.hostname.replace('www.', '');
+        
+        // Now analyze the content with AI
         const response = await base44.integrations.Core.InvokeLLM({
-          prompt: `Extract newsletter content from this URL and return structured data.
+          prompt: `Analyze this healthcare newsletter/article and extract key information.
 
 URL: ${url}
+Source Domain: ${domain}
 
-Return JSON with:
-- title: Newsletter title
-- source_name: Publication/source name
-- publication_date: Date published (YYYY-MM-DD format, estimate if not clear)
-- tldr: 2-3 sentence summary
-- summary: Full summary paragraph
-- key_takeaways: Array of main points (3-5 items)
-- key_statistics: Array of {figure, context} objects
-- themes: Array of {theme, description} objects
-- key_players: Array of company names mentioned
-- sentiment: "positive", "neutral", "negative", or "mixed"`,
-          add_context_from_internet: true,
+HTML Content:
+${htmlContent.substring(0, 15000)}
+
+Extract and return structured data in JSON format.`,
           response_json_schema: {
             type: "object",
             properties: {
