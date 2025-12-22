@@ -195,7 +195,7 @@ export default function ManageSources() {
       const lines = urlText.split('\n').map(line => line.trim()).filter(line => line);
       
       const validUrls = [];
-      const invalidCount = { count: 0 };
+      let invalidCount = 0;
       
       for (const line of lines) {
         try {
@@ -209,7 +209,7 @@ export default function ManageSources() {
             description: ""
           });
         } catch {
-          invalidCount.count++;
+          invalidCount++;
         }
       }
 
@@ -219,50 +219,51 @@ export default function ManageSources() {
         return;
       }
 
+      console.log(`Starting upload of ${validUrls.length} sources...`);
       toast.info(`Processing ${validUrls.length} valid URLs...`);
 
-      // Process in batches of 50 to avoid overwhelming the API
-      const batchSize = 50;
       let successCount = 0;
       const errors = [];
       
-      for (let i = 0; i < validUrls.length; i += batchSize) {
-        const batch = validUrls.slice(i, i + batchSize);
+      // Create sources one by one with progress updates
+      for (let i = 0; i < validUrls.length; i++) {
+        const source = validUrls[i];
         try {
-          await base44.entities.Source.bulkCreate(batch);
-          successCount += batch.length;
-          toast.info(`Progress: ${successCount}/${validUrls.length} created`);
-        } catch (err) {
-          console.error(`Batch ${i / batchSize + 1} failed:`, err);
-          // Fall back to individual creates for this batch
-          for (const source of batch) {
-            try {
-              await base44.entities.Source.create(source);
-              successCount++;
-            } catch (individualErr) {
-              errors.push({ source: source.name, error: individualErr.message });
-            }
+          const result = await base44.entities.Source.create(source);
+          console.log(`Created: ${source.name}`, result);
+          successCount++;
+          
+          // Show progress every 50 items
+          if ((i + 1) % 50 === 0 || i === validUrls.length - 1) {
+            toast.info(`Progress: ${successCount}/${validUrls.length} created`);
           }
+        } catch (err) {
+          console.error(`Failed to create ${source.name}:`, err);
+          errors.push({ source: source.name, error: err.message || 'Unknown error' });
         }
       }
+      
+      console.log(`Upload complete. Success: ${successCount}, Failed: ${errors.length}`);
       
       await queryClient.invalidateQueries({ queryKey: ['sources'] });
       
       if (successCount > 0) {
-        toast.success(`✓ ${successCount} sources created! ${invalidCount.count > 0 ? `(${invalidCount.count} invalid URLs skipped) ` : ''}Go to Admin Dashboard → Source Scraper to fetch newsletters.`);
+        toast.success(`✓ ${successCount} sources created! ${invalidCount > 0 ? `(${invalidCount} invalid URLs skipped) ` : ''}Go to Admin Dashboard → Source Scraper to fetch newsletters.`);
+      } else {
+        toast.error("No sources were created. Check console for errors.");
       }
       
       if (errors.length > 0) {
         console.error("Failed sources:", errors);
-        toast.error(`Failed to create ${errors.length} sources. Check console.`);
+        toast.error(`Failed to create ${errors.length} sources. Check console for details.`);
       }
       
       setShowUrlPaste(false);
       setUrlText("");
       setUrlPreview([]);
     } catch (error) {
-      toast.error(`Upload failed: ${error.message}`);
       console.error("URL Paste Error:", error);
+      toast.error(`Upload failed: ${error.message}`);
     }
     setIsProcessingUrls(false);
   };
