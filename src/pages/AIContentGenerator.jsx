@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, Download, Copy } from "lucide-react";
+import { Sparkles, Loader2, Download, Copy, Save, ThumbsUp, ThumbsDown, Star } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -21,6 +21,8 @@ export default function AIContentGenerator() {
   const [generatedContent, setGeneratedContent] = useState("");
   const [additionalInstructions, setAdditionalInstructions] = useState("");
   const [autoSummaries, setAutoSummaries] = useState([]);
+  const [showRating, setShowRating] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: sources = [] } = useQuery({
     queryKey: ['sources'],
@@ -32,6 +34,19 @@ export default function AIContentGenerator() {
     queryKey: ['newsletters'],
     queryFn: () => base44.entities.Newsletter.list('-publication_date', 100),
     initialData: [],
+  });
+
+  const { data: preferences = [] } = useQuery({
+    queryKey: ['aiPreferences'],
+    queryFn: () => base44.entities.AIContentPreference.list('-created_date', 50),
+    initialData: [],
+  });
+
+  const trackPreference = useMutation({
+    mutationFn: (data) => base44.entities.AIContentPreference.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['aiPreferences'] });
+    },
   });
 
   const activeSources = sources.filter(s => !s.is_deleted);
@@ -82,6 +97,27 @@ export default function AIContentGenerator() {
     );
   };
 
+  const getPersonalizedPrompt = () => {
+    const savedPrefs = preferences.filter(p => p.action_taken === 'saved' || p.action_taken === 'downloaded');
+    const favoriteContentTypes = savedPrefs.reduce((acc, p) => {
+      acc[p.content_type] = (acc[p.content_type] || 0) + 1;
+      return acc;
+    }, {});
+    
+    const favoriteSources = savedPrefs.flatMap(p => p.sources_used || [])
+      .reduce((acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; }, {});
+    
+    const topSources = Object.entries(favoriteSources)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([source]) => source);
+
+    if (topSources.length > 0) {
+      return `\nBased on your preferences, prioritize insights from: ${topSources.join(', ')}.`;
+    }
+    return '';
+  };
+
   const generateContent = async () => {
     if (selectedSources.length === 0 && selectedCategories.length === 0) {
       toast.error("Select at least one source or category");
@@ -115,9 +151,11 @@ ${n.tldr || n.summary || 'No summary available'}`
         report: `Generate a detailed strategic report for healthcare decision-makers. Include: Executive Summary, Market Overview, Key Developments, Data & Statistics, Strategic Implications, and Recommendations.`
       };
 
+      const personalizedContext = getPersonalizedPrompt();
+
       const prompt = `${contentTypePrompts[contentType]}
 
-${additionalInstructions ? `Additional Requirements: ${additionalInstructions}\n\n` : ''}
+${additionalInstructions ? `Additional Requirements: ${additionalInstructions}\n\n` : ''}${personalizedContext}
 
 Based on ${filteredNewsletters.length} newsletters from: ${[...new Set(filteredNewsletters.map(n => n.source_name))].join(', ')}
 
@@ -132,6 +170,7 @@ Return professional, well-structured content in markdown format.`;
       });
 
       setGeneratedContent(result);
+      setShowRating(true);
       toast.success("Content generated successfully!");
     } catch (error) {
       console.error("Generation error:", error);
@@ -140,12 +179,31 @@ Return professional, well-structured content in markdown format.`;
     setGenerating(false);
   };
 
-  const copyToClipboard = () => {
+  const handleAction = async (action, rating = null) => {
+    await trackPreference.mutateAsync({
+      content_type: contentType,
+      sources_used: selectedSources,
+      categories_used: selectedCategories,
+      action_taken: action,
+      content_preview: generatedContent.substring(0, 500),
+      rating: rating
+    });
+    
+    if (action === 'saved') {
+      toast.success("Saved! AI will prioritize similar content.");
+    } else if (action === 'discarded') {
+      toast.info("Noted. AI will adjust future recommendations.");
+    }
+    setShowRating(false);
+  };
+
+  const copyToClipboard = async () => {
     navigator.clipboard.writeText(generatedContent);
+    await handleAction('copied');
     toast.success("Copied to clipboard");
   };
 
-  const downloadContent = () => {
+  const downloadContent = async () => {
     const blob = new Blob([generatedContent], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -153,6 +211,7 @@ Return professional, well-structured content in markdown format.`;
     a.download = `healthcare-${contentType}-${new Date().toISOString().split('T')[0]}.md`;
     a.click();
     URL.revokeObjectURL(url);
+    await handleAction('downloaded');
   };
 
   return (
@@ -320,11 +379,39 @@ Return professional, well-structured content in markdown format.`;
                   <Sparkles className="w-12 h-12 mx-auto mb-4 text-slate-300" />
                   <p className="text-sm">Select sources above to see auto-summaries</p>
                   <p className="text-xs mt-2">Or click Generate Content for detailed analysis</p>
+                  {preferences.length > 0 && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs">
+                      <p className="font-semibold text-blue-900">🎯 Personalization Active</p>
+                      <p className="text-blue-700 mt-1">AI learning from your {preferences.length} past interactions</p>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="prose prose-slate max-w-none">
-                  <ReactMarkdown>{generatedContent}</ReactMarkdown>
-                </div>
+                <>
+                  {showRating && (
+                    <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                      <p className="text-sm font-semibold text-slate-900 mb-3">How useful is this content?</p>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => handleAction('saved', 5)} className="bg-green-600 hover:bg-green-700">
+                          <ThumbsUp className="w-4 h-4 mr-1" />
+                          Great
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleAction('saved', 3)}>
+                          <Save className="w-4 h-4 mr-1" />
+                          Good
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleAction('discarded', 1)}>
+                          <ThumbsDown className="w-4 h-4 mr-1" />
+                          Not Useful
+                        </Button>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">Your feedback helps AI generate better content for you</p>
+                    </div>
+                  )}
+                  <div className="prose prose-slate max-w-none">
+                    <ReactMarkdown>{generatedContent}</ReactMarkdown>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
