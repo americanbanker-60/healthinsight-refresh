@@ -191,7 +191,16 @@ export default function ManageSources() {
     if (!urlText.trim()) return;
 
     setIsProcessingUrls(true);
+    
     try {
+      // Verify admin access first
+      const currentUser = await base44.auth.me();
+      if (!currentUser || currentUser.role !== 'admin') {
+        toast.error("Admin access required to create sources");
+        setIsProcessingUrls(false);
+        return;
+      }
+
       const lines = urlText.split('\n').map(line => line.trim()).filter(line => line);
       
       const validUrls = [];
@@ -199,8 +208,8 @@ export default function ManageSources() {
       
       for (const line of lines) {
         try {
-          const urlObj = new URL(line);
-          const hostname = urlObj.hostname.replace('www.', '');
+          new URL(line);
+          const hostname = new URL(line).hostname.replace('www.', '');
           const baseName = hostname.split('.')[0];
           validUrls.push({
             name: baseName.charAt(0).toUpperCase() + baseName.slice(1),
@@ -215,57 +224,64 @@ export default function ManageSources() {
       }
 
       if (validUrls.length === 0) {
-        toast.error("No valid URLs found");
+        toast.error("No valid URLs found in your paste");
         setIsProcessingUrls(false);
         return;
       }
 
-      console.log(`Starting upload of ${validUrls.length} sources...`);
-      toast.info(`Processing ${validUrls.length} valid URLs...`);
+      console.log("===== STARTING SOURCE UPLOAD =====");
+      console.log(`Total URLs to process: ${validUrls.length}`);
+      console.log("First 3 URLs:", validUrls.slice(0, 3));
+
+      toast.info(`Processing ${validUrls.length} URLs...`);
 
       let successCount = 0;
       const errors = [];
       
-      // Create sources one by one with progress updates
       for (let i = 0; i < validUrls.length; i++) {
         const source = validUrls[i];
         try {
-          const result = await base44.entities.Source.create(source);
-          console.log(`Created: ${source.name}`, result);
+          const created = await base44.entities.Source.create(source);
+          console.log(`✓ Created [${i+1}/${validUrls.length}]:`, source.name, created.id);
           successCount++;
           
-          // Show progress every 50 items
-          if ((i + 1) % 50 === 0 || i === validUrls.length - 1) {
-            toast.info(`Progress: ${successCount}/${validUrls.length} created`);
+          if ((i + 1) % 25 === 0) {
+            toast.info(`Created ${successCount}/${validUrls.length}...`);
           }
         } catch (err) {
-          console.error(`Failed to create ${source.name}:`, err);
-          errors.push({ source: source.name, error: err.message || 'Unknown error' });
+          const errorMsg = err?.response?.data?.message || err?.message || JSON.stringify(err);
+          console.error(`✗ Failed [${i+1}/${validUrls.length}]:`, source.name, errorMsg);
+          errors.push({ name: source.name, url: source.url, error: errorMsg });
+          
+          // Stop after first error to debug
+          if (errors.length === 1) {
+            console.error("FIRST ERROR DETAILS:", err);
+            toast.error(`Failed on "${source.name}": ${errorMsg}`);
+            break;
+          }
         }
       }
       
-      console.log(`Upload complete. Success: ${successCount}, Failed: ${errors.length}`);
-      
-      await queryClient.invalidateQueries({ queryKey: ['sources'] });
+      console.log("===== UPLOAD COMPLETE =====");
+      console.log(`Success: ${successCount}, Failed: ${errors.length}`);
       
       if (successCount > 0) {
-        toast.success(`✓ ${successCount} sources created! ${invalidCount > 0 ? `(${invalidCount} invalid URLs skipped) ` : ''}Go to Admin Dashboard → Source Scraper to fetch newsletters.`);
+        await queryClient.invalidateQueries({ queryKey: ['sources'] });
+        setTimeout(() => window.location.reload(), 1500);
+        toast.success(`✓ Created ${successCount} sources! Reloading...`);
       } else {
-        toast.error("No sources were created. Check console for errors.");
+        toast.error("❌ No sources created - check browser console");
       }
       
-      if (errors.length > 0) {
-        console.error("Failed sources:", errors);
-        toast.error(`Failed to create ${errors.length} sources. Check console for details.`);
+      if (errors.length > 0 && errors.length < 10) {
+        console.table(errors);
       }
       
-      setShowUrlPaste(false);
-      setUrlText("");
-      setUrlPreview([]);
     } catch (error) {
-      console.error("URL Paste Error:", error);
-      toast.error(`Upload failed: ${error.message}`);
+      console.error("===== FATAL ERROR =====", error);
+      toast.error(`Fatal error: ${error?.message || 'Unknown'}`);
     }
+    
     setIsProcessingUrls(false);
   };
 
