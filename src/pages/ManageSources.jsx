@@ -14,6 +14,7 @@ import ConfirmDialog from "../components/common/ConfirmDialog";
 import SourceDatabaseFix from "../components/admin/SourceDatabaseFix";
 import AISourceDiscovery from "../components/admin/AISourceDiscovery";
 import AICategorySuggestion from "../components/admin/AICategorySuggestion";
+import DirectNewsletterUpload from "../components/admin/DirectNewsletterUpload";
 
 const categories = ["Investment Banking", "Technology", "Finance", "Operations", "Policy", "General", "Other"];
 
@@ -322,6 +323,7 @@ export default function ManageSources() {
         </div>
       </div>
 
+      <DirectNewsletterUpload />
       <SourceDatabaseFix />
       <AISourceDiscovery />
 
