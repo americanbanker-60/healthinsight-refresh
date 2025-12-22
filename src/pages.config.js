@@ -11,8 +11,6 @@ import DeepDiveResults from './pages/DeepDiveResults';
 import ExploreAllSources from './pages/ExploreAllSources';
 import Home from './pages/Home';
 import KnowledgeHub from './pages/KnowledgeHub';
-import LearningPacks from './pages/LearningPacks';
-import ManageLearningPacks from './pages/ManageLearningPacks';
 import ManageSources from './pages/ManageSources';
 import MyCustomPacks from './pages/MyCustomPacks';
 import MyLibrary from './pages/MyLibrary';
@@ -44,8 +42,6 @@ export const PAGES = {
     "ExploreAllSources": ExploreAllSources,
     "Home": Home,
     "KnowledgeHub": KnowledgeHub,
-    "LearningPacks": LearningPacks,
-    "ManageLearningPacks": ManageLearningPacks,
     "ManageSources": ManageSources,
     "MyCustomPacks": MyCustomPacks,
     "MyLibrary": MyLibrary,
