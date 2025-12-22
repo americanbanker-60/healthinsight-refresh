@@ -31,18 +31,7 @@ export default function InsightsSection() {
     initialData: [],
   });
 
-  const { data: recentViews = [] } = useQuery({
-    queryKey: ['recentlyViewedPacks', timeRange],
-    queryFn: async () => {
-      const user = await base44.auth.me();
-      const views = await base44.entities.RecentlyViewedPack.filter(
-        { created_by: user.email },
-        "-viewed_at"
-      );
-      return views.filter(v => new Date(v.viewed_at) >= rangeDate);
-    },
-    initialData: [],
-  });
+  const recentViews = [];
 
   const { data: savedSearches = [] } = useQuery({
     queryKey: ['savedSearches', timeRange],
@@ -70,24 +59,8 @@ export default function InsightsSection() {
     initialData: [],
   });
 
-  const { data: favoritePacks = [] } = useQuery({
-    queryKey: ['favoritePacks', timeRange],
-    queryFn: async () => {
-      const user = await base44.auth.me();
-      const favorites = await base44.entities.FavoritePack.filter(
-        { created_by: user.email },
-        "-favorited_at"
-      );
-      return favorites.filter(f => new Date(f.favorited_at || f.created_date) >= rangeDate);
-    },
-    initialData: [],
-  });
-
-  const { data: allPacks = [] } = useQuery({
-    queryKey: ['learningPacks'],
-    queryFn: () => base44.entities.LearningPack.list("sort_order"),
-    initialData: [],
-  });
+  const favoritePacks = [];
+  const allPacks = [];
 
   // Compute insights
   const topTopics = useMemo(() => {

@@ -55,11 +55,7 @@ export default function ExploreAllSources() {
     initialData: [],
   });
 
-  const { data: learningPacks = [] } = useQuery({
-    queryKey: ['learningPacks'],
-    queryFn: () => base44.entities.LearningPack.list("sort_order"),
-    initialData: [],
-  });
+
 
   const availableSources = sources.filter(s => s && !s.is_deleted && s.name).map(s => s.name);
 
@@ -70,26 +66,7 @@ export default function ExploreAllSources() {
     }
   }, [availableSources]);
 
-  // Load Learning Pack from URL params
-  React.useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const packId = urlParams.get('pack_id');
-    const packTitle = urlParams.get('pack_title');
-    
-    if (packId && learningPacks.length > 0) {
-      const pack = learningPacks.find(p => p.id === packId);
-      if (pack) {
-        setSearchText(pack.keywords || "");
-        setDateRangePreset(pack.date_range_type || "90d");
-        setCustomStartDate(pack.custom_start_date ? new Date(pack.custom_start_date) : null);
-        setCustomEndDate(pack.custom_end_date ? new Date(pack.custom_end_date) : null);
-        setSelectedSources(pack.sources_selected && pack.sources_selected.length > 0 ? pack.sources_selected : availableSources);
-        setSelectedTopics(pack.topics_selected || []);
-        setSelectedNewsletters([]);
-        setActivePack({ id: pack.id, title: packTitle || pack.pack_title });
-      }
-    }
-  }, [learningPacks, availableSources]);
+
 
   const allTopics = useMemo(() => {
     const topics = new Set();
@@ -119,10 +96,7 @@ export default function ExploreAllSources() {
     }
   };
 
-  const currentPack = useMemo(() => {
-    if (!activePack?.id || learningPacks.length === 0) return null;
-    return learningPacks.find(p => p.id === activePack.id);
-  }, [activePack, learningPacks]);
+  const currentPack = null;
 
   const filteredResults = useMemo(() => {
     let results = newsletters;
@@ -282,49 +256,10 @@ export default function ExploreAllSources() {
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight mb-2">Explore All Sources</h1>
             <p className="text-sm md:text-base text-slate-600 lg:text-lg">Search and filter across all newsletter content</p>
           </div>
-          <Link to={createPageUrl("LearningPacks")} className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Browse Learning Packs</span>
-              <span className="sm:hidden">Packs</span>
-            </Button>
-          </Link>
+
         </div>
         
-        {activePack && (
-          <div className="mt-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-purple-900">Learning Pack Active</p>
-                <p className="text-sm text-purple-700">{activePack.title}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={generateDeepDive}
-                className="bg-white/80"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Deep Dive
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setActivePack(null);
-                  window.history.replaceState({}, '', createPageUrl("ExploreAllSources"));
-                }}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        )}
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 w-full">
