@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +10,11 @@ import { toast } from "sonner";
 export default function AISourceDiscovery() {
   const [discovering, setDiscovering] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  const queryClient = useQueryClient();
 
   const { data: sources = [] } = useQuery({
     queryKey: ['sources'],
-    queryFn: () => base44.entities.Source.list("name"),
+    queryFn: () => base44.entities.Source.filter({}),
     initialData: [],
   });
 
@@ -88,8 +89,9 @@ Return ONLY valid JSON, nothing else.`,
         is_deleted: false
       });
       
+      queryClient.invalidateQueries({ queryKey: ['sources'] });
       setSuggestions(prev => prev.filter(s => s.url !== suggestion.url));
-      toast.success(`✓ Added ${suggestion.name}`);
+      toast.success(`✓ Added ${suggestion.name} - Go to Admin Dashboard → Source Scraper to fetch its newsletters`);
     } catch (error) {
       toast.error(`Failed to add: ${error.message}`);
     }
