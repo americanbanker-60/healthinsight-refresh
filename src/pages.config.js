@@ -9,7 +9,6 @@ import Dashboard from './pages/Dashboard';
 import DashboardSettings from './pages/DashboardSettings';
 import DeepDiveResults from './pages/DeepDiveResults';
 import ExploreAllSources from './pages/ExploreAllSources';
-import Home from './pages/Home';
 import KnowledgeHub from './pages/KnowledgeHub';
 import ManageSources from './pages/ManageSources';
 import MyCustomPacks from './pages/MyCustomPacks';
@@ -40,7 +39,6 @@ export const PAGES = {
     "DashboardSettings": DashboardSettings,
     "DeepDiveResults": DeepDiveResults,
     "ExploreAllSources": ExploreAllSources,
-    "Home": Home,
     "KnowledgeHub": KnowledgeHub,
     "ManageSources": ManageSources,
     "MyCustomPacks": MyCustomPacks,
