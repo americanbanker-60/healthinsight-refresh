@@ -20,6 +20,7 @@ export default function AIContentGenerator() {
   const [generating, setGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
   const [additionalInstructions, setAdditionalInstructions] = useState("");
+  const [autoSummaries, setAutoSummaries] = useState([]);
 
   const { data: sources = [] } = useQuery({
     queryKey: ['sources'],
@@ -39,6 +40,40 @@ export default function AIContentGenerator() {
     setSelectedSources(prev => 
       prev.includes(sourceId) ? prev.filter(id => id !== sourceId) : [...prev, sourceId]
     );
+  };
+
+  // Auto-generate summaries when sources change
+  React.useEffect(() => {
+    if (selectedSources.length > 0 || selectedCategories.length > 0) {
+      autoGenerateSummaries();
+    } else {
+      setAutoSummaries([]);
+    }
+  }, [selectedSources, selectedCategories]);
+
+  const autoGenerateSummaries = async () => {
+    const filteredNewsletters = newsletters.filter(n => {
+      const sourceMatch = selectedSources.length === 0 || selectedSources.includes(n.source_name);
+      const source = sources.find(s => s.name === n.source_name);
+      const categoryMatch = selectedCategories.length === 0 || (source && selectedCategories.includes(source.category));
+      return sourceMatch && categoryMatch;
+    }).slice(0, 10);
+
+    if (filteredNewsletters.length === 0) {
+      setAutoSummaries([]);
+      return;
+    }
+
+    const summaries = filteredNewsletters.map(n => ({
+      id: n.id,
+      title: n.title,
+      source: n.source_name,
+      date: n.publication_date,
+      summary: n.tldr || n.summary || 'No summary available',
+      url: n.source_url
+    }));
+
+    setAutoSummaries(summaries);
   };
 
   const toggleCategory = (category) => {
@@ -222,36 +257,78 @@ Return professional, well-structured content in markdown format.`;
           </Button>
         </div>
 
-        {/* Generated Content Panel */}
-        <Card className="lg:sticky lg:top-6 lg:self-start">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Generated Content</span>
-              {generatedContent && (
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={copyToClipboard}>
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={downloadContent}>
-                    <Download className="w-4 h-4" />
-                  </Button>
+        {/* Auto-Generated Summaries & Content Panel */}
+        <div className="space-y-6">
+          {/* Auto Summaries */}
+          {autoSummaries.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-blue-600" />
+                  Auto-Generated Summaries ({autoSummaries.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 max-h-96 overflow-y-auto">
+                {autoSummaries.map((item) => (
+                  <Card key={item.id} className="bg-blue-50/50 border-blue-200">
+                    <CardContent className="pt-4">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h4 className="font-semibold text-sm text-slate-900 flex-1">{item.title}</h4>
+                        <Badge variant="outline" className="text-xs shrink-0">{item.source}</Badge>
+                      </div>
+                      <p className="text-xs text-slate-500 mb-2">
+                        {new Date(item.date).toLocaleDateString()}
+                      </p>
+                      <p className="text-sm text-slate-700">{item.summary}</p>
+                      {item.url && (
+                        <a 
+                          href={item.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline mt-2 inline-block"
+                        >
+                          Read full article →
+                        </a>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Generated Content */}
+          <Card className="lg:sticky lg:top-6">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>AI-Generated Content</span>
+                {generatedContent && (
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={copyToClipboard}>
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={downloadContent}>
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!generatedContent ? (
+                <div className="text-center py-12 text-slate-500">
+                  <Sparkles className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                  <p className="text-sm">Select sources above to see auto-summaries</p>
+                  <p className="text-xs mt-2">Or click Generate Content for detailed analysis</p>
+                </div>
+              ) : (
+                <div className="prose prose-slate max-w-none">
+                  <ReactMarkdown>{generatedContent}</ReactMarkdown>
                 </div>
               )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!generatedContent ? (
-              <div className="text-center py-12 text-slate-500">
-                <Sparkles className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-                <p>Configure your content settings and click Generate Content</p>
-              </div>
-            ) : (
-              <div className="prose prose-slate max-w-none">
-                <ReactMarkdown>{generatedContent}</ReactMarkdown>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import AIContentGenerator from './pages/AIContentGenerator';
 import AdminDashboard from './pages/AdminDashboard';
 import AgentWorkspace from './pages/AgentWorkspace';
 import Cleanup from './pages/Cleanup';
@@ -26,11 +27,11 @@ import TopicsDirectory from './pages/TopicsDirectory';
 import Unauthorized from './pages/Unauthorized';
 import UserSettings from './pages/UserSettings';
 import VariousSources from './pages/VariousSources';
-import AIContentGenerator from './pages/AIContentGenerator';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AIContentGenerator": AIContentGenerator,
     "AdminDashboard": AdminDashboard,
     "AgentWorkspace": AgentWorkspace,
     "Cleanup": Cleanup,
@@ -59,7 +60,6 @@ export const PAGES = {
     "Unauthorized": Unauthorized,
     "UserSettings": UserSettings,
     "VariousSources": VariousSources,
-    "AIContentGenerator": AIContentGenerator,
 }
 
 export const pagesConfig = {
