@@ -13,38 +13,35 @@ export default function SourceDatabaseFix() {
   const runDiagnosis = async () => {
     setDiagnosing(true);
     try {
-      // Direct API query bypassing all filters
-      const response = await fetch(
-        `https://base44.app/api/apps/${base44.appId}/entities/Source`,
-        {
-          headers: {
-            Authorization: `Bearer ${await base44.auth.getToken()}`
-          }
-        }
-      );
+      // Get all sources via SDK with all filters
+      const allSourcesQuery = await base44.entities.Source.filter({});
       
-      const rawData = await response.json();
-      const allSources = rawData.data || rawData || [];
+      // Count by is_deleted status
+      const active = allSourcesQuery.filter(s => s.is_deleted === false);
+      const deleted = allSourcesQuery.filter(s => s.is_deleted === true);
+      const orphaned = allSourcesQuery.filter(s => s.is_deleted === undefined || s.is_deleted === null);
       
-      // Also get via SDK
-      const sdkSources = await base44.entities.Source.list();
-      
-      const active = allSources.filter(s => s.is_deleted === false);
-      const deleted = allSources.filter(s => s.is_deleted === true);
-      const orphaned = allSources.filter(s => s.is_deleted === undefined || s.is_deleted === null);
+      console.log("=== DIAGNOSTIC RESULTS ===");
+      console.log("Total sources:", allSourcesQuery.length);
+      console.log("Active (is_deleted=false):", active.length);
+      console.log("Deleted (is_deleted=true):", deleted.length);
+      console.log("Orphaned (is_deleted=null/undefined):", orphaned.length);
+      console.log("Orphaned sources:", orphaned);
       
       setDiagnosis({
-        totalInDatabase: allSources.length,
-        totalViaSDK: sdkSources.length,
+        totalInDatabase: allSourcesQuery.length,
         active: active.length,
         deleted: deleted.length,
         orphaned: orphaned.length,
         orphanedSources: orphaned,
-        sampleSources: allSources.slice(0, 3)
+        sampleActive: active.slice(0, 3),
+        sampleOrphaned: orphaned.slice(0, 5)
       });
       
       if (orphaned.length > 0) {
-        toast.warning(`Found ${orphaned.length} sources missing is_deleted flag!`);
+        toast.warning(`Found ${orphaned.length} sources without is_deleted flag!`);
+      } else if (allSourcesQuery.length === 0) {
+        toast.info("No sources found in database");
       } else {
         toast.success("Database check complete");
       }
