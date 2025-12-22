@@ -11,8 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit2, Trash2, Check, X, RotateCcw, Upload } from "lucide-react";
 import { toast } from "sonner";
 import ConfirmDialog from "../components/common/ConfirmDialog";
-import SourceUploadTest from "../components/admin/SourceUploadTest";
 import SourceDatabaseFix from "../components/admin/SourceDatabaseFix";
+import AISourceDiscovery from "../components/admin/AISourceDiscovery";
+import AICategorySuggestion from "../components/admin/AICategorySuggestion";
 
 const categories = ["Investment Banking", "Technology", "Finance", "Operations", "Policy", "General", "Other"];
 
@@ -391,6 +392,7 @@ export default function ManageSources() {
       </div>
 
       <SourceDatabaseFix />
+      <AISourceDiscovery />
 
       {showUrlPaste && (
         <Card className="mb-6 bg-green-50 border-green-200">
@@ -570,6 +572,15 @@ export default function ManageSources() {
               value={formData.url}
               onChange={(e) => setFormData({ ...formData, url: e.target.value })}
             />
+
+            {formData.url && (
+              <AICategorySuggestion 
+                url={formData.url} 
+                name={formData.name}
+                onSuggest={(category) => setFormData({ ...formData, category })}
+              />
+            )}
+
             <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
