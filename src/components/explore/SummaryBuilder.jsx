@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sparkles, Copy, Download, Loader2, Save } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import RecommendedPacks from "../packs/RecommendedPacks";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -142,13 +141,6 @@ ${sourcesList}
 
   return (
     <div className="space-y-4 sticky top-6">
-      {selectedItems.length > 0 && (
-        <RecommendedPacks
-          selectedNewsletters={selectedNewsletters}
-          newsletters={newsletters}
-        />
-      )}
-
       <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60">
         <CardHeader className="border-b border-slate-200/60">
         <CardTitle className="flex items-center justify-between">

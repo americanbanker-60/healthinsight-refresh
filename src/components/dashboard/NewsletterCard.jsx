@@ -7,7 +7,6 @@ import { ExternalLink, ChevronRight, TrendingUp, Briefcase } from "lucide-react"
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import AddToPackButton from "../packs/AddToPackButton";
 import { BDInsightBadge } from "../bd/BDActionPrompt";
 import NewsletterMetadata from "../newsletter/NewsletterMetadata";
 
@@ -148,15 +147,12 @@ export default function NewsletterCard({ newsletter, index, variant = "full" }) 
             </div>
           )}
 
-          <div className="flex gap-2">
-            <AddToPackButton newsletterId={newsletter.id} />
-            <Link to={createPageUrl("NewsletterDetail") + "?id=" + newsletter.id} className="flex-1">
-              <Button variant="ghost" className="w-full justify-between group-hover:bg-blue-50 group-hover:text-blue-700 transition-colors">
-                View Full Analysis
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
+          <Link to={createPageUrl("NewsletterDetail") + "?id=" + newsletter.id} className="w-full">
+            <Button variant="ghost" className="w-full justify-between group-hover:bg-blue-50 group-hover:text-blue-700 transition-colors">
+              View Full Analysis
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     </motion.div>
