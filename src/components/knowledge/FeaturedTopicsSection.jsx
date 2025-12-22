@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BookOpen, Search, Sparkles } from "lucide-react";
-import { logPackView } from "../utils/packTracking";
 
 export default function FeaturedTopicsSection() {
   const navigate = useNavigate();
@@ -21,7 +20,6 @@ export default function FeaturedTopicsSection() {
   const featuredPacks = packs.slice(0, 8);
 
   const openPack = (pack) => {
-    logPackView(pack.id);
     const params = new URLSearchParams({
       pack_id: pack.id,
       pack_title: pack.pack_title
