@@ -35,82 +35,19 @@ export default function DirectNewsletterUpload() {
 
     for (const url of urlList) {
       try {
-        // First, fetch the actual webpage content
-        const htmlResponse = await fetch(url);
-        if (!htmlResponse.ok) {
-          throw new Error(`Failed to fetch URL (status ${htmlResponse.status})`);
+        // Call backend function to analyze and create newsletter
+        const response = await base44.functions.invoke('analyzeNewsletterUrl', { url });
+
+        if (response.data.success) {
+          processResults.push({
+            url,
+            status: "success",
+            title: response.data.title || "Untitled"
+          });
+          toast.success(`✓ Added: ${response.data.title || url}`);
+        } else {
+          throw new Error(response.data.error || 'Unknown error');
         }
-        const htmlContent = await htmlResponse.text();
-        
-        // Extract domain for source name
-        const urlObj = new URL(url);
-        const domain = urlObj.hostname.replace('www.', '');
-        
-        // Now analyze the content with AI
-        const response = await base44.integrations.Core.InvokeLLM({
-          prompt: `Analyze this healthcare newsletter/article and extract key information.
-
-URL: ${url}
-Source Domain: ${domain}
-
-HTML Content:
-${htmlContent.substring(0, 15000)}
-
-Extract and return structured data in JSON format.`,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              title: { type: "string" },
-              source_name: { type: "string" },
-              publication_date: { type: "string" },
-              tldr: { type: "string" },
-              summary: { type: "string" },
-              key_takeaways: { type: "array", items: { type: "string" } },
-              key_statistics: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    figure: { type: "string" },
-                    context: { type: "string" }
-                  }
-                }
-              },
-              themes: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    theme: { type: "string" },
-                    description: { type: "string" }
-                  }
-                }
-              },
-              key_players: { type: "array", items: { type: "string" } },
-              sentiment: { type: "string" }
-            }
-          }
-        });
-
-        // Create newsletter record
-        const newsletterData = {
-          ...response,
-          source_url: url,
-          date_added_to_app: new Date().toISOString(),
-          publication_date_confidence: "medium",
-          publication_date_source: "AI extraction from content",
-          publication_date_notes: "Extracted via direct upload"
-        };
-
-        await base44.entities.Newsletter.create(newsletterData);
-
-        processResults.push({
-          url,
-          status: "success",
-          title: response.title || "Untitled"
-        });
-
-        toast.success(`✓ Added: ${response.title || url}`);
 
       } catch (error) {
         processResults.push({
