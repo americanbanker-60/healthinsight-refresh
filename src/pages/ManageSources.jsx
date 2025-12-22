@@ -37,17 +37,47 @@ export default function ManageSources() {
     initialData: [],
   });
 
-  const activeSources = sources.filter(s => s && typeof s === 'object' && !s.is_deleted && s.name && s.id);
+  const activeSources = sources.filter(s => {
+    const isValid = s && typeof s === 'object' && s.name && s.id;
+    const isNotDeleted = !s.is_deleted;
+    if (isValid && !isNotDeleted) {
+      console.log("Filtering out deleted source:", s.name, "is_deleted:", s.is_deleted);
+    }
+    return isValid && isNotDeleted;
+  });
   const deletedSources = sources.filter(s => s && typeof s === 'object' && s.is_deleted && s.name && s.id);
+  
+  // Debug log on every render
+  console.log(`[ManageSources] Active: ${activeSources.length}, Deleted: ${deletedSources.length}, Total: ${sources.length}`);
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Source.create(data),
-    onSuccess: (createdSource) => {
+    mutationFn: async (data) => {
+      console.log("Creating source with data:", data);
+      const created = await base44.entities.Source.create(data);
+      console.log("✓ API returned created source:", created);
+      
+      // Verify it was created by fetching it back
+      const verification = await base44.entities.Source.filter({ id: created.id });
+      console.log("✓ Verification fetch result:", verification);
+      
+      return created;
+    },
+    onSuccess: async (createdSource) => {
       console.log("✓ Source created successfully:", createdSource);
-      queryClient.invalidateQueries({ queryKey: ['sources'] });
+      
+      // Force refetch and wait for it
+      await queryClient.invalidateQueries({ queryKey: ['sources'] });
+      await queryClient.refetchQueries({ queryKey: ['sources'] });
+      
+      // Verify it appears in the list
+      const allSources = queryClient.getQueryData(['sources']) || [];
+      console.log(`Total sources after creation: ${allSources.length}`);
+      const found = allSources.find(s => s.id === createdSource.id);
+      console.log("Source found in query cache:", found);
+      
       setIsAdding(false);
       setFormData({ name: "", description: "", url: "", category: "General" });
-      toast.success(`Source "${createdSource.name}" added successfully`);
+      toast.success(`✓ Source "${createdSource.name}" created! ID: ${createdSource.id}`);
     },
     onError: (error) => {
       console.error("✗ Failed to create source:", error);
