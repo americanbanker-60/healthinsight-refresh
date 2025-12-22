@@ -11,7 +11,6 @@ import NewsletterCard from "../components/dashboard/NewsletterCard";
 import StatsOverview from "../components/dashboard/StatsOverview";
 import PersistentFilters, { applyFilters } from "../components/filters/PersistentFilters";
 import TrendChart from "../components/dashboard/TrendChart";
-import FeaturedPacks from "../components/dashboard/FeaturedPacks";
 import TrendDiscovery from "../components/trends/TrendDiscovery";
 import { GridCardSkeleton } from "../components/common/CardSkeleton";
 import { Badge } from "@/components/ui/badge";
@@ -159,8 +158,6 @@ export default function Dashboard() {
       />
 
       <TrendDiscovery />
-
-      <FeaturedPacks />
 
       {userConfig.show_charts && newsletters.length > 0 && (
         <TrendChart newsletters={tabFilteredNewsletters} />
