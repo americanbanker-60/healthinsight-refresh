@@ -3,94 +3,70 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { BookOpen, Search, Sparkles } from "lucide-react";
+import { Search, Lightbulb } from "lucide-react";
 
 export default function FeaturedTopicsSection() {
   const navigate = useNavigate();
 
-  const { data: packs = [] } = useQuery({
-    queryKey: ['learningPacks'],
-    queryFn: () => base44.entities.LearningPack.list("sort_order"),
+  const { data: topics = [] } = useQuery({
+    queryKey: ['topics'],
+    queryFn: () => base44.entities.Topic.list("sort_order"),
     initialData: [],
   });
 
-  const featuredPacks = packs.slice(0, 8);
-
-  const openPack = (pack) => {
-    const params = new URLSearchParams({
-      pack_id: pack.id,
-      pack_title: pack.pack_title
-    });
-    navigate(createPageUrl("ExploreAllSources") + "?" + params.toString());
-  };
+  const featuredTopics = topics.slice(0, 8);
 
   const exploreTopic = (keywords) => {
-    const params = new URLSearchParams({ keywords });
+    const searchTerms = Array.isArray(keywords) ? keywords.join(' ') : keywords;
+    const params = new URLSearchParams({ keywords: searchTerms });
     navigate(createPageUrl("ExploreAllSources") + "?" + params.toString());
   };
 
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Featured Topics & Packs</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Featured Topics</h2>
         <p className="text-sm md:text-base text-slate-600">
-          Jump into curated content collections on key healthcare topics
+          Explore key healthcare topics and trends
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {featuredPacks.map(pack => (
+        {featuredTopics.map(topic => (
           <Card 
-            key={pack.id} 
+            key={topic.id} 
             className="hover:shadow-lg transition-all cursor-pointer group"
-            onClick={() => openPack(pack)}
+            onClick={() => topic.keywords && exploreTopic(topic.keywords)}
           >
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-3">
-                {pack.icon && <div className="text-3xl">{pack.icon}</div>}
-                <Badge variant="secondary" className="text-xs">
-                  Pack included
-                </Badge>
+                {topic.icon && <div className="text-3xl">{topic.icon}</div>}
               </div>
               
               <h3 className="font-semibold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
-                {pack.pack_title}
+                {topic.topic_name}
               </h3>
               
               <p className="text-sm text-slate-600 mb-4 line-clamp-2">
-                {pack.description}
+                {topic.description || "Explore content related to this topic"}
               </p>
 
-              <div className="space-y-2">
+              {topic.keywords && (
                 <Button 
                   size="sm" 
+                  variant="outline"
                   className="w-full"
                   onClick={(e) => {
                     e.stopPropagation();
-                    openPack(pack);
+                    exploreTopic(topic.keywords);
                   }}
                 >
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  Open Learning Pack
+                  <Search className="w-3 h-3 mr-1" />
+                  Explore Topic
                 </Button>
-                {pack.keywords && (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    className="w-full text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      exploreTopic(pack.keywords);
-                    }}
-                  >
-                    <Search className="w-3 h-3 mr-1" />
-                    Explore in All Sources
-                  </Button>
-                )}
-              </div>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -99,9 +75,10 @@ export default function FeaturedTopicsSection() {
       <div className="mt-6 text-center">
         <Button 
           variant="outline"
-          onClick={() => navigate(createPageUrl("LearningPacks"))}
+          onClick={() => navigate(createPageUrl("TopicsDirectory"))}
         >
-          View All Learning Packs
+          <Lightbulb className="w-4 h-4 mr-2" />
+          View All Topics
         </Button>
       </div>
     </div>
