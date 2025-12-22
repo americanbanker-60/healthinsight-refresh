@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Users, BarChart3, Newspaper, Calendar } from "lucide-react";
+import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Users, BarChart3, Newspaper, Calendar, Sparkles } from "lucide-react";
 import { RoleGuard, useUserRole } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import EnhancedSourceScraper from "../components/admin/EnhancedSourceScraper";
@@ -197,6 +197,21 @@ export default function AdminDashboard() {
             <CardContent>
               <Link to={createPageUrl("PublicationDateMigration")}>
                 <Button className="w-full">Manage Dates</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader className="flex-1">
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                AI Content Generator
+              </CardTitle>
+              <CardDescription>Generate articles, summaries, and reports from newsletters</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to={createPageUrl("AIContentGenerator")}>
+                <Button className="w-full">Generate Content</Button>
               </Link>
             </CardContent>
           </Card>
