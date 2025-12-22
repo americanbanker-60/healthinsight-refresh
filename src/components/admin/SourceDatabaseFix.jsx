@@ -13,20 +13,21 @@ export default function SourceDatabaseFix() {
   const runDiagnosis = async () => {
     setDiagnosing(true);
     try {
-      // Get all sources via SDK with all filters
+      // Get all sources using filter (bypasses list's limit)
       const allSourcesQuery = await base44.entities.Source.filter({});
+      
+      console.log("=== RAW QUERY RESULTS ===");
+      console.log("Total returned:", allSourcesQuery.length);
+      console.log("First 3:", allSourcesQuery.slice(0, 3));
       
       // Count by is_deleted status
       const active = allSourcesQuery.filter(s => s.is_deleted === false);
       const deleted = allSourcesQuery.filter(s => s.is_deleted === true);
-      const orphaned = allSourcesQuery.filter(s => s.is_deleted === undefined || s.is_deleted === null);
+      const orphaned = allSourcesQuery.filter(s => typeof s.is_deleted === 'undefined' || s.is_deleted === null);
       
-      console.log("=== DIAGNOSTIC RESULTS ===");
-      console.log("Total sources:", allSourcesQuery.length);
       console.log("Active (is_deleted=false):", active.length);
       console.log("Deleted (is_deleted=true):", deleted.length);
       console.log("Orphaned (is_deleted=null/undefined):", orphaned.length);
-      console.log("Orphaned sources:", orphaned);
       
       setDiagnosis({
         totalInDatabase: allSourcesQuery.length,
@@ -34,20 +35,19 @@ export default function SourceDatabaseFix() {
         deleted: deleted.length,
         orphaned: orphaned.length,
         orphanedSources: orphaned,
-        sampleActive: active.slice(0, 3),
-        sampleOrphaned: orphaned.slice(0, 5)
+        allSources: allSourcesQuery
       });
       
-      if (orphaned.length > 0) {
-        toast.warning(`Found ${orphaned.length} sources without is_deleted flag!`);
-      } else if (allSourcesQuery.length === 0) {
-        toast.info("No sources found in database");
+      if (allSourcesQuery.length === 0) {
+        toast.error("🔴 No sources found! Check RLS policies or try refreshing the page.");
+      } else if (orphaned.length > 0) {
+        toast.warning(`⚠️ Found ${orphaned.length} sources without is_deleted flag!`);
       } else {
-        toast.success("Database check complete");
+        toast.success(`✓ Found ${active.length} active sources`);
       }
     } catch (error) {
       console.error("Diagnosis error:", error);
-      toast.error(`Diagnosis failed: ${error.message}`);
+      toast.error(`Failed: ${error.message}`);
     }
     setDiagnosing(false);
   };
@@ -86,31 +86,46 @@ export default function SourceDatabaseFix() {
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-red-600" />
-            Database Diagnostic & Repair
+            Source Visibility Diagnostic
           </span>
-          <Button 
-            onClick={runDiagnosis} 
-            disabled={diagnosing}
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${diagnosing ? 'animate-spin' : ''}`} />
-            {diagnosing ? "Checking..." : "Run Check"}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline"
+              size="sm"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reload Page
+            </Button>
+            <Button 
+              onClick={runDiagnosis} 
+              disabled={diagnosing}
+              variant="outline"
+              size="sm"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${diagnosing ? 'animate-spin' : ''}`} />
+              {diagnosing ? "Checking..." : "Run Check"}
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
         {!diagnosis ? (
           <div className="text-center py-6">
-            <p className="text-slate-600 mb-4">
-              Click "Run Check" to diagnose why sources aren't appearing
-            </p>
+            <div className="bg-blue-50 border border-blue-300 rounded-lg p-4 mb-4">
+              <p className="font-semibold text-blue-900 mb-2">📋 After uploading sources:</p>
+              <ol className="text-sm text-blue-800 text-left space-y-1">
+                <li>1. Click "Run Check" to see if they're in the database</li>
+                <li>2. If found but not showing, click "Fix All Orphaned Sources"</li>
+                <li>3. Click "Reload Page" to clear React Query cache</li>
+              </ol>
+            </div>
             <div className="text-sm text-slate-500 bg-white p-3 rounded border">
-              <p className="font-semibold mb-1">What this checks:</p>
+              <p className="font-semibold mb-1">This diagnostic checks:</p>
               <ul className="text-left space-y-1">
-                <li>• Total sources in database vs SDK query</li>
-                <li>• Sources missing is_deleted flag (orphaned)</li>
-                <li>• RLS policy filtering issues</li>
+                <li>• How many sources exist in database</li>
+                <li>• Which ones are missing the is_deleted flag</li>
+                <li>• React Query caching issues</li>
               </ul>
             </div>
           </div>
@@ -181,27 +196,30 @@ export default function SourceDatabaseFix() {
               </div>
             )}
 
-            {diagnosis.orphaned === 0 && diagnosis.totalInDatabase === diagnosis.totalViaSDK && (
+            {diagnosis.orphaned === 0 && diagnosis.totalInDatabase > 0 && (
               <div className="bg-green-100 border border-green-400 rounded-lg p-4 flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-700 mt-0.5" />
                 <div>
-                  <p className="font-bold text-green-900">✓ Database is healthy</p>
+                  <p className="font-bold text-green-900">✓ All sources have is_deleted flags</p>
                   <p className="text-sm text-green-800 mt-1">
-                    All sources have proper is_deleted flags. No orphaned records found.
+                    Found {diagnosis.active} active sources. If they're not showing above, try clicking "Reload Page".
                   </p>
                 </div>
               </div>
             )}
 
-            {diagnosis.totalInDatabase > diagnosis.totalViaSDK && diagnosis.orphaned === 0 && (
-              <div className="bg-amber-100 border border-amber-400 rounded-lg p-4">
-                <p className="font-bold text-amber-900 mb-1">
-                  ⚠️ SDK returns fewer sources than database
-                </p>
-                <p className="text-sm text-amber-800">
-                  Database has {diagnosis.totalInDatabase} sources, but SDK query returns {diagnosis.totalViaSDK}.
-                  This may indicate an RLS policy issue.
-                </p>
+            {diagnosis.totalInDatabase === 0 && (
+              <div className="bg-red-100 border border-red-400 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-700 mt-0.5" />
+                <div>
+                  <p className="font-bold text-red-900">🔴 No sources found in database</p>
+                  <p className="text-sm text-red-800 mt-2">
+                    The upload might have failed silently, or RLS policies are blocking read access.
+                  </p>
+                  <p className="text-xs text-red-700 mt-2 font-mono bg-red-50 p-2 rounded">
+                    Check browser console for errors during upload.
+                  </p>
+                </div>
               </div>
             )}
 
