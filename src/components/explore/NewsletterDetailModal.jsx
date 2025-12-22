@@ -1,8 +1,8 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Briefcase, DollarSign } from "lucide-react";
-import AddToPackButton from "../packs/AddToPackButton";
 import NewsletterMetadata from "../newsletter/NewsletterMetadata";
 
 export default function NewsletterDetailModal({ newsletter, onClose }) {
@@ -10,12 +10,9 @@ export default function NewsletterDetailModal({ newsletter, onClose }) {
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <DialogTitle className="text-2xl mb-3">{newsletter.title}</DialogTitle>
-              <NewsletterMetadata newsletter={newsletter} showLink={true} />
-            </div>
-            <AddToPackButton newsletterId={newsletter.id} variant="icon" />
+          <div className="flex-1">
+            <DialogTitle className="text-2xl mb-3">{newsletter.title}</DialogTitle>
+            <NewsletterMetadata newsletter={newsletter} showLink={true} />
           </div>
         </DialogHeader>
 
