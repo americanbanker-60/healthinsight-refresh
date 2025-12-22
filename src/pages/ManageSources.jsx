@@ -35,56 +35,26 @@ export default function ManageSources() {
 
   const { data: sources = [], isLoading } = useQuery({
     queryKey: ['sources'],
-    queryFn: () => base44.entities.Source.list("name"),
+    queryFn: async () => {
+      // Use filter to get ALL sources without limit
+      const allSources = await base44.entities.Source.filter({});
+      console.log(`✓ Loaded ${allSources.length} total sources from database`);
+      return allSources;
+    },
     initialData: [],
   });
 
-  const activeSources = sources.filter(s => {
-    const isValid = s && typeof s === 'object' && s.name && s.id;
-    const isNotDeleted = !s.is_deleted;
-    if (isValid && !isNotDeleted) {
-      console.log("Filtering out deleted source:", s.name, "is_deleted:", s.is_deleted);
-    }
-    return isValid && isNotDeleted;
-  });
-  const deletedSources = sources.filter(s => s && typeof s === 'object' && s.is_deleted && s.name && s.id);
-  
-  // Debug log on every render
-  console.log(`[ManageSources] Active: ${activeSources.length}, Deleted: ${deletedSources.length}, Total: ${sources.length}`);
+  const activeSources = sources.filter(s => s.is_deleted !== true);
+  const deletedSources = sources.filter(s => s.is_deleted === true);
 
   const createMutation = useMutation({
-    mutationFn: async (data) => {
-      console.log("Creating source with data:", data);
-      const created = await base44.entities.Source.create(data);
-      console.log("✓ API returned created source:", created);
-      
-      // Verify it was created by fetching it back
-      const verification = await base44.entities.Source.filter({ id: created.id });
-      console.log("✓ Verification fetch result:", verification);
-      
-      return created;
-    },
-    onSuccess: async (createdSource) => {
-      console.log("✓ Source created successfully:", createdSource);
-      
-      // Force refetch and wait for it
-      await queryClient.invalidateQueries({ queryKey: ['sources'] });
-      await queryClient.refetchQueries({ queryKey: ['sources'] });
-      
-      // Verify it appears in the list
-      const allSources = queryClient.getQueryData(['sources']) || [];
-      console.log(`Total sources after creation: ${allSources.length}`);
-      const found = allSources.find(s => s.id === createdSource.id);
-      console.log("Source found in query cache:", found);
-      
+    mutationFn: (data) => base44.entities.Source.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sources'] });
       setIsAdding(false);
       setFormData({ name: "", description: "", url: "", category: "General" });
-      toast.success(`✓ Source "${createdSource.name}" created! ID: ${createdSource.id}`);
+      toast.success("Source created successfully");
     },
-    onError: (error) => {
-      console.error("✗ Failed to create source:", error);
-      toast.error(`Failed to create source: ${error.message}`);
-    }
   });
 
   const updateMutation = useMutation({
@@ -232,98 +202,59 @@ export default function ManageSources() {
     setIsProcessingUrls(true);
     
     try {
-      // Verify admin access first
-      const currentUser = await base44.auth.me();
-      if (!currentUser || currentUser.role !== 'admin') {
-        toast.error("Admin access required to create sources");
-        setIsProcessingUrls(false);
-        return;
-      }
-
       const lines = urlText.split('\n').map(line => line.trim()).filter(line => line);
       
-      const validUrls = [];
-      let invalidCount = 0;
-      
-      for (const line of lines) {
-        try {
-          new URL(line);
+      const validUrls = lines
+        .filter(line => {
+          try {
+            new URL(line);
+            return true;
+          } catch {
+            return false;
+          }
+        })
+        .map(line => {
           const hostname = new URL(line).hostname.replace('www.', '');
           const baseName = hostname.split('.')[0];
-          validUrls.push({
+          return {
             name: baseName.charAt(0).toUpperCase() + baseName.slice(1),
             url: line,
             category: "General",
             description: "",
             is_deleted: false
-          });
-        } catch {
-          invalidCount++;
-        }
-      }
+          };
+        });
 
       if (validUrls.length === 0) {
-        toast.error("No valid URLs found in your paste");
+        toast.error("No valid URLs found");
         setIsProcessingUrls(false);
         return;
       }
 
-      console.log("===== STARTING SOURCE UPLOAD =====");
-      console.log(`Total URLs to process: ${validUrls.length}`);
-      console.log("First 3 URLs:", validUrls.slice(0, 3));
-
-      toast.info(`Processing ${validUrls.length} URLs...`);
+      toast.info(`Creating ${validUrls.length} sources...`);
 
       let successCount = 0;
-      const errors = [];
       
-      for (let i = 0; i < validUrls.length; i++) {
-        const source = validUrls[i];
+      for (const source of validUrls) {
         try {
-          const created = await base44.entities.Source.create(source);
-          console.log(`✓ Created [${i+1}/${validUrls.length}]:`, source.name, created.id);
+          await base44.entities.Source.create(source);
           successCount++;
-          
-          if ((i + 1) % 25 === 0) {
-            toast.info(`Created ${successCount}/${validUrls.length}...`);
-          }
         } catch (err) {
-          const errorMsg = err?.response?.data?.message || err?.message || JSON.stringify(err);
-          console.error(`✗ Failed [${i+1}/${validUrls.length}]:`, source.name, errorMsg);
-          errors.push({ name: source.name, url: source.url, error: errorMsg });
-          
-          // Stop after first error to debug
-          if (errors.length === 1) {
-            console.error("FIRST ERROR DETAILS:", err);
-            toast.error(`Failed on "${source.name}": ${errorMsg}`);
-            break;
-          }
+          console.error(`Failed to create ${source.name}:`, err);
         }
       }
       
-      console.log("===== UPLOAD COMPLETE =====");
-      console.log(`Success: ${successCount}, Failed: ${errors.length}`);
+      await queryClient.invalidateQueries({ queryKey: ['sources'] });
+      toast.success(`✓ Created ${successCount}/${validUrls.length} sources!`);
       
-      if (successCount > 0) {
-        await queryClient.invalidateQueries({ queryKey: ['sources'] });
-        toast.success(`✓ Created ${successCount} sources successfully!`);
-        setShowUrlPaste(false);
-        setUrlText("");
-        setUrlPreview([]);
-      } else {
-        toast.error("❌ No sources created - check browser console");
-      }
-      
-      if (errors.length > 0 && errors.length < 10) {
-        console.table(errors);
-      }
+      setShowUrlPaste(false);
+      setUrlText("");
+      setUrlPreview([]);
       
     } catch (error) {
-      console.error("===== FATAL ERROR =====", error);
-      toast.error(`Fatal error: ${error?.message || 'Unknown'}`);
-    } finally {
-      setIsProcessingUrls(false);
+      toast.error(`Upload failed: ${error.message}`);
     }
+    setIsProcessingUrls(false);
   };
 
   const startEdit = (source) => {
