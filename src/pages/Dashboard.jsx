@@ -177,6 +177,15 @@ export default function Dashboard() {
         </TabsList>
       </Tabs>
 
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+        <p className="font-semibold text-blue-900 mb-1">Debug Info:</p>
+        <p className="text-blue-800">Total Newsletters Loaded: <strong>{newsletters.length}</strong></p>
+        <p className="text-blue-800">After Tab Filter: <strong>{tabFilteredNewsletters.length}</strong></p>
+        <p className="text-blue-800">After Focus Filter: <strong>{focusFilteredNewsletters.length}</strong></p>
+        <p className="text-blue-800">After All Filters: <strong>{filteredNewsletters.length}</strong></p>
+        <p className="text-blue-800 mt-2">Active Filters: {persistentFilters ? JSON.stringify(persistentFilters) : "None"}</p>
+      </div>
+
       <PersistentFilters 
         onFilterChange={setPersistentFilters}
         availableThemes={availableThemes}
