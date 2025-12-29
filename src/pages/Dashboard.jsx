@@ -15,6 +15,7 @@ import TrendDiscovery from "../components/trends/TrendDiscovery";
 import { GridCardSkeleton } from "../components/common/CardSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import DashboardGuidance from "../components/dashboard/DashboardGuidance";
 
 const defaultUserConfig = {
   visible_stats: ["newsletters", "ma_deals", "funding", "themes"],
@@ -164,6 +165,8 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
+
+      <DashboardGuidance />
 
       <StatsOverview 
         newsletters={newsletters} 

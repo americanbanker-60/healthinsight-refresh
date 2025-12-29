@@ -215,10 +215,10 @@ Write a short paragraph summarizing what this user has been learning about.`;
         <CardContent>
           <div className="text-center py-8 text-slate-600">
             <BarChart3 className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-            <p className="text-sm mb-3">Once you start exploring Learning Packs and running searches, your personalized insights will appear here.</p>
+            <p className="text-sm mb-3">Once you start exploring content and running searches, your personalized insights will appear here.</p>
             <div className="text-xs text-slate-500 space-y-1 max-w-sm mx-auto text-left">
               <p>• Search for healthcare topics on the Explore page</p>
-              <p>• Open Learning Packs to discover curated content</p>
+              <p>• Browse newsletters from tracked sources</p>
               <p>• Save searches and summaries for future reference</p>
               <p>• Your activity patterns will generate AI insights</p>
             </div>
@@ -261,7 +261,7 @@ Write a short paragraph summarizing what this user has been learning about.`;
             <CardContent className="p-4 text-center">
               <BookOpen className="w-6 h-6 mx-auto mb-2 text-green-600" />
               <p className="text-2xl font-bold text-green-900">{activityStats.packsOpened}</p>
-              <p className="text-xs text-green-700">Packs Opened</p>
+              <p className="text-xs text-green-700">Content Viewed</p>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
@@ -353,35 +353,7 @@ Write a short paragraph summarizing what this user has been learning about.`;
           )}
         </div>
 
-        {/* Most Opened Packs */}
-        {topPacks.length > 0 && (
-          <div>
-            <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-slate-600" />
-              Most Opened Packs
-            </h4>
-            <div className="grid md:grid-cols-3 gap-3">
-              {topPacks.map(({ pack, count, isFavorite }) => (
-                <Card
-                  key={pack.id}
-                  className="cursor-pointer hover:shadow-md transition-all"
-                  onClick={() => openPack(pack)}
-                >
-                  <CardContent className="p-3">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="flex items-center gap-1">
-                        {pack.icon && <span className="text-lg">{pack.icon}</span>}
-                        {isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-400" />}
-                      </div>
-                      <Badge variant="secondary" className="text-xs">{count} views</Badge>
-                    </div>
-                    <p className="text-xs font-semibold text-slate-900 line-clamp-2">{pack.pack_title}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+
       </CardContent>
     </Card>
   );

@@ -1,38 +1,20 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { RoleGuard } from "../components/auth/RoleGuard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit2, Trash2, Check, X, RotateCcw, Upload } from "lucide-react";
-import { toast } from "sonner";
-import ConfirmDialog from "../components/common/ConfirmDialog";
+import { Plus, Trash2 } from "lucide-react";
 import SourceDatabaseFix from "../components/admin/SourceDatabaseFix";
 import AISourceDiscovery from "../components/admin/AISourceDiscovery";
-import AICategorySuggestion from "../components/admin/AICategorySuggestion";
 import DirectNewsletterUpload from "../components/admin/DirectNewsletterUpload";
-
-const categories = ["Investment Banking", "Technology", "Finance", "Operations", "Policy", "General", "Other"];
+import SourceUploadManager from "../components/admin/SourceUploadManager";
+import SourceEditor from "../components/admin/SourceEditor";
+import SourceList from "../components/admin/SourceList";
 
 export default function ManageSources() {
-  const [editingId, setEditingId] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [formData, setFormData] = useState({ name: "", description: "", url: "", category: "General" });
-  const [deleteSourceId, setDeleteSourceId] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
-  const [showBulkUpload, setShowBulkUpload] = useState(false);
-  const [showUrlPaste, setShowUrlPaste] = useState(false);
-  const [csvFile, setCsvFile] = useState(null);
-  const [csvPreview, setCsvPreview] = useState([]);
-  const [isProcessingCsv, setIsProcessingCsv] = useState(false);
-  const [urlText, setUrlText] = useState("");
-  const [urlPreview, setUrlPreview] = useState([]);
-  const [isProcessingUrls, setIsProcessingUrls] = useState(false);
-  const queryClient = useQueryClient();
 
   const { data: sources = [], isLoading } = useQuery({
     queryKey: ['sources'],
@@ -45,265 +27,9 @@ export default function ManageSources() {
     initialData: [],
   });
 
-  const activeSources = sources.filter(s => s.is_deleted !== true);
   const deletedSources = sources.filter(s => s.is_deleted === true);
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Source.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sources'] });
-      setIsAdding(false);
-      setFormData({ name: "", description: "", url: "", category: "General" });
-      toast.success("Source created successfully");
-    },
-  });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Source.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sources'] });
-      setEditingId(null);
-      toast.success("Source updated successfully");
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Source.update(id, { is_deleted: true }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sources'] });
-      toast.success("Source deleted successfully");
-    },
-  });
-
-  const restoreMutation = useMutation({
-    mutationFn: (id) => base44.entities.Source.update(id, { is_deleted: false }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sources'] });
-      toast.success("Source restored successfully");
-    },
-  });
-
-  const handleCsvUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target.result;
-      const rows = text.split('\n').map(row => row.split(',').map(cell => cell.trim()));
-      
-      // Assume first row is headers
-      const headers = rows[0];
-      const sourceColIndex = headers.findIndex(h => h.toLowerCase() === 'source');
-      const urlColIndex = headers.findIndex(h => h.toLowerCase() === 'url');
-
-      if (sourceColIndex === -1 || urlColIndex === -1) {
-        toast.error("CSV must have 'Source' and 'URL' columns");
-        return;
-      }
-
-      const preview = rows.slice(1, 6).map(row => ({
-        name: row[sourceColIndex],
-        url: row[urlColIndex]
-      })).filter(item => item.name && item.url);
-
-      setCsvPreview(preview);
-      setCsvFile(text);
-    };
-
-    reader.readAsText(file);
-  };
-
-  const processCsvUpload = async () => {
-    if (!csvFile) return;
-
-    setIsProcessingCsv(true);
-    try {
-      const rows = csvFile.split('\n')
-        .map(row => row.split(',').map(cell => cell.trim()))
-        .filter(row => row.some(cell => cell));
-      
-      const headers = rows[0];
-      const sourceColIndex = headers.findIndex(h => h.toLowerCase() === 'source');
-      const urlColIndex = headers.findIndex(h => h.toLowerCase() === 'url');
-
-      if (sourceColIndex === -1 || urlColIndex === -1) {
-        toast.error("CSV must have 'Source' and 'URL' columns");
-        setIsProcessingCsv(false);
-        return;
-      }
-
-      const sourcesToCreate = rows.slice(1)
-        .map(row => ({
-          name: row[sourceColIndex],
-          url: row[urlColIndex],
-          category: "General",
-          description: "",
-          is_deleted: false
-        }))
-        .filter(item => item.name && item.url);
-
-      if (sourcesToCreate.length === 0) {
-        toast.error("No valid sources found in CSV");
-        setIsProcessingCsv(false);
-        return;
-      }
-
-      // Create sources one by one to catch individual errors
-      let successCount = 0;
-      const errors = [];
-      
-      for (const source of sourcesToCreate) {
-        try {
-          await base44.entities.Source.create(source);
-          successCount++;
-        } catch (err) {
-          errors.push({ source: source.name, error: err.message });
-        }
-      }
-      
-      await queryClient.invalidateQueries({ queryKey: ['sources'] });
-      
-      if (successCount > 0) {
-        toast.success(`✓ ${successCount} sources created! Note: Go to Admin Dashboard → Source Scraper to fetch newsletters.`);
-      }
-      
-      if (errors.length > 0) {
-        console.error("Failed sources:", errors);
-        toast.error(`Failed to create ${errors.length} sources. Check console.`);
-      }
-      
-      setShowBulkUpload(false);
-      setCsvFile(null);
-      setCsvPreview([]);
-    } catch (error) {
-      toast.error(`Upload failed: ${error.message}`);
-      console.error("CSV Upload Error:", error);
-    }
-    setIsProcessingCsv(false);
-  };
-
-  const handleUrlPaste = (text) => {
-    setUrlText(text);
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-    const preview = lines.slice(0, 10).map(url => {
-      try {
-        const urlObj = new URL(url);
-        return { url, valid: true, name: urlObj.hostname.replace('www.', '') };
-      } catch {
-        return { url, valid: false, name: 'Invalid URL' };
-      }
-    });
-    setUrlPreview(preview);
-  };
-
-  const processUrlPaste = async () => {
-    if (!urlText.trim()) return;
-
-    setIsProcessingUrls(true);
-    
-    try {
-      const lines = urlText.split('\n').map(line => line.trim()).filter(line => line);
-      
-      const validUrls = lines
-        .filter(line => {
-          try {
-            new URL(line);
-            return true;
-          } catch {
-            return false;
-          }
-        })
-        .map(line => {
-          const hostname = new URL(line).hostname.replace('www.', '');
-          const baseName = hostname.split('.')[0];
-          return {
-            name: baseName.charAt(0).toUpperCase() + baseName.slice(1),
-            url: line,
-            category: "General",
-            description: "",
-            is_deleted: false
-          };
-        });
-
-      if (validUrls.length === 0) {
-        toast.error("No valid URLs found");
-        setIsProcessingUrls(false);
-        return;
-      }
-
-      console.log(`Attempting to create ${validUrls.length} sources:`, validUrls);
-      toast.info(`Creating ${validUrls.length} sources...`);
-
-      let successCount = 0;
-      const errors = [];
-      
-      for (const source of validUrls) {
-        try {
-          console.log(`Creating source: ${source.name} (${source.url})`);
-          await base44.entities.Source.create(source);
-          console.log(`✓ Created: ${source.name}`);
-          successCount++;
-        } catch (err) {
-          console.error(`✗ Failed to create ${source.name}:`, err);
-          errors.push({ name: source.name, error: err.message });
-        }
-      }
-      
-      await queryClient.invalidateQueries({ queryKey: ['sources'] });
-      
-      if (successCount > 0) {
-        toast.success(`✓ Created ${successCount}/${validUrls.length} sources! ${errors.length > 0 ? 'Check console for errors.' : ''}`);
-      }
-      
-      if (errors.length > 0) {
-        console.error("Failed sources:", errors);
-        toast.error(`Failed to create ${errors.length} sources. Check console for details.`);
-      }
-      
-      setShowUrlPaste(false);
-      setUrlText("");
-      setUrlPreview([]);
-      
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error(`Upload failed: ${error.message}`);
-    }
-    setIsProcessingUrls(false);
-  };
-
-  const startEdit = (source) => {
-    setEditingId(source.id);
-    setFormData({ name: source.name, description: source.description, url: source.url, category: source.category });
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setFormData({ name: "", description: "", url: "", category: "General" });
-  };
-
-  const saveEdit = (id) => {
-    updateMutation.mutate({ id, data: formData });
-  };
-
-  const addSource = () => {
-    if (!formData.name.trim()) {
-      toast.error("Source name is required");
-      return;
-    }
-    createMutation.mutate({
-      ...formData,
-      is_deleted: false
-    });
-  };
-
-  const sourcesByCategory = activeSources.reduce((acc, source) => {
-    if (!source || typeof source !== 'object') return acc;
-    const cat = source.category || "General";
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(source);
-    return acc;
-  }, {});
 
   return (
     <RoleGuard allowedRoles={["admin"]}>
@@ -322,14 +48,6 @@ export default function ManageSources() {
             <Trash2 className="w-4 h-4 mr-2" />
             {showDeleted ? "Hide" : "Show"} Deleted ({deletedSources.length})
           </Button>
-          <Button onClick={() => setShowUrlPaste(true)} className="bg-green-600 hover:bg-green-700">
-            <Upload className="w-4 h-4 mr-2" />
-            Paste URLs
-          </Button>
-          <Button onClick={() => setShowBulkUpload(true)} variant="outline">
-            <Upload className="w-4 h-4 mr-2" />
-            CSV Upload
-          </Button>
           <Button onClick={() => setIsAdding(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" />
             Add Source
@@ -340,6 +58,7 @@ export default function ManageSources() {
       <DirectNewsletterUpload />
       <SourceDatabaseFix />
       <AISourceDiscovery />
+      <SourceUploadManager />
 
       {showUrlPaste && (
         <Card className="mb-6 bg-green-50 border-green-200">
