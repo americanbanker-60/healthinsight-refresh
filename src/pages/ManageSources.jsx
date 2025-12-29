@@ -232,27 +232,41 @@ export default function ManageSources() {
         return;
       }
 
+      console.log(`Attempting to create ${validUrls.length} sources:`, validUrls);
       toast.info(`Creating ${validUrls.length} sources...`);
 
       let successCount = 0;
+      const errors = [];
       
       for (const source of validUrls) {
         try {
+          console.log(`Creating source: ${source.name} (${source.url})`);
           await base44.entities.Source.create(source);
+          console.log(`✓ Created: ${source.name}`);
           successCount++;
         } catch (err) {
-          console.error(`Failed to create ${source.name}:`, err);
+          console.error(`✗ Failed to create ${source.name}:`, err);
+          errors.push({ name: source.name, error: err.message });
         }
       }
       
       await queryClient.invalidateQueries({ queryKey: ['sources'] });
-      toast.success(`✓ Created ${successCount}/${validUrls.length} sources!`);
+      
+      if (successCount > 0) {
+        toast.success(`✓ Created ${successCount}/${validUrls.length} sources! ${errors.length > 0 ? 'Check console for errors.' : ''}`);
+      }
+      
+      if (errors.length > 0) {
+        console.error("Failed sources:", errors);
+        toast.error(`Failed to create ${errors.length} sources. Check console for details.`);
+      }
       
       setShowUrlPaste(false);
       setUrlText("");
       setUrlPreview([]);
       
     } catch (error) {
+      console.error("Upload error:", error);
       toast.error(`Upload failed: ${error.message}`);
     }
     setIsProcessingUrls(false);
