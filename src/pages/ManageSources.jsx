@@ -37,8 +37,8 @@ export default function ManageSources() {
   const { data: sources = [], isLoading } = useQuery({
     queryKey: ['sources'],
     queryFn: async () => {
-      // Use filter to get ALL sources without limit
-      const allSources = await base44.entities.Source.filter({});
+      // Load all sources sorted by name
+      const allSources = await base44.entities.Source.list("name", 1000);
       console.log(`✓ Loaded ${allSources.length} total sources from database`);
       return allSources;
     },
