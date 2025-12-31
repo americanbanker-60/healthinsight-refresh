@@ -129,6 +129,12 @@ const navigationGroups = [
         icon: Shield,
         roles: ["admin"],
       },
+      {
+        title: "System Documentation",
+        url: createPageUrl("SystemDocumentation"),
+        icon: BookOpen,
+        roles: ["admin"],
+      },
     ]
   },
 ];

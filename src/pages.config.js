@@ -24,6 +24,7 @@ import TopicsDirectory from './pages/TopicsDirectory';
 import Unauthorized from './pages/Unauthorized';
 import UserSettings from './pages/UserSettings';
 import VariousSources from './pages/VariousSources';
+import SystemDocumentation from './pages/SystemDocumentation';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +55,7 @@ export const PAGES = {
     "Unauthorized": Unauthorized,
     "UserSettings": UserSettings,
     "VariousSources": VariousSources,
+    "SystemDocumentation": SystemDocumentation,
 }
 
 export const pagesConfig = {
