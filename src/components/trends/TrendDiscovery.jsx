@@ -290,8 +290,8 @@ If NO clusters meet the 5-source rule, return an empty trends array.`;
 
   return (
     <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
-      <CardHeader>
-        <div className="flex items-center justify-between mb-2">
+      <CardHeader className="border-b border-slate-200/60">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-600" />
             <CardTitle>AI Trend Discovery</CardTitle>

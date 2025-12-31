@@ -39,8 +39,8 @@ export default function SourcesOverviewSection() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Sources in This Hub</h2>
-        <p className="text-sm md:text-base text-slate-600">
+        <h2 className="text-3xl font-bold text-slate-900 mb-2">Sources in This Hub</h2>
+        <p className="text-slate-600">
           Explore newsletters from leading healthcare intelligence sources
         </p>
       </div>

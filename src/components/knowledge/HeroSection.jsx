@@ -14,9 +14,9 @@ export default function HeroSection() {
         <div className="max-w-4xl">
           <div className="flex items-center gap-2 md:gap-3 mb-4">
             <Compass className="w-8 h-8 md:w-10 md:h-10" />
-            <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold">Welcome to the Knowledge Hub</h1>
+            <h1 className="text-3xl md:text-4xl font-bold">Welcome to the Knowledge Hub</h1>
           </div>
-          <p className="text-base md:text-xl text-blue-50 mb-6 md:mb-8 leading-relaxed">
+          <p className="text-lg text-blue-50 mb-6 leading-relaxed">
             Explore curated healthcare insights across newsletters and your personal library. 
             Choose a topic, run a search, or jump back into your work.
           </p>
@@ -26,14 +26,14 @@ export default function HeroSection() {
               className="w-full sm:w-auto bg-white/20 backdrop-blur-sm text-white border border-white/40 hover:bg-white/30 hover:text-white"
               onClick={() => navigate(createPageUrl("ExploreAllSources"))}
             >
-              <Search className="w-4 h-4 md:w-5 md:h-5 mr-2 text-white" />
+              <Search className="w-4 h-4 mr-2 text-white" />
               <span className="text-white">Explore All Sources</span>
             </Button>
             <Button 
               className="w-full sm:w-auto bg-white/20 backdrop-blur-sm text-white border border-white/40 hover:bg-white/30 hover:text-white"
               onClick={() => navigate(createPageUrl("MyLibrary"))}
             >
-              <Library className="w-4 h-4 md:w-5 md:h-5 mr-2 text-white" />
+              <Library className="w-4 h-4 mr-2 text-white" />
               <span className="text-white">Go to My Library</span>
             </Button>
           </div>

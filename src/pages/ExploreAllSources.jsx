@@ -375,7 +375,7 @@ export default function ExploreAllSources() {
             </CardContent>
           </Card>
 
-          <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <p className="text-slate-600">
               <span className="font-semibold text-slate-900">{filteredResults.length}</span> results found
               {selectedNewsletters.length > 0 && (

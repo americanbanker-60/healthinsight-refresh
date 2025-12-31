@@ -164,8 +164,8 @@ export default function SourceUploadManager() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
+    <div className="space-y-4 mb-6">
+      <div className="flex flex-wrap gap-2">
         <Button onClick={() => setShowUrlPaste(true)} className="bg-green-600 hover:bg-green-700">
           <Upload className="w-4 h-4 mr-2" />
           Paste URLs

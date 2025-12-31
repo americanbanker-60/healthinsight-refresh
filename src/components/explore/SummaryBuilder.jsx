@@ -142,14 +142,14 @@ ${sourcesList}
   return (
     <div className="space-y-4 sticky top-6">
       <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60">
-        <CardHeader className="border-b border-slate-200/60">
-        <CardTitle className="flex items-center justify-between">
-          <span>Summary Builder</span>
-          <span className="text-sm font-normal text-slate-600">
-            {selectedItems.length} item{selectedItems.length !== 1 ? 's' : ''} selected
-          </span>
-        </CardTitle>
-      </CardHeader>
+          <CardHeader className="border-b border-slate-200/60">
+          <CardTitle className="flex items-center justify-between">
+            <span>Summary Builder</span>
+            <span className="text-sm font-normal text-slate-600">
+              {selectedItems.length} item{selectedItems.length !== 1 ? 's' : ''} selected
+            </span>
+          </CardTitle>
+        </CardHeader>
       <CardContent className="pt-6 space-y-4">
         {selectedItems.length === 0 ? (
           <p className="text-slate-500 text-sm text-center py-8">
