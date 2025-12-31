@@ -26,7 +26,7 @@ export default function SystemDocumentation() {
 
   return (
     <RoleGuard allowedRoles={["admin"]}>
-      <div className="p-6 md:p-10 max-w-[1400px] mx-auto">
+      <div className="p-6 md:p-10 max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">
             System Documentation
@@ -36,15 +36,15 @@ export default function SystemDocumentation() {
           </p>
           <div className="flex gap-2 mt-4">
             <Badge className="bg-blue-100 text-blue-800">
-              <BookOpen className="w-3 h-3 mr-1" />
+              <BookOpen className="w-4 h-4 mr-2" />
               Single Source of Truth
             </Badge>
             <Badge className="bg-green-100 text-green-800">
-              <CheckCircle className="w-3 h-3 mr-1" />
+              <CheckCircle className="w-4 h-4 mr-2" />
               Developer Onboarding
             </Badge>
             <Badge className="bg-purple-100 text-purple-800">
-              <Code className="w-3 h-3 mr-1" />
+              <Code className="w-4 h-4 mr-2" />
               Implementation Guide
             </Badge>
           </div>

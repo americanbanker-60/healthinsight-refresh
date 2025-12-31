@@ -13,7 +13,7 @@ const StatusBadge = ({ status }) => {
   const { icon: Icon, color, label } = config[status];
   return (
     <Badge className={color}>
-      <Icon className="w-3 h-3 mr-1" />
+      <Icon className="w-4 h-4 mr-2" />
       {label}
     </Badge>
   );

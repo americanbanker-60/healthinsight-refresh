@@ -249,7 +249,7 @@ export default function ExploreAllSources() {
   const detailNewsletter = newsletters.find(n => n.id === detailNewsletterId);
 
   return (
-    <div className="p-4 md:p-6 lg:p-10 max-w-[1800px] mx-auto overflow-x-hidden w-full">
+    <div className="p-6 md:p-10 max-w-7xl mx-auto overflow-x-hidden w-full">
       <div className="mb-6 md:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
