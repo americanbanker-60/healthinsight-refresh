@@ -4,7 +4,7 @@ import { Info } from "lucide-react";
 
 export default function DashboardGuidance() {
   return (
-    <Card className="bg-blue-50 border-blue-200">
+    <Card className="bg-blue-50 border-blue-200 mb-8">
       <CardContent className="pt-6">
         <div className="flex gap-3">
           <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
