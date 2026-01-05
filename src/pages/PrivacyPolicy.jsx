@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function PrivacyPolicy() {
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-8">
+    <div className="p-6 md:p-10 max-w-4xl mx-auto">
+      <div className="mb-6">
         <h1 className="text-4xl font-bold text-slate-900 mb-2">Privacy Policy</h1>
         <p className="text-slate-600">Last Updated: December 9, 2025</p>
       </div>

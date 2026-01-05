@@ -177,7 +177,7 @@ export default function CompanyPage() {
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
       <BackButton className="mb-4" />
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
             {company.logo_url ? (

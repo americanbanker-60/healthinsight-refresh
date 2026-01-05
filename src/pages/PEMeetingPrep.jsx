@@ -419,7 +419,7 @@ Research the company using available web search if URLs provided, or use the req
 
   return (
     <div className="p-6 md:p-10 max-w-[1800px] mx-auto">
-      <div className="mb-8 flex items-center gap-3">
+      <div className="mb-6 flex items-center gap-3">
         <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
           <Briefcase className="w-7 h-7 text-white" />
         </div>

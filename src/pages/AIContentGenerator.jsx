@@ -216,7 +216,7 @@ Return professional, well-structured content in markdown format.`;
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">AI Content Generator</h1>
         <p className="text-slate-600 text-lg">Generate summaries, articles, and reports from your newsletter sources</p>
       </div>

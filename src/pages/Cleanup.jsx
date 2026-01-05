@@ -93,7 +93,7 @@ export default function Cleanup() {
 
   return (
     <RoleGuard allowedRoles={["admin"]}>
-      <div className="p-10 max-w-5xl mx-auto">
+      <div className="p-6 md:p-10 max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Newsletter Cleanup Tool</h1>
       
       <div className="mb-6">

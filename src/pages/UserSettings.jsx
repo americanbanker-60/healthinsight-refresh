@@ -89,7 +89,7 @@ export default function UserSettings() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-10 max-w-5xl mx-auto">
+    <div className="p-6 md:p-10 max-w-5xl mx-auto">
       <div className="mb-6">
         <Link to={createPageUrl("KnowledgeHub")}>
           <Button variant="ghost" size="sm" className="mb-4">

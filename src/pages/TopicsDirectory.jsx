@@ -111,7 +111,7 @@ export default function TopicsDirectory() {
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-amber-600 to-orange-600 rounded-xl flex items-center justify-center">

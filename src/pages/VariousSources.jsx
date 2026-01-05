@@ -211,7 +211,7 @@ Be thorough and extract all relevant details.`;
 
   return (
     <div className="p-6 md:p-10 max-w-4xl mx-auto">
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl flex items-center justify-center">
             <Globe className="w-7 h-7 text-white" />

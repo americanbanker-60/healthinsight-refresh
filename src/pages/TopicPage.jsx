@@ -143,7 +143,7 @@ export default function TopicPage() {
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
       <BackButton className="mb-4" />
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex justify-end gap-2 mb-4">
           <WatchTopicButton topicId={topic.id} variant="outline" />
           <Button variant="outline" onClick={generateDeepDive} className="gap-2">

@@ -18,13 +18,13 @@ import PEMeetingPrep from './pages/PEMeetingPrep';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import PublicationDateMigration from './pages/PublicationDateMigration';
 import SourcePage from './pages/SourcePage';
+import SystemDocumentation from './pages/SystemDocumentation';
 import TermsOfService from './pages/TermsOfService';
 import TopicPage from './pages/TopicPage';
 import TopicsDirectory from './pages/TopicsDirectory';
 import Unauthorized from './pages/Unauthorized';
 import UserSettings from './pages/UserSettings';
 import VariousSources from './pages/VariousSources';
-import SystemDocumentation from './pages/SystemDocumentation';
 import __Layout from './Layout.jsx';
 
 
@@ -49,13 +49,13 @@ export const PAGES = {
     "PrivacyPolicy": PrivacyPolicy,
     "PublicationDateMigration": PublicationDateMigration,
     "SourcePage": SourcePage,
+    "SystemDocumentation": SystemDocumentation,
     "TermsOfService": TermsOfService,
     "TopicPage": TopicPage,
     "TopicsDirectory": TopicsDirectory,
     "Unauthorized": Unauthorized,
     "UserSettings": UserSettings,
     "VariousSources": VariousSources,
-    "SystemDocumentation": SystemDocumentation,
 }
 
 export const pagesConfig = {
