@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Users, BarChart3, Newspaper, Calendar, Sparkles } from "lucide-react";
+import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Users, BarChart3, Newspaper, Calendar, Sparkles, Loader2 } from "lucide-react";
 import { RoleGuard, useUserRole } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import EnhancedSourceScraper from "../components/admin/EnhancedSourceScraper";
 
 export default function AdminDashboard() {
