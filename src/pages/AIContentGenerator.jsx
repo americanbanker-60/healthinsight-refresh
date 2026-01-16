@@ -26,7 +26,10 @@ export default function AIContentGenerator() {
 
   const { data: sources = [] } = useQuery({
     queryKey: ['sources'],
-    queryFn: () => base44.entities.Source.filter({}),
+    queryFn: async () => {
+      const allSources = await base44.entities.Source.list("name");
+      return allSources.filter(s => !s.is_deleted);
+    },
     initialData: [],
   });
 
@@ -49,7 +52,7 @@ export default function AIContentGenerator() {
     },
   });
 
-  const activeSources = sources.filter(s => !s.is_deleted);
+  const activeSources = sources;
 
   const toggleSource = (sourceId) => {
     setSelectedSources(prev => 
