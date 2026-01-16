@@ -408,8 +408,20 @@ Return professional, well-structured content in markdown format.`;
                       <p className="text-xs text-slate-500 mt-2">Your feedback helps AI generate better content for you</p>
                     </div>
                   )}
-                  <div className="prose prose-slate max-w-none">
-                    <ReactMarkdown>{generatedContent}</ReactMarkdown>
+                  <div className="prose prose-slate max-w-none prose-headings:mb-6 prose-headings:mt-8 prose-p:mb-4 prose-p:leading-relaxed prose-ul:my-6 prose-ol:my-6 prose-li:my-2 prose-strong:font-semibold prose-blockquote:my-6">
+                    <ReactMarkdown
+                      components={{
+                        h1: ({children}) => <h1 className="text-3xl font-bold mb-6 mt-8">{children}</h1>,
+                        h2: ({children}) => <h2 className="text-2xl font-bold mb-6 mt-8">{children}</h2>,
+                        h3: ({children}) => <h3 className="text-xl font-semibold mb-4 mt-6">{children}</h3>,
+                        p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
+                        ul: ({children}) => <ul className="my-6 space-y-2">{children}</ul>,
+                        ol: ({children}) => <ol className="my-6 space-y-2">{children}</ol>,
+                        li: ({children}) => <li className="my-2 leading-relaxed">{children}</li>,
+                      }}
+                    >
+                      {generatedContent}
+                    </ReactMarkdown>
                   </div>
                 </>
               )}
