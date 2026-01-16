@@ -231,6 +231,32 @@ export default function AdminDashboard() {
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
             <CardHeader className="flex-1">
               <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-amber-600" />
+                Auto-Generate Topics
+              </CardTitle>
+              <CardDescription>Create topics from your current sources</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={handleGenerateTopics}
+                disabled={generatingTopics}
+                className="w-full"
+              >
+                {generatingTopics ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Topics'
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader className="flex-1">
+              <CardTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-purple-600" />
                 AI Content Generator
               </CardTitle>
