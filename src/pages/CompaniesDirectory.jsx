@@ -237,7 +237,7 @@ export default function CompaniesDirectory() {
           {filteredCompanies.map(company => (
             <Card
               key={company.id}
-              className="bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-200 cursor-pointer group border-slate-200/60"
+              className="bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all cursor-pointer group border-slate-200/60"
               onClick={() => openCompany(company)}
             >
               <CardHeader className="pb-3">

@@ -159,7 +159,7 @@ export default function TopicsDirectory() {
           {filteredTopics.map(topic => (
             <Card
               key={topic.id}
-              className="bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-200 cursor-pointer group border-slate-200/60"
+              className="bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all cursor-pointer group border-slate-200/60"
               onClick={() => openTopic(topic)}
             >
               <CardHeader className="pb-3">
@@ -195,7 +195,7 @@ export default function TopicsDirectory() {
                 )}
 
                 <Button
-                  className="w-full group-hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  className="w-full group-hover:shadow-lg bg-blue-600 hover:bg-blue-700"
                   onClick={(e) => {
                     e.stopPropagation();
                     openTopic(topic);
