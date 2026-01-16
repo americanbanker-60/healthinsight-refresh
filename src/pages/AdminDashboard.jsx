@@ -44,7 +44,7 @@ export default function AdminDashboard() {
     queryKey: ['adminStats'],
     queryFn: async () => {
       const [newsletters, companies, sources, users] = await Promise.all([
-        base44.entities.Newsletter.list(),
+        base44.entities.Newsletter.list('-updated_date', 10000),
         base44.entities.Company.list(),
         base44.entities.Source.list(),
         base44.entities.User.list()
