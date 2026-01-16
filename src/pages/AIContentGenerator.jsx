@@ -411,16 +411,20 @@ Return professional, well-structured content in markdown format.`;
                       <p className="text-xs text-slate-500 mt-2">Your feedback helps AI generate better content for you</p>
                     </div>
                   )}
-                  <div className="prose prose-slate max-w-none prose-headings:mb-6 prose-headings:mt-8 prose-p:mb-4 prose-p:leading-relaxed prose-ul:my-6 prose-ol:my-6 prose-li:my-2 prose-strong:font-semibold prose-blockquote:my-6">
+                  <div className="prose prose-slate max-w-none">
                     <ReactMarkdown
                       components={{
-                        h1: ({children}) => <h1 className="text-3xl font-bold mb-6 mt-8">{children}</h1>,
-                        h2: ({children}) => <h2 className="text-2xl font-bold mb-6 mt-8">{children}</h2>,
-                        h3: ({children}) => <h3 className="text-xl font-semibold mb-4 mt-6">{children}</h3>,
-                        p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
-                        ul: ({children}) => <ul className="my-6 space-y-2">{children}</ul>,
-                        ol: ({children}) => <ol className="my-6 space-y-2">{children}</ol>,
-                        li: ({children}) => <li className="my-2 leading-relaxed">{children}</li>,
+                        h1: ({children}) => <h1 className="text-3xl font-bold mb-8 mt-12 first:mt-0">{children}</h1>,
+                        h2: ({children}) => <h2 className="text-2xl font-bold mb-6 mt-10">{children}</h2>,
+                        h3: ({children}) => <h3 className="text-xl font-semibold mb-5 mt-8">{children}</h3>,
+                        h4: ({children}) => <h4 className="text-lg font-semibold mb-4 mt-6">{children}</h4>,
+                        p: ({children}) => <p className="mb-5 leading-[1.75] text-slate-700">{children}</p>,
+                        ul: ({children}) => <ul className="my-6 ml-6 space-y-3 list-disc marker:text-slate-400">{children}</ul>,
+                        ol: ({children}) => <ol className="my-6 ml-6 space-y-3 list-decimal marker:text-slate-400">{children}</ol>,
+                        li: ({children}) => <li className="pl-2 leading-[1.75] text-slate-700">{children}</li>,
+                        blockquote: ({children}) => <blockquote className="my-8 pl-6 border-l-4 border-slate-300 italic text-slate-600">{children}</blockquote>,
+                        strong: ({children}) => <strong className="font-semibold text-slate-900">{children}</strong>,
+                        hr: () => <hr className="my-10 border-slate-200" />,
                       }}
                     >
                       {generatedContent}
