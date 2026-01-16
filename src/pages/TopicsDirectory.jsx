@@ -13,8 +13,6 @@ import { createPageUrl } from "@/utils";
 import { Lightbulb, Search, TrendingUp, Plus, X, ArrowUpDown } from "lucide-react";
 import SortControl from "../components/common/SortControl";
 import { GridCardSkeleton } from "../components/common/CardSkeleton";
-import { StyledCard } from "../components/common/StyledCard";
-import { PrimaryButton } from "../components/common/PrimaryButton";
 import { toast } from "sonner";
 import { AdminOnlyButton } from "../components/admin/AdminOnlyButton";
 import EmptyState from "../components/common/EmptyState";
@@ -159,8 +157,9 @@ export default function TopicsDirectory() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTopics.map(topic => (
-            <StyledCard
+            <Card
               key={topic.id}
+              className="bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-200 cursor-pointer group border-slate-200/60"
               onClick={() => openTopic(topic)}
             >
               <CardHeader className="pb-3">
@@ -195,8 +194,8 @@ export default function TopicsDirectory() {
                   </div>
                 )}
 
-                <PrimaryButton
-                  className="w-full group-hover:shadow-lg"
+                <Button
+                  className="w-full group-hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                   onClick={(e) => {
                     e.stopPropagation();
                     openTopic(topic);
@@ -204,9 +203,9 @@ export default function TopicsDirectory() {
                 >
                   <TrendingUp className="w-4 h-4 mr-2" />
                   Explore Topic
-                </PrimaryButton>
+                </Button>
               </CardContent>
-            </StyledCard>
+            </Card>
           ))}
         </div>
       )}
