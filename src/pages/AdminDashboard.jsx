@@ -14,6 +14,31 @@ import EnhancedSourceScraper from "../components/admin/EnhancedSourceScraper";
 
 export default function AdminDashboard() {
   const { user } = useUserRole();
+  const queryClient = useQueryClient();
+  const [generatingTopics, setGeneratingTopics] = React.useState(false);
+
+  const generateTopicsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await base44.functions.invoke('autoGenerateTopics');
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(`Generated ${data.topicsCreated} new topics!`);
+      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to generate topics: ${error.message}`);
+    },
+  });
+
+  const handleGenerateTopics = async () => {
+    setGeneratingTopics(true);
+    try {
+      await generateTopicsMutation.mutateAsync();
+    } finally {
+      setGeneratingTopics(false);
+    }
+  };
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['adminStats'],
