@@ -78,53 +78,20 @@ export default function DirectNewsletterUpload() {
       const uploadResponse = await base44.integrations.Core.UploadFile({ file });
       const fileUrl = uploadResponse.file_url;
 
-      // Extract data from PDF using AI
-      const extractResponse = await base44.integrations.Core.ExtractDataFromUploadedFile({
-        file_url: fileUrl,
-        json_schema: {
-          type: "object",
-          properties: {
-            title: { type: "string", description: "Newsletter or document title" },
-            summary: { type: "string", description: "Executive summary or main content" },
-            key_players: {
-              type: "array",
-              items: { type: "string" },
-              description: "Key companies or organizations mentioned"
-            }
-          },
-          required: ["title"]
-        }
-      });
+      // Call backend function to analyze PDF and create newsletter
+      const response = await base44.functions.invoke('analyzeNewsletterPDF', { file_url: fileUrl });
 
-      if (extractResponse.status === "success" && extractResponse.output) {
-        const { title, summary, key_players } = extractResponse.output;
-
-        // Create newsletter record with PDF source
-        const newsletter = await base44.entities.Newsletter.create({
-          title: title || file.name.replace(/\.pdf$/i, ''),
-          summary: summary || "",
-          key_players: key_players || [],
-          source_url: fileUrl,
-          source_type: "PDF",
-          source_name: "PDF Upload",
-          publication_date: new Date().toISOString().split('T')[0],
-          date_added_to_app: new Date().toISOString(),
-          publication_date_confidence: "medium",
-          publication_date_source: "PDF upload date",
-          tldr: summary?.split('\n')[0] || summary || title
-        });
-
-        toast.success(`✓ PDF uploaded: ${title}`);
+      if (response.data.success) {
+        toast.success(`✓ PDF uploaded: ${response.data.title}`);
         setResults(prev => [...prev, {
           file: file.name,
           status: "success",
-          title: title
+          title: response.data.title
         }]);
+        queryClient.invalidateQueries({ queryKey: ['newsletters'] });
       } else {
-        throw new Error(extractResponse.details || 'Failed to extract PDF data');
+        throw new Error(response.data.error || 'Failed to process PDF');
       }
-
-      queryClient.invalidateQueries({ queryKey: ['newsletters'] });
 
     } catch (error) {
       toast.error(`✗ PDF processing failed: ${error.message}`);
