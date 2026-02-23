@@ -170,3 +170,20 @@ export async function retrieveCustomPackItems(packId) {
     };
   }).filter(item => item.newsletter);
 }
+
+export async function retrieveSourceStats() {
+  // Fetch all newsletters
+  const newsletters = await base44.entities.Newsletter.list('-publication_date', 10000);
+  
+  // Group by source_name and count
+  const stats = {};
+  newsletters.forEach(newsletter => {
+    const sourceName = newsletter.source_name || 'Unknown Source';
+    stats[sourceName] = (stats[sourceName] || 0) + 1;
+  });
+  
+  // Convert to array and sort by count descending
+  return Object.entries(stats)
+    .map(([source, count]) => ({ source, count }))
+    .sort((a, b) => b.count - a.count);
+}
