@@ -150,45 +150,45 @@ export default function Cleanup() {
       const relations = await base44.entities.NewsletterRelation.list();
       for (let i = 0; i < relations.length; i++) {
         await base44.entities.NewsletterRelation.delete(relations[i].id);
+        await sleep(100); // 100ms delay after each deletion
         if ((i + 1) % 10 === 0) {
           addLog(`Deleted ${i + 1}/${relations.length} relations...`, 'info');
-          await sleep(500); // 500ms delay every 10 deletions
         }
       }
       totalCounts.relations = relations.length;
       addLog(`✅ Deleted ${relations.length} newsletter relations`, 'delete');
       
-      await sleep(1000); // 1 second pause between entity types
+      await sleep(2000); // 2 second pause between entity types
       
       // 2. Delete Newsletters
       addLog('Deleting newsletters...', 'info');
       const newsletters = await base44.entities.Newsletter.list();
       for (let i = 0; i < newsletters.length; i++) {
         await base44.entities.Newsletter.delete(newsletters[i].id);
+        await sleep(150); // 150ms delay after each deletion
         if ((i + 1) % 10 === 0) {
           addLog(`Deleted ${i + 1}/${newsletters.length} newsletters...`, 'info');
-          await sleep(500); // 500ms delay every 10 deletions
         }
       }
       totalCounts.newsletters = newsletters.length;
       addLog(`✅ Deleted ${newsletters.length} newsletters`, 'delete');
       
-      await sleep(1000); // 1 second pause between entity types
+      await sleep(2000); // 2 second pause between entity types
       
       // 3. Delete Sources
       addLog('Deleting sources...', 'info');
       const sources = await base44.entities.Source.list();
       for (let i = 0; i < sources.length; i++) {
         await base44.entities.Source.delete(sources[i].id);
+        await sleep(150); // 150ms delay after each deletion
         if ((i + 1) % 5 === 0) {
           addLog(`Deleted ${i + 1}/${sources.length} sources...`, 'info');
-          await sleep(500); // 500ms delay every 5 deletions
         }
       }
       totalCounts.sources = sources.length;
       addLog(`✅ Deleted ${sources.length} sources`, 'delete');
       
-      await sleep(1000);
+      await sleep(2000);
       
       // Invalidate all queries
       addLog('Invalidating cached queries...', 'info');
