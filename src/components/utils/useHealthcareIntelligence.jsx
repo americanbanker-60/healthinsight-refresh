@@ -16,10 +16,13 @@ export function useHealthcareIntelligence(options = {}) {
   } = options;
 
   const [persistentFilters, setPersistentFilters] = React.useState(null);
+  const [skip, setSkip] = React.useState(0);
 
   // Fetch newsletters with server-side filtering
-  const { data: newsletters = [], isLoading: isLoadingNewsletters } = useQuery({
-    queryKey: ['newsletters', persistentFilters, activeTab],
+  const [allLoadedNewsletters, setAllLoadedNewsletters] = React.useState([]);
+  
+  const { data: newsletters = [], isLoading: isLoadingNewsletters, isFetching } = useQuery({
+    queryKey: ['newsletters', persistentFilters, activeTab, skip],
     queryFn: async () => {
       const query = {};
       
@@ -47,6 +50,25 @@ export function useHealthcareIntelligence(options = {}) {
     initialData: [],
   });
 
+  // Accumulate newsletters when skip changes
+  React.useEffect(() => {
+    if (skip === 0) {
+      setAllLoadedNewsletters(newsletters);
+    } else if (newsletters.length > 0) {
+      setAllLoadedNewsletters(prev => {
+        const existingIds = new Set(prev.map(n => n.id));
+        const newNewsletters = newsletters.filter(n => !existingIds.has(n.id));
+        return [...prev, ...newNewsletters];
+      });
+    }
+  }, [newsletters, skip]);
+
+  // Reset skip when filters change
+  React.useEffect(() => {
+    setSkip(0);
+    setAllLoadedNewsletters([]);
+  }, [persistentFilters, activeTab]);
+
   const { data: sources = [] } = useQuery({
     queryKey: ['sources'],
     queryFn: () => base44.entities.Source.list("name"),
@@ -65,8 +87,10 @@ export function useHealthcareIntelligence(options = {}) {
 
   // Investment focus filtering (optional)
   const focusFilteredNewsletters = React.useMemo(() => {
+    const newslettersToFilter = skip > 0 ? allLoadedNewsletters : newsletters;
+    
     if (!enableInvestmentFocus || !userConfig?.investment_focus || userConfig.investment_focus.length === 0) {
-      return newsletters;
+      return newslettersToFilter;
     }
 
     return newsletters.map(newsletter => {
@@ -90,7 +114,7 @@ export function useHealthcareIntelligence(options = {}) {
 
       return { ...newsletter, relevanceScore, matchedFocusAreas };
     }).sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
-  }, [newsletters, userConfig, enableInvestmentFocus]);
+  }, [newsletters, allLoadedNewsletters, skip, userConfig, enableInvestmentFocus]);
 
   // Client-side filtering for fields not supported by server-side query
   const filteredNewsletters = React.useMemo(() => {
@@ -141,37 +165,49 @@ export function useHealthcareIntelligence(options = {}) {
   // Extract available filter options
   const availableThemes = React.useMemo(() => {
     const themes = new Set();
-    newsletters.forEach(n => {
+    const newslettersToUse = skip > 0 ? allLoadedNewsletters : newsletters;
+    newslettersToUse.forEach(n => {
       if (n.themes) {
         n.themes.forEach(t => themes.add(t.theme));
       }
     });
     return Array.from(themes).sort();
-  }, [newsletters]);
+  }, [newsletters, allLoadedNewsletters, skip]);
 
   const availableCompanies = React.useMemo(() => {
     const companies = new Set();
-    newsletters.forEach(n => {
+    const newslettersToUse = skip > 0 ? allLoadedNewsletters : newsletters;
+    newslettersToUse.forEach(n => {
       if (n.key_players) {
         n.key_players.forEach(p => companies.add(p));
       }
     });
     return Array.from(companies).sort();
-  }, [newsletters]);
+  }, [newsletters, allLoadedNewsletters, skip]);
 
   const availableSources = React.useMemo(() => {
     return sources.filter(s => !s.is_deleted).map(s => s.name).sort();
   }, [sources]);
 
+  const hasMore = newsletters.length === maxItems;
+  const loadMore = () => {
+    setSkip(prev => prev + maxItems);
+  };
+
   return {
     // Data
     newsletters: filteredNewsletters,
-    allNewsletters: newsletters,
+    allNewsletters: skip > 0 ? allLoadedNewsletters : newsletters,
     sources,
     userConfig,
     
     // Loading states
     isLoading: isLoadingNewsletters,
+    isLoadingMore: skip > 0 && isFetching,
+    
+    // Pagination
+    hasMore,
+    loadMore,
     
     // Filter state and management
     persistentFilters,
