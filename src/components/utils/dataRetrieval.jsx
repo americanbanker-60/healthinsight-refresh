@@ -153,7 +153,12 @@ export async function retrieveCustomPackItems(packId) {
   const items = await base44.entities.UserCustomPackItem.filter({ custom_pack_id: packId });
   const sortedItems = items.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
   
-  const newsletters = await base44.entities.Newsletter.list();
+  // Fetch only the specific newsletters needed
+  const newsletterIds = sortedItems.map(item => item.item_id);
+  
+  if (newsletterIds.length === 0) return [];
+  
+  const newsletters = await base44.entities.Newsletter.filter({ id: { $in: newsletterIds } });
   
   return sortedItems.map(item => {
     const newsletter = newsletters.find(n => n.id === item.item_id);
