@@ -16,6 +16,7 @@ import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import WatchTopicButton from "../components/topics/WatchTopicButton";
 import BackButton from "../components/navigation/BackButton";
 import BDActionPrompt from "../components/bd/BDActionPrompt";
+import TrendChart from "../components/dashboard/TrendChart";
 
 export default function TopicPage() {
   const navigate = useNavigate();
@@ -217,6 +218,11 @@ export default function TopicPage() {
         topic={topic}
         relevantNewsletters={relevantNewsletters}
       />
+
+      {/* Trend Chart */}
+      {relevantNewsletters.length > 0 && (
+        <TrendChart newsletters={relevantNewsletters} />
+      )}
 
       <div className="grid lg:grid-cols-3 gap-6 mt-6">
         {/* Main Content */}
