@@ -24,7 +24,7 @@ export function useHealthcareIntelligence(options = {}) {
   const { data: newsletters = [], isLoading: isLoadingNewsletters, isFetching } = useQuery({
     queryKey: ['newsletters', persistentFilters, activeTab, skip],
     queryFn: async () => {
-      const query = {};
+      const query = { is_analyzed: true };
       
       // Source filter (from tab or persistent filters)
       if (activeTab !== "all") {
@@ -222,7 +222,7 @@ export function useHealthcareIntelligence(options = {}) {
 
 // Standalone function for non-hook contexts (backend functions, one-off queries)
 export async function retrieveNewslettersForSearch(filters) {
-  const query = {};
+  const query = { is_analyzed: true };
   
   if (filters.startDate || filters.endDate) {
     query.publication_date = {};
