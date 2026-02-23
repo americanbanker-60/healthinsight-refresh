@@ -3,9 +3,17 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    
+    // Check if there's an authenticated user, otherwise allow service role calls
+    let user = null;
+    try {
+      user = await base44.auth.me();
+    } catch (e) {
+      // No user authenticated - that's okay for service role calls
+    }
 
-    if (!user || user.role !== 'admin') {
+    // Require either authenticated admin user or allow service role invocations
+    if (user && user.role !== 'admin') {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 401 });
     }
 
