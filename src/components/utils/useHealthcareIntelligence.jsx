@@ -186,7 +186,13 @@ export function useHealthcareIntelligence(options = {}) {
   }, [newsletters, allLoadedNewsletters, skip]);
 
   const availableSources = React.useMemo(() => {
-    return sources.filter(s => !s.is_deleted).map(s => s.name).sort();
+    const sourceNames = new Set();
+    sources.forEach(s => {
+      if (!s.is_deleted && s.name) {
+        sourceNames.add(s.name);
+      }
+    });
+    return Array.from(sourceNames).sort();
   }, [sources]);
 
   const hasMore = newsletters.length === maxItems;
