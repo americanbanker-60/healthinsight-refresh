@@ -16,8 +16,12 @@ import {
         DollarSign,
         Building2,
         BarChart3,
-        CheckSquare
+        CheckSquare,
+        Mail
       } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import EnhanceSummaryButton from "../components/newsletter/EnhanceSummaryButton";
@@ -28,6 +32,9 @@ export default function NewsletterDetail() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const newsletterId = urlParams.get('id');
+  const [showEmailDialog, setShowEmailDialog] = React.useState(false);
+  const [recipientEmail, setRecipientEmail] = React.useState("");
+  const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
   const { data: newsletter, isLoading, refetch } = useQuery({
     queryKey: ['newsletter', newsletterId],
@@ -43,6 +50,76 @@ export default function NewsletterDetail() {
     neutral: "bg-slate-100 text-slate-800 border-slate-200",
     negative: "bg-red-100 text-red-800 border-red-200",
     mixed: "bg-yellow-100 text-yellow-800 border-yellow-200"
+  };
+
+  const sendToEmail = async () => {
+    if (!recipientEmail) {
+      toast.error("Please enter a recipient email");
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const subject = `Healthcare Intelligence: ${newsletter.title}`;
+      
+      let body = `<h2>${newsletter.title}</h2>\n\n`;
+      
+      if (newsletter.sentiment) {
+        body += `<p><strong>Sentiment:</strong> ${newsletter.sentiment}</p>\n`;
+      }
+      
+      if (newsletter.tldr) {
+        body += `<h3>TL;DR</h3>\n<p>${newsletter.tldr}</p>\n\n`;
+      }
+      
+      if (newsletter.summary) {
+        body += `<h3>Executive Summary</h3>\n<p>${newsletter.summary}</p>\n\n`;
+      }
+      
+      if (newsletter.key_takeaways && newsletter.key_takeaways.length > 0) {
+        body += `<h3>Key Takeaways</h3>\n<ul>\n`;
+        newsletter.key_takeaways.forEach(takeaway => {
+          body += `<li>${takeaway}</li>\n`;
+        });
+        body += `</ul>\n\n`;
+      }
+      
+      if (newsletter.recommended_actions && newsletter.recommended_actions.length > 0) {
+        body += `<h3>Recommended Actions</h3>\n<ol>\n`;
+        newsletter.recommended_actions.forEach(action => {
+          body += `<li>${action}</li>\n`;
+        });
+        body += `</ol>\n\n`;
+      }
+      
+      if (newsletter.ma_activities && newsletter.ma_activities.length > 0) {
+        body += `<h3>M&A Activity</h3>\n`;
+        newsletter.ma_activities.forEach(deal => {
+          body += `<p><strong>${deal.acquirer} → ${deal.target}</strong>`;
+          if (deal.deal_value) body += ` - ${deal.deal_value}`;
+          body += `<br>${deal.description}</p>\n`;
+        });
+        body += `\n`;
+      }
+      
+      if (newsletter.source_url) {
+        body += `<p><a href="${newsletter.source_url}">View Original Source</a></p>`;
+      }
+
+      await base44.integrations.Core.SendEmail({
+        to: recipientEmail,
+        subject,
+        body
+      });
+
+      toast.success(`Newsletter sent to ${recipientEmail}`);
+      setShowEmailDialog(false);
+      setRecipientEmail("");
+    } catch (error) {
+      toast.error("Failed to send email");
+      console.error(error);
+    }
+    setIsSendingEmail(false);
   };
 
   if (isLoading) {
@@ -78,7 +155,17 @@ export default function NewsletterDetail() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Dashboard
         </Button>
-        <EnhanceSummaryButton newsletter={newsletter} onEnhanced={refetch} />
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowEmailDialog(true)}
+            variant="outline"
+            className="bg-blue-50 border-blue-200 hover:bg-blue-100"
+          >
+            <Mail className="w-4 h-4 mr-2" />
+            Send to Email
+          </Button>
+          <EnhanceSummaryButton newsletter={newsletter} onEnhanced={refetch} />
+        </div>
       </div>
 
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/60 p-8 mb-6">
@@ -329,6 +416,48 @@ export default function NewsletterDetail() {
           themes: newsletter.themes?.map(t => t.theme)
         }}
       />
+
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Newsletter via Email</DialogTitle>
+            <DialogDescription>
+              Enter the recipient's email address to send this healthcare intelligence newsletter.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              type="email"
+              placeholder="recipient@example.com"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendToEmail()}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowEmailDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={sendToEmail}
+              disabled={isSendingEmail}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSendingEmail ? (
+                <>
+                  <Mail className="w-4 h-4 mr-2 animate-pulse" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Send Email
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

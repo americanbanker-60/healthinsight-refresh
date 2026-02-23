@@ -3,9 +3,11 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Save, TrendingUp, Lightbulb, Briefcase, DollarSign, BarChart3, CheckSquare, Download, FileText } from "lucide-react";
+import { Save, TrendingUp, Lightbulb, Briefcase, DollarSign, BarChart3, CheckSquare, Download, FileText, Mail } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const sentimentColors = {
   positive: "bg-green-100 text-green-800 border-green-200",
@@ -16,6 +18,9 @@ const sentimentColors = {
 
 export default function AnalysisPreview({ analysis, onSave }) {
   const [isExportingPDF, setIsExportingPDF] = React.useState(false);
+  const [showEmailDialog, setShowEmailDialog] = React.useState(false);
+  const [recipientEmail, setRecipientEmail] = React.useState("");
+  const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
   const exportToPDF = async () => {
     setIsExportingPDF(true);
@@ -38,6 +43,76 @@ export default function AnalysisPreview({ analysis, onSave }) {
       console.error(error);
     }
     setIsExportingPDF(false);
+  };
+
+  const sendToEmail = async () => {
+    if (!recipientEmail) {
+      toast.error("Please enter a recipient email");
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const subject = `Healthcare Intelligence: ${analysis.title}`;
+      
+      let body = `<h2>${analysis.title}</h2>\n\n`;
+      
+      if (analysis.sentiment) {
+        body += `<p><strong>Sentiment:</strong> ${analysis.sentiment}</p>\n`;
+      }
+      
+      if (analysis.tldr) {
+        body += `<h3>TL;DR</h3>\n<p>${analysis.tldr}</p>\n\n`;
+      }
+      
+      if (analysis.summary) {
+        body += `<h3>Executive Summary</h3>\n<p>${analysis.summary}</p>\n\n`;
+      }
+      
+      if (analysis.key_takeaways && analysis.key_takeaways.length > 0) {
+        body += `<h3>Key Takeaways</h3>\n<ul>\n`;
+        analysis.key_takeaways.forEach(takeaway => {
+          body += `<li>${takeaway}</li>\n`;
+        });
+        body += `</ul>\n\n`;
+      }
+      
+      if (analysis.recommended_actions && analysis.recommended_actions.length > 0) {
+        body += `<h3>Recommended Actions</h3>\n<ol>\n`;
+        analysis.recommended_actions.forEach(action => {
+          body += `<li>${action}</li>\n`;
+        });
+        body += `</ol>\n\n`;
+      }
+      
+      if (analysis.ma_activities && analysis.ma_activities.length > 0) {
+        body += `<h3>M&A Activity</h3>\n`;
+        analysis.ma_activities.forEach(deal => {
+          body += `<p><strong>${deal.acquirer} → ${deal.target}</strong>`;
+          if (deal.deal_value) body += ` - ${deal.deal_value}`;
+          body += `<br>${deal.description}</p>\n`;
+        });
+        body += `\n`;
+      }
+      
+      if (analysis.source_url) {
+        body += `<p><a href="${analysis.source_url}">View Original Source</a></p>`;
+      }
+
+      await base44.integrations.Core.SendEmail({
+        to: recipientEmail,
+        subject,
+        body
+      });
+
+      toast.success(`Analysis sent to ${recipientEmail}`);
+      setShowEmailDialog(false);
+      setRecipientEmail("");
+    } catch (error) {
+      toast.error("Failed to send email");
+      console.error(error);
+    }
+    setIsSendingEmail(false);
   };
 
   const exportToMarkdown = () => {
@@ -342,6 +417,14 @@ export default function AnalysisPreview({ analysis, onSave }) {
           Export as Markdown
         </Button>
         <Button
+          onClick={() => setShowEmailDialog(true)}
+          variant="outline"
+          className="bg-blue-50 border-blue-200 hover:bg-blue-100"
+        >
+          <Mail className="w-4 h-4 mr-2" />
+          Send to Email
+        </Button>
+        <Button
           onClick={onSave}
           className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/30"
         >
@@ -349,6 +432,48 @@ export default function AnalysisPreview({ analysis, onSave }) {
           Save to Library
         </Button>
       </div>
+
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Analysis via Email</DialogTitle>
+            <DialogDescription>
+              Enter the recipient's email address to send this healthcare intelligence analysis.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              type="email"
+              placeholder="recipient@example.com"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendToEmail()}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowEmailDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={sendToEmail}
+              disabled={isSendingEmail}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSendingEmail ? (
+                <>
+                  <Mail className="w-4 h-4 mr-2 animate-pulse" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Send Email
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
