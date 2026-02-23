@@ -32,6 +32,7 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [consolidatedReport, setConsolidatedReport] = useState(null);
   const [isExportingBatchPDF, setIsExportingBatchPDF] = useState(false);
+  const [isBatchAnalyzing, setIsBatchAnalyzing] = useState(false);
 
   const extractMainContent = (html) => {
     const parser = new DOMParser();
@@ -337,6 +338,56 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
       newSelected.add(index);
     }
     setSelectedNewsletters(newSelected);
+  };
+
+  const batchAnalyzeViaFunction = async () => {
+    if (inputMethod !== "manual" || !manualUrls.trim()) {
+      toast.error("Please enter URLs in Manual URLs tab");
+      return;
+    }
+
+    const urls = manualUrls
+      .split(/[\n,]/)
+      .map(u => u.trim())
+      .filter(u => u && u.startsWith('http'));
+
+    if (urls.length === 0) {
+      toast.error("No valid URLs found");
+      return;
+    }
+
+    setIsBatchAnalyzing(true);
+    setProcessedCount(0);
+    setProcessingProgress(0);
+    setProcessedNewsletters([]);
+
+    for (let i = 0; i < urls.length; i++) {
+      try {
+        const response = await base44.functions.invoke('analyzeNewsletterUrl', { url: urls[i] });
+        
+        if (response.data?.success) {
+          // Fetch the created newsletter
+          const newsletters = await base44.entities.Newsletter.filter({ source_url: urls[i] });
+          if (newsletters.length > 0) {
+            setProcessedNewsletters(prev => [...prev, newsletters[0]]);
+          }
+          toast.success(`Analyzed: ${response.data.title}`);
+        } else {
+          toast.error(`Failed to analyze ${urls[i]}: ${response.data?.error}`);
+        }
+      } catch (err) {
+        console.error(`Error analyzing ${urls[i]}:`, err);
+        toast.error(`Error: ${err.message}`);
+      }
+
+      setProcessedCount(i + 1);
+      setProcessingProgress(((i + 1) / urls.length) * 100);
+    }
+
+    setIsBatchAnalyzing(false);
+    if (processedNewsletters.length > 0) {
+      toast.success(`Successfully analyzed ${processedNewsletters.length} newsletters`);
+    }
   };
 
   const processSelectedNewsletters = async () => {
@@ -791,23 +842,42 @@ Format as markdown with clear sections.`,
                   value={manualUrls}
                   onChange={(e) => setManualUrls(e.target.value)}
                   className="h-32 text-lg border-slate-300 focus:border-blue-500"
-                  disabled={isCrawling}
+                  disabled={isCrawling || isBatchAnalyzing}
                 />
                 <p className="text-sm text-slate-500 mt-2">
                   Paste newsletter URLs, one per line or comma-separated
                 </p>
-                <div className="mt-3">
-                  <label htmlFor="file-upload">
+                <div className="mt-3 space-y-3">
+                  <div className="flex gap-3">
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full"
+                      className="flex-1"
                       onClick={() => document.getElementById('file-upload')?.click()}
+                      disabled={isBatchAnalyzing}
                     >
                       <Upload className="w-4 h-4 mr-2" />
-                      Upload File with URLs
+                      Upload File
                     </Button>
-                  </label>
+                    <Button
+                      type="button"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      onClick={batchAnalyzeViaFunction}
+                      disabled={!manualUrls.trim() || isBatchAnalyzing || isCrawling}
+                    >
+                      {isBatchAnalyzing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-4 h-4 mr-2" />
+                          Quick Analyze
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   <input
                     id="file-upload"
                     type="file"
@@ -815,8 +885,8 @@ Format as markdown with clear sections.`,
                     onChange={handleFileUpload}
                     className="hidden"
                   />
-                  <p className="text-xs text-slate-500 mt-2">
-                    Upload a .txt or .csv file with one URL per line
+                  <p className="text-xs text-slate-500">
+                    Upload a .txt/.csv file with URLs, or click "Quick Analyze" to analyze your list directly using the analyzeNewsletterUrl function
                   </p>
                 </div>
               </div>
@@ -838,26 +908,27 @@ Format as markdown with clear sections.`,
             </TabsContent>
           </Tabs>
 
-          <Button
-            onClick={collectNewsletters}
-            disabled={isCrawling || 
-              (inputMethod === "index" && !indexUrl.trim()) ||
-              (inputMethod === "manual" && !manualUrls.trim()) ||
-              (inputMethod === "raw" && !rawContent.trim())}
-            className="w-full h-14 text-lg bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg shadow-purple-500/30"
-          >
-            {isCrawling ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Collecting Newsletters...
-              </>
-            ) : (
-              <>
-                <Search className="w-5 h-5 mr-2" />
-                Collect Newsletters
-              </>
-            )}
-          </Button>
+          {inputMethod !== "manual" ? (
+            <Button
+              onClick={collectNewsletters}
+              disabled={isCrawling || 
+                (inputMethod === "index" && !indexUrl.trim()) ||
+                (inputMethod === "raw" && !rawContent.trim())}
+              className="w-full h-14 text-lg bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg shadow-purple-500/30"
+            >
+              {isCrawling ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Collecting Newsletters...
+                </>
+              ) : (
+                <>
+                  <Search className="w-5 h-5 mr-2" />
+                  Collect Newsletters
+                </>
+              )}
+            </Button>
+          ) : null}
 
           <div className="bg-purple-50 rounded-xl p-6 border border-purple-100">
             <h3 className="font-semibold text-slate-900 mb-3">Three ways to analyze:</h3>
@@ -928,20 +999,20 @@ Format as markdown with clear sections.`,
             ))}
           </div>
 
-          {isProcessing && (
-            <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
-              <div className="flex items-center gap-3 mb-3">
-                <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-                <span className="font-medium text-slate-900">
-                  Processing newsletters... {processedCount} of {selectedNewsletters.size}
-                </span>
-              </div>
-              <Progress value={processingProgress} className="h-2" />
-              <p className="text-sm text-slate-600 mt-3">
-                This may take a few minutes depending on the number of newsletters selected.
-              </p>
-            </div>
-          )}
+          {(isProcessing || isBatchAnalyzing) && (
+             <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
+               <div className="flex items-center gap-3 mb-3">
+                 <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                 <span className="font-medium text-slate-900">
+                   {isBatchAnalyzing ? `Analyzing URLs... ${processedCount}` : `Processing newsletters... ${processedCount} of ${selectedNewsletters.size}`}
+                 </span>
+               </div>
+               <Progress value={processingProgress} className="h-2" />
+               <p className="text-sm text-slate-600 mt-3">
+                 This may take a few minutes depending on the number of items.
+               </p>
+             </div>
+           )}
 
           <div className="flex gap-3">
             <Button
