@@ -134,23 +134,27 @@ export default function Dashboard() {
     return sources.filter(s => !s.is_deleted).map(s => s.name).sort();
   }, [sources]);
 
+  // Client-side filtering for fields not supported by server-side query
   const filteredNewsletters = React.useMemo(() => {
     if (!persistentFilters) return focusFilteredNewsletters;
     
-    // Check if any filters are actually active
-    const hasActiveFilters = 
-      persistentFilters.keywords?.trim() ||
-      persistentFilters.startDate ||
-      persistentFilters.endDate ||
-      (persistentFilters.sentiments && persistentFilters.sentiments.length > 0) ||
-      (persistentFilters.themes && persistentFilters.themes.length > 0) ||
-      (persistentFilters.companies && persistentFilters.companies.length > 0) ||
-      (persistentFilters.sources && persistentFilters.sources.length > 0);
+    // Only apply client-side filters for keywords, sentiments, themes, companies
+    const clientSideFilters = {
+      keywords: persistentFilters.keywords,
+      sentiments: persistentFilters.sentiments,
+      themes: persistentFilters.themes,
+      companies: persistentFilters.companies
+    };
     
-    // If no filters are active, show all newsletters
-    if (!hasActiveFilters) return focusFilteredNewsletters;
+    const hasClientSideFilters = 
+      clientSideFilters.keywords?.trim() ||
+      (clientSideFilters.sentiments && clientSideFilters.sentiments.length > 0) ||
+      (clientSideFilters.themes && clientSideFilters.themes.length > 0) ||
+      (clientSideFilters.companies && clientSideFilters.companies.length > 0);
     
-    return applyFilters(focusFilteredNewsletters, persistentFilters);
+    if (!hasClientSideFilters) return focusFilteredNewsletters;
+    
+    return applyFilters(focusFilteredNewsletters, clientSideFilters);
   }, [focusFilteredNewsletters, persistentFilters]);
 
 
