@@ -284,6 +284,15 @@ export default function SourceUploadManager() {
                 2. Go to Admin Dashboard → Source Scraper to fetch newsletters
               </p>
             </div>
+
+            <div className="bg-amber-50 p-3 rounded-lg text-sm border border-amber-200">
+              <p className="font-semibold text-amber-900 mb-2">Required CSV Columns:</p>
+              <div className="space-y-1 text-xs text-amber-800">
+                <p><span className="font-mono bg-white px-2 py-1 rounded">Source</span> - Name of the newsletter/source</p>
+                <p><span className="font-mono bg-white px-2 py-1 rounded">URL</span> - Website or newsletter URL</p>
+              </div>
+              <p className="text-xs text-amber-700 mt-2 italic">Example: First row should have column headers, data starts from second row</p>
+            </div>
             
             <Input
               type="file"
