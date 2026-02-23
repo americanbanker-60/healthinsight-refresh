@@ -2,16 +2,18 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2, RefreshCw } from "lucide-react";
+import { Loader2, Trash2, RefreshCw, Copy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 import { RoleGuard } from "../components/auth/RoleGuard";
 
 export default function Cleanup() {
   const [selectedSource, setSelectedSource] = useState("all");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDeduplicating, setIsDeduplicating] = useState(false);
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState({ deleted: 0, updated: 0, skipped: 0 });
 
@@ -91,10 +93,61 @@ export default function Cleanup() {
     setIsProcessing(false);
   };
 
+  const deduplicateNewsletters = async () => {
+    setIsDeduplicating(true);
+    setLogs([]);
+    
+    try {
+      addLog('Starting deduplication scan...', 'info');
+      const response = await base44.functions.invoke('deduplicateNewsletters', {});
+      
+      if (response.data.success) {
+        addLog(`✅ ${response.data.message}`, 'success');
+        addLog(`Found ${response.data.duplicateGroups} duplicate groups`, 'info');
+        addLog(`Merged ${response.data.merged} newsletter groups`, 'update');
+        addLog(`Deleted ${response.data.deleted} duplicate records`, 'delete');
+        toast.success('Deduplication complete!');
+      } else {
+        addLog(`❌ Error: ${response.data.error}`, 'error');
+        toast.error('Deduplication failed');
+      }
+    } catch (error) {
+      addLog(`❌ Error: ${error.message}`, 'error');
+      toast.error('Deduplication failed');
+    }
+    
+    setIsDeduplicating(false);
+  };
+
   return (
     <RoleGuard allowedRoles={["admin"]}>
       <div className="p-6 md:p-10 max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Newsletter Cleanup Tool</h1>
+        
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="font-semibold text-blue-900 mb-2">Deduplication Tool</h3>
+          <p className="text-sm text-blue-800 mb-4">
+            Scan for duplicate newsletters (by URL or title) and merge their themes, key takeaways, and other data into a single record.
+          </p>
+          <Button
+            onClick={deduplicateNewsletters}
+            disabled={isDeduplicating || isProcessing}
+            variant="outline"
+            className="w-full"
+          >
+            {isDeduplicating ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Scanning for duplicates...
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4 mr-2" />
+                Run Deduplication
+              </>
+            )}
+          </Button>
+        </div>
       
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2">Select Source</label>
