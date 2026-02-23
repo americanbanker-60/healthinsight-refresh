@@ -142,33 +142,57 @@ export default function IntelligenceOverhaul() {
           </p>
         </div>
 
-        {/* Action Button */}
-        <Button
-          onClick={handleStartProcessing}
-          disabled={processing || stats.pending === 0}
-          className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
-        >
-          {processing ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Processing {stats.analyzed} / {stats.total}...
-            </>
-          ) : stats.pending === 0 ? (
-            <>
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              All Newsletters Analyzed
-            </>
-          ) : (
-            <>
-              <Zap className="w-4 h-4 mr-2" />
-              Start Batch Processing
-            </>
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <Button
+            onClick={handleStartProcessing}
+            disabled={processing || stats.pending === 0}
+            className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
+          >
+            {processing ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Processing {stats.analyzed} / {stats.total}...
+              </>
+            ) : stats.pending === 0 ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                All Newsletters Analyzed
+              </>
+            ) : (
+              <>
+                <Zap className="w-4 h-4 mr-2" />
+                Start Batch Processing
+              </>
+            )}
+          </Button>
+
+          {stats.total === 0 && (
+            <Button
+              onClick={handleScrapeAllSources}
+              disabled={processing}
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Scraping Sources...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Scrape All 525 Sources First
+                </>
+              )}
+            </Button>
           )}
-        </Button>
+        </div>
 
         {processing && (
           <p className="text-xs text-slate-600 text-center">
-            Real-time progress updates • Processing {stats.pending} remaining newsletters
+            {stats.pending > 0 
+              ? `Real-time progress updates • Processing ${stats.pending} remaining newsletters`
+              : 'Scraping sources and creating newsletters...'}
           </p>
         )}
       </CardContent>
