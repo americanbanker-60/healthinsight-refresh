@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Users, BarChart3, Newspaper, Calendar, Sparkles, Loader2 } from "lucide-react";
+import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Users, BarChart3, Newspaper, Calendar, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { useUserRole } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,6 +16,8 @@ export default function AdminDashboard() {
   const { user } = useUserRole();
   const queryClient = useQueryClient();
   const [generatingTopics, setGeneratingTopics] = React.useState(false);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshProgress, setRefreshProgress] = React.useState({ current: 0, total: 0 });
 
   const generateTopicsMutation = useMutation({
     mutationFn: async () => {
@@ -37,6 +39,51 @@ export default function AdminDashboard() {
       await generateTopicsMutation.mutateAsync();
     } finally {
       setGeneratingTopics(false);
+    }
+  };
+
+  const handleRefreshIntelligence = async () => {
+    setRefreshing(true);
+    setRefreshProgress({ current: 0, total: 0 });
+    
+    try {
+      // Fetch all non-deleted sources
+      const sources = await base44.entities.Source.list();
+      const activeSources = sources.filter(s => !s.is_deleted);
+      
+      setRefreshProgress({ current: 0, total: activeSources.length });
+      
+      let successCount = 0;
+      let failureCount = 0;
+      
+      // Scrape each source
+      for (let i = 0; i < activeSources.length; i++) {
+        const source = activeSources[i];
+        try {
+          await base44.functions.invoke('scrapeSource', { sourceId: source.id });
+          successCount++;
+        } catch (error) {
+          failureCount++;
+          console.error(`Failed to scrape ${source.name}:`, error);
+        }
+        setRefreshProgress({ current: i + 1, total: activeSources.length });
+      }
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
+      queryClient.invalidateQueries({ queryKey: ['newsletters'] });
+      
+      // Show summary toast
+      if (failureCount === 0) {
+        toast.success(`Successfully refreshed all ${successCount} sources!`);
+      } else {
+        toast.warning(`Refreshed ${successCount} sources, ${failureCount} failed`);
+      }
+    } catch (error) {
+      toast.error(`Failed to refresh intelligence: ${error.message}`);
+    } finally {
+      setRefreshing(false);
+      setRefreshProgress({ current: 0, total: 0 });
     }
   };
 
@@ -63,15 +110,61 @@ export default function AdminDashboard() {
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
-              <Shield className="w-7 h-7 text-white" />
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+                <Shield className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Admin Dashboard</h1>
+                <p className="text-slate-600 text-lg">System management and configuration</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Admin Dashboard</h1>
-              <p className="text-slate-600 text-lg">System management and configuration</p>
-            </div>
+            <Button
+              onClick={handleRefreshIntelligence}
+              disabled={refreshing}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+            >
+              {refreshing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Refreshing ({refreshProgress.current}/{refreshProgress.total})
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh Intelligence
+                </>
+              )}
+            </Button>
           </div>
+          
+          {refreshing && (
+            <div className="mb-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-blue-900">
+                    Refreshing sources...
+                  </span>
+                  <span className="text-sm text-blue-700">
+                    {refreshProgress.current} / {refreshProgress.total}
+                  </span>
+                </div>
+                <div className="w-full bg-blue-200 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-blue-600 h-2 transition-all duration-300"
+                    style={{ 
+                      width: refreshProgress.total > 0 
+                        ? `${(refreshProgress.current / refreshProgress.total) * 100}%` 
+                        : '0%' 
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          
+          
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
             <Shield className="w-5 h-5 text-amber-600 mt-0.5" />
             <div>
