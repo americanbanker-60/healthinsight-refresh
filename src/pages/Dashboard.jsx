@@ -1,6 +1,4 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -9,13 +7,14 @@ import KeyFeaturesModal from "../components/dashboard/KeyFeaturesModal";
 import EmptyState from "../components/common/EmptyState";
 import NewsletterCard from "../components/dashboard/NewsletterCard";
 import StatsOverview from "../components/dashboard/StatsOverview";
-import PersistentFilters, { applyFilters } from "../components/filters/PersistentFilters";
+import PersistentFilters from "../components/filters/PersistentFilters";
 import TrendChart from "../components/dashboard/TrendChart";
 import TrendDiscovery from "../components/trends/TrendDiscovery";
 import { GridCardSkeleton } from "../components/common/CardSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardGuidance from "../components/dashboard/DashboardGuidance";
+import { useHealthcareIntelligence } from "../components/utils/useHealthcareIntelligence";
 
 const defaultUserConfig = {
   visible_stats: ["newsletters", "ma_deals", "funding", "themes"],
@@ -25,138 +24,25 @@ const defaultUserConfig = {
 };
 
 export default function Dashboard() {
-  const [persistentFilters, setPersistentFilters] = React.useState(null);
   const [activeTab, setActiveTab] = React.useState("all");
   const [showFeaturesModal, setShowFeaturesModal] = React.useState(false);
 
-  // Fetch newsletters with server-side filtering
-  const { data: newsletters, isLoading } = useQuery({
-    queryKey: ['newsletters', persistentFilters, activeTab],
-    queryFn: async () => {
-      const query = {};
-      
-      // Source filter (from tab)
-      if (activeTab !== "all") {
-        query.source_name = activeTab;
-      }
-      
-      // Date range filter
-      if (persistentFilters?.startDate || persistentFilters?.endDate) {
-        query.publication_date = {};
-        if (persistentFilters.startDate) {
-          query.publication_date.$gte = persistentFilters.startDate;
-        }
-        if (persistentFilters.endDate) {
-          query.publication_date.$lte = persistentFilters.endDate;
-        }
-      }
-      
-      // Source filter from persistent filters
-      if (persistentFilters?.sources && persistentFilters.sources.length > 0) {
-        query.source_name = { $in: persistentFilters.sources };
-      }
-      
-      const result = await base44.entities.Newsletter.filter(query, '-publication_date', 100);
-      return result;
-    },
-    initialData: [],
+  const {
+    newsletters: filteredNewsletters,
+    allNewsletters: newsletters,
+    sources,
+    userConfig,
+    isLoading,
+    persistentFilters,
+    setPersistentFilters,
+    availableThemes,
+    availableCompanies,
+    availableSources,
+  } = useHealthcareIntelligence({
+    activeTab,
+    maxItems: 100,
+    enableInvestmentFocus: true,
   });
-
-  const { data: sources = [] } = useQuery({
-    queryKey: ['sources'],
-    queryFn: () => base44.entities.Source.list("name"),
-    initialData: [],
-  });
-
-  const { data: userConfig = defaultUserConfig } = useQuery({
-    queryKey: ['dashboardUserConfig'],
-    queryFn: async () => {
-      const user = await base44.auth.me();
-      return user.dashboard_config || defaultUserConfig;
-    },
-    initialData: defaultUserConfig,
-  });
-
-  // Tab filtering is now handled server-side in the query
-  const tabFilteredNewsletters = newsletters;
-
-  // Filter by investment focus
-  const focusFilteredNewsletters = React.useMemo(() => {
-    if (!userConfig?.investment_focus || userConfig.investment_focus.length === 0) {
-      return tabFilteredNewsletters;
-    }
-
-    return tabFilteredNewsletters.map(newsletter => {
-      let relevanceScore = 0;
-      const matchedFocusAreas = [];
-
-      userConfig.investment_focus.forEach(focus => {
-        const focusLower = focus.toLowerCase();
-        
-        if (newsletter.title?.toLowerCase().includes(focusLower)) relevanceScore += 3;
-        if (newsletter.summary?.toLowerCase().includes(focusLower)) relevanceScore += 2;
-        if (newsletter.key_takeaways?.some(t => t.toLowerCase().includes(focusLower))) relevanceScore += 2;
-        if (newsletter.themes?.some(t => 
-          t.theme?.toLowerCase().includes(focusLower) || 
-          t.description?.toLowerCase().includes(focusLower)
-        )) {
-          relevanceScore += 2;
-          matchedFocusAreas.push(focus);
-        }
-      });
-
-      return { ...newsletter, relevanceScore, matchedFocusAreas };
-    }).sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
-  }, [tabFilteredNewsletters, userConfig]);
-
-  // Extract available themes and companies
-  const availableThemes = React.useMemo(() => {
-    const themes = new Set();
-    newsletters.forEach(n => {
-      if (n.themes) {
-        n.themes.forEach(t => themes.add(t.theme));
-      }
-    });
-    return Array.from(themes).sort();
-  }, [newsletters]);
-
-  const availableCompanies = React.useMemo(() => {
-    const companies = new Set();
-    newsletters.forEach(n => {
-      if (n.key_players) {
-        n.key_players.forEach(p => companies.add(p));
-      }
-    });
-    return Array.from(companies).sort();
-  }, [newsletters]);
-
-  const availableSources = React.useMemo(() => {
-    return sources.filter(s => !s.is_deleted).map(s => s.name).sort();
-  }, [sources]);
-
-  // Client-side filtering for fields not supported by server-side query
-  const filteredNewsletters = React.useMemo(() => {
-    if (!persistentFilters) return focusFilteredNewsletters;
-    
-    // Only apply client-side filters for keywords, sentiments, themes, companies
-    const clientSideFilters = {
-      keywords: persistentFilters.keywords,
-      sentiments: persistentFilters.sentiments,
-      themes: persistentFilters.themes,
-      companies: persistentFilters.companies
-    };
-    
-    const hasClientSideFilters = 
-      clientSideFilters.keywords?.trim() ||
-      (clientSideFilters.sentiments && clientSideFilters.sentiments.length > 0) ||
-      (clientSideFilters.themes && clientSideFilters.themes.length > 0) ||
-      (clientSideFilters.companies && clientSideFilters.companies.length > 0);
-    
-    if (!hasClientSideFilters) return focusFilteredNewsletters;
-    
-    return applyFilters(focusFilteredNewsletters, clientSideFilters);
-  }, [focusFilteredNewsletters, persistentFilters]);
-
 
   const displayVariant = userConfig?.newsletter_display || "full";
 
@@ -205,7 +91,7 @@ export default function Dashboard() {
       <TrendDiscovery />
 
       {userConfig.show_charts && newsletters.length > 0 && (
-        <TrendChart newsletters={tabFilteredNewsletters} />
+        <TrendChart newsletters={newsletters} />
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
