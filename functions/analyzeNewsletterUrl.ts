@@ -56,7 +56,10 @@ Extract:
 - key_statistics: Array of notable figures with context (can be empty array if none)
 - themes: Major topics covered (can be empty array if none)
 - key_players: Companies/organizations mentioned (can be empty array if none)
-- sentiment: Overall tone (positive/neutral/negative/mixed)`,
+- sentiment: Overall tone (positive/neutral/negative/mixed)
+- market_sentiment: Investment market sentiment (bullish/bearish/neutral/mixed) - focus on financial/business implications
+- deal_value: If M&A transaction mentioned, extract total value (e.g., "$500M", "undisclosed"), otherwise null
+- primary_sector: Primary healthcare sector (Urgent Care, Behavioral Health, Imaging, ASC, Physical Therapy, Dental, Home Health, Anesthesia, MSO, Telehealth, Healthcare IT, Pharmacy, Other)`,
       response_json_schema: {
         type: "object",
         properties: {
@@ -87,7 +90,10 @@ Extract:
             }
           },
           key_players: { type: "array", items: { type: "string" } },
-          sentiment: { type: "string" }
+          sentiment: { type: "string" },
+          market_sentiment: { type: "string" },
+          deal_value: { type: ["string", "null"] },
+          primary_sector: { type: "string" }
         }
       }
     });
