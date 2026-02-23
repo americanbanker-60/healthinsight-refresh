@@ -176,7 +176,51 @@ Extract:
         }
       }
 
-      // Invoke createNewsletterRelations for topics in background
+      // Process themes: extract keywords and create/update topics
+      if (result.themes && result.themes.length > 0) {
+        console.log('Processing themes:', result.themes.length);
+        
+        for (const themeObj of result.themes) {
+          if (!themeObj || !themeObj.theme || themeObj.theme.trim().length === 0) continue;
+          
+          try {
+            const themeName = themeObj.theme.trim();
+            
+            // Check if topic with this name exists
+            const existingTopics = await base44.asServiceRole.entities.Topic.filter({ topic_name: themeName });
+            
+            let topicId;
+            if (existingTopics.length > 0) {
+              topicId = existingTopics[0].id;
+              console.log(`Topic found: ${themeName}`);
+            } else {
+              // Create new topic with keywords extracted from theme
+              const keywords = themeName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+              const newTopic = await base44.asServiceRole.entities.Topic.create({
+                topic_name: themeName,
+                description: themeObj.description || `Related to ${themeName}`,
+                keywords: keywords.length > 0 ? keywords : [themeName.toLowerCase()]
+              });
+              topicId = newTopic.id;
+              console.log(`Topic created: ${themeName}`);
+            }
+
+            // Create NewsletterRelation for topic
+            await base44.asServiceRole.entities.NewsletterRelation.create({
+              newsletter_id: newsletterId,
+              entity_type: 'topic',
+              entity_id: topicId,
+              entity_name: themeName,
+              match_type: 'exact'
+            });
+            console.log(`Topic relation created: ${themeName} -> Newsletter`);
+          } catch (err) {
+            console.error(`Failed to process theme ${themeObj.theme}:`, err.message);
+          }
+        }
+      }
+
+      // Invoke createNewsletterRelations for additional processing in background
       base44.asServiceRole.functions.invoke('createNewsletterRelations', {
         newsletter_id: newsletterId
       }).catch(err => console.error('Background relation creation failed:', err));
