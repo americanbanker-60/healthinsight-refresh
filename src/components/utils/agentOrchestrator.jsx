@@ -53,18 +53,21 @@ export async function orchestrateAgent(config) {
     systemPrompt,
     userPrompt,
     structureGuide,
-    maxRetries = MAX_RETRIES
+    maxRetries = MAX_RETRIES,
+    includeFormatting = true
   } = config;
   
   // Build clean, structured input
   const structuredInput = buildStructuredInput(newsletters, context);
   
   // Construct full prompt
-  const fullPrompt = buildPrompt({
+  const fullPrompt = await buildPrompt({
     systemPrompt,
     userPrompt,
     structureGuide,
-    data: structuredInput
+    data: structuredInput,
+    includeFormatting,
+    agentType
   });
   
   // Execute with retries
