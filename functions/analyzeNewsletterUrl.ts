@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { url } = await req.json();
+    const { url, sourceName } = await req.json();
 
     if (!url) {
       return Response.json({ error: 'URL required' }, { status: 400 });
@@ -102,6 +102,7 @@ Extract:
     const newsletterData = {
       ...result,
       source_url: url,
+      source_name: sourceName || result.source_name || 'Unknown Source',
       content_type: 'URL',
       raw_input: htmlContent.substring(0, 50000),
       date_added_to_app: new Date().toISOString(),
