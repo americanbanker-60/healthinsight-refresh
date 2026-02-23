@@ -72,18 +72,20 @@ export default function FeaturedTopicsSection() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           {featuredTopics.map((topic, index) => (
             <motion.div
               key={topic.theme}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.05 }}
+              className="flex-shrink-0"
             >
               <Badge 
-                className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 text-sm font-medium cursor-pointer transition-all hover:shadow-md"
+                className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 text-sm font-medium cursor-pointer transition-all hover:shadow-md whitespace-nowrap"
+                title={topic.theme}
               >
-                <span>{topic.theme}</span>
+                <span className="max-w-xs truncate">{topic.theme}</span>
                 <span className="ml-2 bg-amber-500 px-2 py-0.5 rounded-full text-xs font-bold">
                   {topic.count}
                 </span>
