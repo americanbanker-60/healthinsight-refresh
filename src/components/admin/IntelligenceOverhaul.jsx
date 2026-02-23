@@ -74,22 +74,34 @@ export default function IntelligenceOverhaul() {
 
   const handleScrapeAllSources = async () => {
     setProcessing(true);
+    setIsPolling(true);
 
     try {
-      const response = await base44.functions.invoke('scrapeAllSources');
+      // Set a timeout since scraping can take a while
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Scraping timed out after 10 minutes')), 600000)
+      );
+      
+      const response = await Promise.race([
+        base44.functions.invoke('scrapeAllSources'),
+        timeoutPromise
+      ]);
       
       if (response.data?.success) {
+        // Wait a moment for stats to update, then poll
+        setTimeout(() => fetchStats(), 1000);
+        
         toast.success(
-          `Scraped ${response.data.processed} sources! ${response.data.errors > 0 ? `${response.data.errors} errors` : 'All successful'}`
+          `Scraping started! ${response.data.processed} sources scraped. Newsletters will populate shortly.`
         );
-        await fetchStats();
       } else {
         toast.error('Scraping failed. Check logs for details.');
       }
     } catch (error) {
-      toast.error(`Error: ${error.message}`);
+      toast.error(`Scraping error: ${error.message}`);
     } finally {
       setProcessing(false);
+      setIsPolling(false);
     }
   };
 
