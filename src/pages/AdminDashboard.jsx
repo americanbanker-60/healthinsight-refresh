@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import EnhancedSourceScraper from "../components/admin/EnhancedSourceScraper";
+import IntelligenceOverhaul from "../components/admin/IntelligenceOverhaul";
 
 export default function AdminDashboard() {
   const { user } = useUserRole();
@@ -236,6 +237,11 @@ export default function AdminDashboard() {
             </Card>
           </div>
         )}
+
+        {/* Intelligence Overhaul */}
+        <div className="mb-6">
+          <IntelligenceOverhaul />
+        </div>
 
         {/* Source Scraper */}
         <div className="mb-6">
