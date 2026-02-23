@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Users, BarChart3, Newspaper, Calendar, Sparkles, Loader2 } from "lucide-react";
-import { RoleGuard, useUserRole } from "../components/auth/RoleGuard";
+import { useUserRole } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -61,8 +61,7 @@ export default function AdminDashboard() {
   });
 
   return (
-    <RoleGuard allowedRoles={["admin"]}>
-      <div className="p-6 md:p-10 max-w-7xl mx-auto">
+    <div className="p-6 md:p-10 max-w-7xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
@@ -294,6 +293,5 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-    </RoleGuard>
   );
 }
