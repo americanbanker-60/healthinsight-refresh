@@ -29,23 +29,24 @@ import { Toaster } from "@/components/ui/sonner";
 
 const navigationGroups = [
   {
-    label: "AI Agents",
+    label: "My Workspace",
     items: [
       {
-        title: "Agent Workspace",
-        url: createPageUrl("AgentWorkspace"),
-        icon: Brain,
+        title: "Dashboard",
+        url: createPageUrl("Dashboard"),
+        icon: LayoutDashboard,
         roles: ["admin", "power", "user"],
       },
-    ]
-  },
-  {
-    label: "Meeting Prep",
-    items: [
       {
-        title: "PE Meeting Prep",
-        url: createPageUrl("PEMeetingPrep"),
-        icon: Briefcase,
+        title: "My Library",
+        url: createPageUrl("MyLibrary"),
+        icon: Library,
+        roles: ["admin", "power", "user"],
+      },
+      {
+        title: "Research Folders",
+        url: createPageUrl("MyCustomPacks"),
+        icon: FolderOpen,
         roles: ["admin", "power", "user"],
       },
     ]
@@ -80,24 +81,23 @@ const navigationGroups = [
     ]
   },
   {
-    label: "My Workspace",
+    label: "Meeting Prep",
     items: [
       {
-        title: "Dashboard",
-        url: createPageUrl("Dashboard"),
-        icon: LayoutDashboard,
+        title: "PE Meeting Prep",
+        url: createPageUrl("PEMeetingPrep"),
+        icon: Briefcase,
         roles: ["admin", "power", "user"],
       },
+    ]
+  },
+  {
+    label: "AI Agents",
+    items: [
       {
-        title: "My Library",
-        url: createPageUrl("MyLibrary"),
-        icon: Library,
-        roles: ["admin", "power", "user"],
-      },
-      {
-        title: "Research Folders",
-        url: createPageUrl("MyCustomPacks"),
-        icon: FolderOpen,
+        title: "Agent Workspace",
+        url: createPageUrl("AgentWorkspace"),
+        icon: Brain,
         roles: ["admin", "power", "user"],
       },
     ]
