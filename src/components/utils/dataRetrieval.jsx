@@ -132,7 +132,7 @@ export async function retrieveNewslettersForSearch(filters) {
   
   const newsletters = await base44.entities.Newsletter.filter(query, "-publication_date", limit);
   
-  // Client-side keyword filtering (can't be done server-side)
+  // Client-side text-based search across title, summary, tldr, and themes
   if (filters.keywords) {
     const keywords = filters.keywords.toLowerCase().split(/\s+/).filter(k => k.length > 0);
     return newsletters.filter(n => {
@@ -140,7 +140,6 @@ export async function retrieveNewslettersForSearch(filters) {
         n.title || '',
         n.summary || '',
         n.tldr || '',
-        ...(n.key_takeaways || []),
         ...(n.themes?.map(t => `${t.theme} ${t.description}`) || [])
       ].join(' ').toLowerCase();
       

@@ -19,7 +19,7 @@ export default function FeaturedTopicsSection() {
   const featuredTopics = topics.slice(0, 8);
 
   const exploreTopic = (keywords) => {
-    const searchTerms = Array.isArray(keywords) ? keywords.join(' ') : keywords;
+    const searchTerms = Array.isArray(keywords) ? keywords.join(' ') : (typeof keywords === 'string' ? keywords : '');
     const params = new URLSearchParams({ keywords: searchTerms });
     navigate(createPageUrl("ExploreAllSources") + "?" + params.toString());
   };
