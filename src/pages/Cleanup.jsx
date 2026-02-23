@@ -1,19 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2, RefreshCw, Copy } from "lucide-react";
+import { Loader2, Trash2, RefreshCw, Copy, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import { RoleGuard } from "../components/auth/RoleGuard";
 
 export default function Cleanup() {
+  const queryClient = useQueryClient();
   const [selectedSource, setSelectedSource] = useState("all");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeduplicating, setIsDeduplicating] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState({ deleted: 0, updated: 0, skipped: 0 });
 
@@ -119,10 +132,113 @@ export default function Cleanup() {
     setIsDeduplicating(false);
   };
 
+  const hardReset = async () => {
+    setIsResetting(true);
+    setLogs([]);
+    
+    const totalCounts = {
+      newsletters: 0,
+      sources: 0,
+      relations: 0
+    };
+    
+    try {
+      // 1. Delete NewsletterRelations
+      addLog('Deleting newsletter relations...', 'info');
+      const relations = await base44.entities.NewsletterRelation.list();
+      for (const relation of relations) {
+        await base44.entities.NewsletterRelation.delete(relation.id);
+      }
+      totalCounts.relations = relations.length;
+      addLog(`✅ Deleted ${relations.length} newsletter relations`, 'delete');
+      
+      // 2. Delete Newsletters
+      addLog('Deleting newsletters...', 'info');
+      const newsletters = await base44.entities.Newsletter.list();
+      for (const newsletter of newsletters) {
+        await base44.entities.Newsletter.delete(newsletter.id);
+      }
+      totalCounts.newsletters = newsletters.length;
+      addLog(`✅ Deleted ${newsletters.length} newsletters`, 'delete');
+      
+      // 3. Delete Sources
+      addLog('Deleting sources...', 'info');
+      const sources = await base44.entities.Source.list();
+      for (const source of sources) {
+        await base44.entities.Source.delete(source.id);
+      }
+      totalCounts.sources = sources.length;
+      addLog(`✅ Deleted ${sources.length} sources`, 'delete');
+      
+      // Invalidate all queries
+      addLog('Invalidating cached queries...', 'info');
+      queryClient.invalidateQueries({ queryKey: ['newsletters'] });
+      queryClient.invalidateQueries({ queryKey: ['sources'] });
+      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
+      queryClient.invalidateQueries();
+      
+      addLog('✅ Platform reset complete!', 'success');
+      toast.success(`Reset complete: ${totalCounts.newsletters} newsletters, ${totalCounts.sources} sources, ${totalCounts.relations} relations deleted`);
+      
+    } catch (error) {
+      addLog(`❌ Error during reset: ${error.message}`, 'error');
+      toast.error(`Reset failed: ${error.message}`);
+    }
+    
+    setIsResetting(false);
+  };
+
   return (
     <RoleGuard allowedRoles={["admin"]}>
       <div className="p-6 md:p-10 max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Newsletter Cleanup Tool</h1>
+        
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            Hard Reset (Dangerous)
+          </h3>
+          <p className="text-sm text-red-800 mb-4">
+            Permanently delete ALL newsletters, sources, and relations. This action cannot be undone. 
+            Use only for complete platform overhaul.
+          </p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                disabled={isResetting || isProcessing || isDeduplicating}
+                variant="destructive"
+                className="w-full"
+              >
+                {isResetting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Resetting Platform...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Hard Reset Platform
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete ALL newsletters, sources, and relations from the database. 
+                  This action cannot be undone. The platform will return to a clean state.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={hardReset} className="bg-red-600 hover:bg-red-700">
+                  Yes, Delete Everything
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
         
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h3 className="font-semibold text-blue-900 mb-2">Deduplication Tool</h3>
