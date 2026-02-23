@@ -44,10 +44,8 @@ export async function retrieveNewslettersForPack(packId, maxItems = 100) {
   
   if (!pack) return [];
   
-  const newsletters = await base44.entities.Newsletter.list("-publication_date", 500);
-  
-  // Apply pack filters
-  let filtered = newsletters;
+  // Build server-side query
+  const query = {};
   
   // Date range filter
   if (pack.date_range_type) {
@@ -65,22 +63,21 @@ export async function retrieveNewslettersForPack(packId, maxItems = 100) {
     }
     
     if (startDate) {
-      filtered = filtered.filter(n => {
-        const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-        return pubDate >= startDate;
-      });
+      query.publication_date = { $gte: startDate.toISOString().split('T')[0] };
     }
   }
   
   // Source filter
   if (pack.sources_selected && pack.sources_selected.length > 0) {
-    filtered = filtered.filter(n => pack.sources_selected.includes(n.source_name));
+    query.source_name = { $in: pack.sources_selected };
   }
   
-  // Keyword filter
+  const newsletters = await base44.entities.Newsletter.filter(query, "-publication_date", maxItems);
+  
+  // Client-side keyword filter (can't be done server-side)
   if (pack.keywords) {
     const keywords = pack.keywords.split(/\s+/).filter(k => k.length > 0);
-    filtered = filtered.filter(n => {
+    return newsletters.filter(n => {
       const searchText = [
         n.title || '',
         n.summary || '',
@@ -91,7 +88,7 @@ export async function retrieveNewslettersForPack(packId, maxItems = 100) {
     });
   }
   
-  return filtered.slice(0, maxItems);
+  return newsletters;
 }
 
 export async function retrieveNewslettersForCompany(companyName, maxItems = 50) {
