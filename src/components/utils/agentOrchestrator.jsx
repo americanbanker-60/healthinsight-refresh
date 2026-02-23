@@ -107,22 +107,29 @@ export async function orchestrateAgent(config) {
   }
 }
 
-function buildPrompt({ systemPrompt, userPrompt, structureGuide, data }) {
+async function buildPrompt({ systemPrompt, userPrompt, structureGuide, data, includeFormatting = true, agentType }) {
   let prompt = "";
   
-  const formattingRules = `
-CRITICAL FORMATTING RULES FOR WORD/PDF EXPORT:
-1. PARAGRAPHS: Keep paragraphs short (2-3 sentences max). Put ONE blank line between EVERY paragraph.
-2. HEADINGS: Put a blank line BEFORE and AFTER every heading (##, ###).
-3. LISTS: Put a blank line before and after every list. Each bullet point on its own line with a blank line between bullets.
-4. SPACING: When in doubt, add a blank line. Generous spacing is essential.
-5. NO WALLS OF TEXT: Break up long sections into logical, readable paragraphs.
-6. STRUCTURE: Use clear sections with headings when helpful.
-
-`;
+  // Use short-form prompt for repetitive tasks
+  const shortFormTasks = ['summary', 'packSummary'];
+  const useShortForm = shortFormTasks.includes(agentType);
   
   if (systemPrompt) {
-    prompt += `SYSTEM:\n${systemPrompt}\n\n${formattingRules}`;
+    if (useShortForm) {
+      // Replace with lightweight short-form prompt
+      const shortPrompt = await getShortFormPrompt();
+      prompt += `SYSTEM:\n${shortPrompt}\n\n`;
+    } else {
+      prompt += `SYSTEM:\n${systemPrompt}\n\n`;
+    }
+    
+    // Only include formatting rules when needed (not for every call)
+    if (includeFormatting) {
+      const formattingRules = await getFormattingRules();
+      if (formattingRules) {
+        prompt += `${formattingRules}\n\n`;
+      }
+    }
   }
   
   if (userPrompt) {
