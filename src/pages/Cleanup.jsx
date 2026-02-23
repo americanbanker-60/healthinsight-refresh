@@ -142,33 +142,53 @@ export default function Cleanup() {
       relations: 0
     };
     
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    
     try {
       // 1. Delete NewsletterRelations
       addLog('Deleting newsletter relations...', 'info');
       const relations = await base44.entities.NewsletterRelation.list();
-      for (const relation of relations) {
-        await base44.entities.NewsletterRelation.delete(relation.id);
+      for (let i = 0; i < relations.length; i++) {
+        await base44.entities.NewsletterRelation.delete(relations[i].id);
+        if ((i + 1) % 10 === 0) {
+          addLog(`Deleted ${i + 1}/${relations.length} relations...`, 'info');
+          await sleep(500); // 500ms delay every 10 deletions
+        }
       }
       totalCounts.relations = relations.length;
       addLog(`✅ Deleted ${relations.length} newsletter relations`, 'delete');
       
+      await sleep(1000); // 1 second pause between entity types
+      
       // 2. Delete Newsletters
       addLog('Deleting newsletters...', 'info');
       const newsletters = await base44.entities.Newsletter.list();
-      for (const newsletter of newsletters) {
-        await base44.entities.Newsletter.delete(newsletter.id);
+      for (let i = 0; i < newsletters.length; i++) {
+        await base44.entities.Newsletter.delete(newsletters[i].id);
+        if ((i + 1) % 10 === 0) {
+          addLog(`Deleted ${i + 1}/${newsletters.length} newsletters...`, 'info');
+          await sleep(500); // 500ms delay every 10 deletions
+        }
       }
       totalCounts.newsletters = newsletters.length;
       addLog(`✅ Deleted ${newsletters.length} newsletters`, 'delete');
       
+      await sleep(1000); // 1 second pause between entity types
+      
       // 3. Delete Sources
       addLog('Deleting sources...', 'info');
       const sources = await base44.entities.Source.list();
-      for (const source of sources) {
-        await base44.entities.Source.delete(source.id);
+      for (let i = 0; i < sources.length; i++) {
+        await base44.entities.Source.delete(sources[i].id);
+        if ((i + 1) % 5 === 0) {
+          addLog(`Deleted ${i + 1}/${sources.length} sources...`, 'info');
+          await sleep(500); // 500ms delay every 5 deletions
+        }
       }
       totalCounts.sources = sources.length;
       addLog(`✅ Deleted ${sources.length} sources`, 'delete');
+      
+      await sleep(1000);
       
       // Invalidate all queries
       addLog('Invalidating cached queries...', 'info');
