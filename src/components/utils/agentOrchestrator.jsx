@@ -1,5 +1,6 @@
 import { securedInvokeLLM } from "./aiDefenseWrapper";
 import { buildStructuredInput } from "./contentPreprocessor";
+import { base44 } from "@/api/base44Client";
 
 /**
  * Centralized AI agent orchestration with validation and retry logic
