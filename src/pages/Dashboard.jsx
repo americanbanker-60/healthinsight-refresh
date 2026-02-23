@@ -77,11 +77,8 @@ export default function Dashboard() {
     initialData: defaultUserConfig,
   });
 
-  // Filter by active tab
-  const tabFilteredNewsletters = React.useMemo(() => {
-    if (activeTab === "all") return newsletters;
-    return newsletters.filter(n => n.source_name === activeTab);
-  }, [newsletters, activeTab]);
+  // Tab filtering is now handled server-side in the query
+  const tabFilteredNewsletters = newsletters;
 
   // Filter by investment focus
   const focusFilteredNewsletters = React.useMemo(() => {
