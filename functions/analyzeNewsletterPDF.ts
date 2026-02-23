@@ -110,6 +110,8 @@ Deno.serve(async (req) => {
       primary_sector: pdfData.primary_sector || 'Other',
       source_url: file_url,
       source_type: 'PDF',
+      content_type: 'PDF',
+      raw_input: pdfData.summary ? pdfData.summary.substring(0, 50000) : '',
       source_name: 'PDF Upload',
       publication_date: new Date().toISOString().split('T')[0],
       date_added_to_app: new Date().toISOString(),

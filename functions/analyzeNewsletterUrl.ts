@@ -102,10 +102,12 @@ Extract:
     const newsletterData = {
       ...result,
       source_url: url,
+      content_type: 'URL',
+      raw_input: htmlContent.substring(0, 50000),
       date_added_to_app: new Date().toISOString(),
       publication_date_confidence: "medium",
       publication_date_source: "AI extraction",
-      publication_date_notes: "Direct upload via admin panel"
+      publication_date_notes: "Direct URL upload via admin panel"
     };
 
     console.log('AI analysis complete:', result.title);
