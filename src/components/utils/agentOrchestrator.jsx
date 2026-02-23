@@ -278,6 +278,7 @@ Body: [3–5 professional sentences positioning the user as an advisor/banker re
     
     packSummary: {
       agentType: 'packSummary',
+      includeFormatting: false, // Short-form task, skip formatting rules
       systemPrompt: `You are the Actionability Engine for healthcare investment banking business development. Transform Learning Pack contents into actionable BD strategies.
 Focus on outreach, deal origination, and pipeline building for U.S. healthcare services sectors.
 Do NOT guess or add content not present in the inputs.`,
