@@ -93,7 +93,7 @@ export async function retrieveNewslettersForPack(packId, maxItems = 100) {
 
 export async function retrieveNewslettersForCompany(companyName, maxItems = 50) {
   // Fetch recent newsletters with limit (can't do text search server-side)
-  const newsletters = await base44.entities.Newsletter.filter({}, "-publication_date", 200);
+  const newsletters = await base44.entities.Newsletter.filter({}, "-publication_date", 500);
   
   return newsletters.filter(n => {
     const searchText = [
@@ -127,8 +127,10 @@ export async function retrieveNewslettersForSearch(filters) {
     query.source_name = { $in: filters.sources };
   }
   
-  const maxItems = filters.maxItems || 100;
-  const newsletters = await base44.entities.Newsletter.filter(query, "-publication_date", maxItems);
+  const limit = filters.limit || 500;
+  const skip = filters.skip || 0;
+  
+  const newsletters = await base44.entities.Newsletter.filter(query, "-publication_date", limit);
   
   // Client-side keyword filtering (can't be done server-side)
   if (filters.keywords) {
