@@ -47,18 +47,39 @@ export default function SmartSearchInput({ value, onChange, availableTopics = []
     
     setIsLoadingAI(true);
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Given the healthcare search query "${query}", suggest 3 related search terms or keywords that would help find relevant healthcare intelligence content. Return only the keywords, one per line, no explanations.`,
-        response_json_schema: null
+      // Fetch analyzed newsletters to search themes and summaries
+      const analyzedNewsletters = await base44.entities.Newsletter.filter(
+        { is_analyzed: true },
+        '-publication_date',
+        1000
+      );
+
+      const queryLower = query.toLowerCase();
+      const matchedThemesSet = new Set();
+      
+      // Extract themes and summaries matching the query
+      analyzedNewsletters.forEach(n => {
+        if (n.themes?.some(t => 
+          t.theme?.toLowerCase().includes(queryLower) || 
+          t.description?.toLowerCase().includes(queryLower)
+        )) {
+          n.themes.forEach(t => {
+            if (t.theme && (t.theme.toLowerCase().includes(queryLower) || !queryLower.match(/^[a-z]/i))) {
+              matchedThemesSet.add(t.theme);
+            }
+          });
+        }
+        if (n.summary?.toLowerCase().includes(queryLower)) {
+          n.themes?.forEach(t => t.theme && matchedThemesSet.add(t.theme));
+        }
       });
 
-      const keywords = result.split('\n')
-        .map(k => k.trim().replace(/^[-•*]\s*/, ''))
-        .filter(k => k && k.length > 0 && k.toLowerCase() !== query.toLowerCase())
+      const themeKeywords = Array.from(matchedThemesSet)
+        .filter(t => t.toLowerCase() !== query.toLowerCase())
         .slice(0, 3)
-        .map(keyword => ({ type: 'ai', value: keyword }));
+        .map(theme => ({ type: 'ai', value: theme }));
 
-      setAiSuggestions(keywords);
+      setAiSuggestions(themeKeywords);
     } catch (error) {
       console.error('Failed to get AI suggestions:', error);
     } finally {
