@@ -29,9 +29,36 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = React.useState("all");
   const [showFeaturesModal, setShowFeaturesModal] = React.useState(false);
 
+  // Fetch newsletters with server-side filtering
   const { data: newsletters, isLoading } = useQuery({
-    queryKey: ['newsletters'],
-    queryFn: () => base44.entities.Newsletter.list("-created_date"),
+    queryKey: ['newsletters', persistentFilters, activeTab],
+    queryFn: async () => {
+      const query = {};
+      
+      // Source filter (from tab)
+      if (activeTab !== "all") {
+        query.source_name = activeTab;
+      }
+      
+      // Date range filter
+      if (persistentFilters?.startDate || persistentFilters?.endDate) {
+        query.publication_date = {};
+        if (persistentFilters.startDate) {
+          query.publication_date.$gte = persistentFilters.startDate;
+        }
+        if (persistentFilters.endDate) {
+          query.publication_date.$lte = persistentFilters.endDate;
+        }
+      }
+      
+      // Source filter from persistent filters
+      if (persistentFilters?.sources && persistentFilters.sources.length > 0) {
+        query.source_name = { $in: persistentFilters.sources };
+      }
+      
+      const result = await base44.entities.Newsletter.filter(query, '-publication_date', 100);
+      return result;
+    },
     initialData: [],
   });
 
