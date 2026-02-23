@@ -125,11 +125,54 @@ Deno.serve(async (req) => {
 
     console.log('Newsletter created successfully');
 
-    // Create relations in background
+    // Fetch created newsletter to get its ID
     const createdNewsletter = await base44.asServiceRole.entities.Newsletter.filter({ source_url: file_url });
     if (createdNewsletter[0]) {
+      const newsletterId = createdNewsletter[0].id;
+
+      // Process key_players: check/create companies and link to newsletter
+      if (pdfData.key_players && pdfData.key_players.length > 0) {
+        console.log('Processing key_players:', pdfData.key_players.length);
+        
+        for (const playerName of pdfData.key_players) {
+          if (!playerName || playerName.trim().length === 0) continue;
+          
+          try {
+            // Check if company exists
+            const existingCompanies = await base44.asServiceRole.entities.Company.filter({ company_name: playerName });
+            
+            let companyId;
+            if (existingCompanies.length > 0) {
+              companyId = existingCompanies[0].id;
+              console.log(`Company found: ${playerName}`);
+            } else {
+              // Create new company
+              const newCompany = await base44.asServiceRole.entities.Company.create({
+                company_name: playerName,
+                primary_keywords: [playerName.toLowerCase()]
+              });
+              companyId = newCompany.id;
+              console.log(`Company created: ${playerName}`);
+            }
+
+            // Create NewsletterRelation
+            await base44.asServiceRole.entities.NewsletterRelation.create({
+              newsletter_id: newsletterId,
+              entity_type: 'company',
+              entity_id: companyId,
+              entity_name: playerName,
+              match_type: 'exact'
+            });
+            console.log(`Relation created: ${playerName} -> Newsletter`);
+          } catch (err) {
+            console.error(`Failed to process company ${playerName}:`, err.message);
+          }
+        }
+      }
+
+      // Invoke createNewsletterRelations for topics in background
       base44.asServiceRole.functions.invoke('createNewsletterRelations', {
-        newsletter_id: createdNewsletter[0].id
+        newsletter_id: newsletterId
       }).catch(err => console.error('Background relation creation failed:', err));
     }
 
