@@ -116,6 +116,14 @@ Extract:
 
     console.log('Newsletter created successfully');
 
+    // Create relations in background (don't await to avoid blocking)
+    const createdNewsletter = await base44.asServiceRole.entities.Newsletter.filter({ source_url: url });
+    if (createdNewsletter[0]) {
+      base44.asServiceRole.functions.invoke('createNewsletterRelations', {
+        newsletter_id: createdNewsletter[0].id
+      }).catch(err => console.error('Background relation creation failed:', err));
+    }
+
     return Response.json({
       success: true,
       title: result.title,

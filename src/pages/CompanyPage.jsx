@@ -33,9 +33,24 @@ export default function CompanyPage() {
     enabled: !!companyId,
   });
 
+  const { data: relations = [], isLoading: relationsLoading } = useQuery({
+    queryKey: ['company-relations', companyId],
+    queryFn: async () => {
+      if (!companyId) return [];
+      return base44.entities.NewsletterRelation.filter({ entity_type: 'company', entity_id: companyId }, '-relevance_score');
+    },
+    enabled: !!companyId,
+    initialData: [],
+  });
+
   const { data: newsletters = [], isLoading: newsLoading } = useQuery({
-    queryKey: ['newsletters'],
-    queryFn: () => base44.entities.Newsletter.list("-publication_date", 500),
+    queryKey: ['company-newsletters', relations],
+    queryFn: async () => {
+      if (relations.length === 0) return [];
+      const newsletterIds = relations.map(r => r.newsletter_id);
+      return base44.entities.Newsletter.filter({ id: { $in: newsletterIds } }, '-publication_date');
+    },
+    enabled: relations.length > 0,
     initialData: [],
   });
 
@@ -51,21 +66,18 @@ export default function CompanyPage() {
     initialData: [],
   });
 
-  // Filter newsletters that mention the company
-  const allKeywords = useMemo(() => {
-    if (!company) return [];
-    return [
-      company.company_name,
-      ...(company.known_aliases || []),
-      ...(company.primary_keywords || [])
-    ];
-  }, [company]);
-
-  const relevantNewsletters = useNewsletterFilters(newsletters, {
-    keywords: allKeywords,
-    timeRange,
-    searchFields: ['title', 'summary', 'tldr', 'key_takeaways', 'key_players', 'ma_activities', 'funding_rounds']
-  });
+  // Filter newsletters by time range
+  const relevantNewsletters = useMemo(() => {
+    if (!newsletters.length) return [];
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - timeRange);
+    
+    return newsletters.filter(n => {
+      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
+      return pubDate >= cutoffDate;
+    });
+  }, [newsletters, timeRange]);
 
   // Extract highlights (MA, funding, partnerships)
   const highlights = useMemo(() => {

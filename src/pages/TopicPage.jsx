@@ -35,9 +35,24 @@ export default function TopicPage() {
     enabled: !!topicId,
   });
 
+  const { data: relations = [], isLoading: relationsLoading } = useQuery({
+    queryKey: ['topic-relations', topicId],
+    queryFn: async () => {
+      if (!topicId) return [];
+      return base44.entities.NewsletterRelation.filter({ entity_type: 'topic', entity_id: topicId }, '-relevance_score');
+    },
+    enabled: !!topicId,
+    initialData: [],
+  });
+
   const { data: newsletters = [], isLoading: newsLoading } = useQuery({
-    queryKey: ['newsletters'],
-    queryFn: () => base44.entities.Newsletter.list("-publication_date", 500),
+    queryKey: ['topic-newsletters', relations],
+    queryFn: async () => {
+      if (relations.length === 0) return [];
+      const newsletterIds = relations.map(r => r.newsletter_id);
+      return base44.entities.Newsletter.filter({ id: { $in: newsletterIds } }, '-publication_date');
+    },
+    enabled: relations.length > 0,
     initialData: [],
   });
 
@@ -47,17 +62,18 @@ export default function TopicPage() {
     initialData: [],
   });
 
-  // Filter newsletters that match topic keywords
-  const keywords = useMemo(() => {
-    if (!topic || !topic.keywords) return [];
-    return Array.isArray(topic.keywords) ? topic.keywords : [topic.keywords];
-  }, [topic]);
-
-  const relevantNewsletters = useNewsletterFilters(newsletters, {
-    keywords,
-    timeRange,
-    searchFields: ['title', 'summary', 'tldr', 'key_takeaways', 'themes']
-  });
+  // Filter newsletters by time range
+  const relevantNewsletters = useMemo(() => {
+    if (!newsletters.length) return [];
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - timeRange);
+    
+    return newsletters.filter(n => {
+      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
+      return pubDate >= cutoffDate;
+    });
+  }, [newsletters, timeRange]);
 
   // Get related Learning Packs
   const relatedPacks = useMemo(() => {
