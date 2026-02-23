@@ -51,6 +51,7 @@ const briefToMarkdown = (briefJson) => {
   const questions = briefJson.questions || {};
   const followups = briefJson.followUps || {};
   const sources = safeArray(briefJson.sourcesUsed);
+  const intelligence = safeArray(briefJson.relevantIntelligence);
 
   let md = `# ${meta.companyName || "Company"} — Meeting Prep Brief\n\n`;
   
@@ -154,6 +155,21 @@ const briefToMarkdown = (briefJson) => {
   }
   if (followups.nextStepsEmailDraft) {
     md += `### Next Steps Email Draft\n${followups.nextStepsEmailDraft}\n\n`;
+  }
+
+  if (intelligence.length > 0) {
+    md += `## Relevant Internal Intelligence\n`;
+    md += `Based on portfolio companies identified, the following HealthInsight content is relevant:\n\n`;
+    intelligence.forEach(item => {
+      md += `### ${item.title}\n`;
+      md += `**Company:** ${item.company_mentioned} | **Source:** ${item.source_name} | **Date:** ${item.publication_date || "N/A"}\n\n`;
+      if (item.tldr) md += `**Summary:** ${item.tldr}\n\n`;
+      if (item.key_takeaways.length > 0) {
+        md += `**Key Takeaways:**\n`;
+        item.key_takeaways.forEach(kt => md += `- ${kt}\n`);
+        md += `\n`;
+      }
+    });
   }
 
   if (sources.length > 0) {
@@ -274,14 +290,69 @@ Use web search to find accurate information about all their healthcare holdings.
     }
   };
 
+  const fetchRelevantIntelligence = async (holdings) => {
+    if (!holdings || holdings.length === 0) return [];
+    
+    try {
+      // Get company names from holdings
+      const companyNames = holdings.map(h => h.company_name);
+      
+      // Query for related newsletters via NewsletterRelation
+      const relations = await base44.entities.NewsletterRelation.filter(
+        { entity_type: "company" },
+        "-created_date",
+        500
+      );
+      
+      // Filter relations for discovered holdings
+      const relevantRelations = relations.filter(r => 
+        companyNames.some(name => name.toLowerCase() === r.entity_name.toLowerCase())
+      );
+      
+      if (relevantRelations.length === 0) return [];
+      
+      // Get unique newsletter IDs
+      const newsletterIds = [...new Set(relevantRelations.map(r => r.newsletter_id))];
+      
+      // Fetch newsletter details
+      const newsletters = await base44.entities.Newsletter.filter(
+        { id: { $in: newsletterIds } },
+        "-publication_date",
+        100
+      );
+      
+      // Map newsletters with their related company
+      const intelligence = newsletters.map(n => {
+        const relation = relevantRelations.find(r => r.newsletter_id === n.id);
+        return {
+          newsletter_id: n.id,
+          title: n.title,
+          company_mentioned: relation.entity_name,
+          publication_date: n.publication_date,
+          source_name: n.source_name,
+          tldr: n.tldr,
+          key_takeaways: safeArray(n.key_takeaways).slice(0, 2)
+        };
+      });
+      
+      return intelligence;
+    } catch (err) {
+      console.error("Failed to fetch relevant intelligence:", err);
+      return [];
+    }
+  };
+
   const generate = async () => {
     if (!canGenerate || generating) return;
 
     setGenerating(true);
     try {
-      // If a PE Firm name is provided, discover its holdings first
+      let relevantIntelligence = [];
+      
+      // If a PE Firm name is provided, discover its holdings and fetch relevant intelligence
       if (form.sponsorName.trim()) {
-        await discoverHoldings(form.sponsorName.trim());
+        const holdings = await discoverHoldings(form.sponsorName.trim());
+        relevantIntelligence = await fetchRelevantIntelligence(holdings);
       }
 
       const validUrls = form.urls.filter(u => {
@@ -302,6 +373,7 @@ REQUEST:
 - sectors: ${form.sectors.join(", ") || "N/A"}
 - role: ${form.role}
 - urls: ${validUrls.join(", ") || "None"}
+- discoveredHoldings: ${discoveredHoldings.length > 0 ? JSON.stringify(discoveredHoldings.map(h => h.company_name)) : "None"}
 
 OUTPUT EXACTLY THIS JSON SCHEMA:
 {
@@ -348,6 +420,17 @@ OUTPUT EXACTLY THIS JSON SCHEMA:
     "dataRequests": ["string"],
     "nextStepsEmailDraft": "string"
   },
+  "relevantIntelligence": [
+    {
+      "newsletter_id": "string",
+      "title": "string",
+      "company_mentioned": "string",
+      "publication_date": "YYYY-MM-DD",
+      "source_name": "string",
+      "tldr": "string",
+      "key_takeaways": ["string"]
+    }
+  ],
   "sourcesUsed": [
     { "type": "url|note", "ref": "string", "title": "string|null" }
   ]
@@ -428,6 +511,21 @@ Research the company using available web search if URLs provided, or use the req
                 nextStepsEmailDraft: { type: "string" }
               }
             },
+            relevantIntelligence: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  newsletter_id: { type: "string" },
+                  title: { type: "string" },
+                  company_mentioned: { type: "string" },
+                  publication_date: { type: "string" },
+                  source_name: { type: "string" },
+                  tldr: { type: "string" },
+                  key_takeaways: { type: "array", items: { type: "string" } }
+                }
+              }
+            },
             sourcesUsed: { 
               type: "array",
               items: {
@@ -445,6 +543,7 @@ Research the company using available web search if URLs provided, or use the req
 
       // Validate and normalize
       const briefJson = result || {};
+      briefJson.relevantIntelligence = relevantIntelligence;
       const markdown = briefToMarkdown(briefJson);
 
       const saved = await base44.entities.PEMeetingBrief.create({
