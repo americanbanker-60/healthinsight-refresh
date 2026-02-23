@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Upload, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, Loader2, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 
 export default function DirectNewsletterUpload() {
   const [urls, setUrls] = useState("");
   const [processing, setProcessing] = useState(false);
   const [results, setResults] = useState([]);
+  const [processingPdfs, setProcessingPdfs] = useState(false);
   const queryClient = useQueryClient();
 
   const processNewsletters = async () => {
@@ -67,96 +67,220 @@ export default function DirectNewsletterUpload() {
     toast.success(`Processed ${successCount}/${urlList.length} newsletters`);
   };
 
+  const handlePdfUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setProcessingPdfs(true);
+
+    try {
+      // Upload PDF file
+      const uploadResponse = await base44.integrations.Core.UploadFile({ file });
+      const fileUrl = uploadResponse.file_url;
+
+      // Extract data from PDF using AI
+      const extractResponse = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url: fileUrl,
+        json_schema: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "Newsletter or document title" },
+            summary: { type: "string", description: "Executive summary or main content" },
+            key_players: {
+              type: "array",
+              items: { type: "string" },
+              description: "Key companies or organizations mentioned"
+            }
+          },
+          required: ["title"]
+        }
+      });
+
+      if (extractResponse.status === "success" && extractResponse.output) {
+        const { title, summary, key_players } = extractResponse.output;
+
+        // Create newsletter record with PDF source
+        const newsletter = await base44.entities.Newsletter.create({
+          title: title || file.name.replace(/\.pdf$/i, ''),
+          summary: summary || "",
+          key_players: key_players || [],
+          source_url: fileUrl,
+          source_type: "PDF",
+          source_name: "PDF Upload",
+          publication_date: new Date().toISOString().split('T')[0],
+          date_added_to_app: new Date().toISOString(),
+          publication_date_confidence: "medium",
+          publication_date_source: "PDF upload date",
+          tldr: summary?.split('\n')[0] || summary || title
+        });
+
+        toast.success(`✓ PDF uploaded: ${title}`);
+        setResults(prev => [...prev, {
+          file: file.name,
+          status: "success",
+          title: title
+        }]);
+      } else {
+        throw new Error(extractResponse.details || 'Failed to extract PDF data');
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['newsletters'] });
+
+    } catch (error) {
+      toast.error(`✗ PDF processing failed: ${error.message}`);
+      setResults(prev => [...prev, {
+        file: file.name,
+        status: "error",
+        error: error.message
+      }]);
+    } finally {
+      setProcessingPdfs(false);
+      event.target.value = '';
+    }
+  };
+
   return (
-    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="w-5 h-5 text-green-600" />
-          Direct Newsletter Upload
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-green-100 border border-green-300 rounded-lg p-4 text-sm">
-          <p className="font-semibold text-green-900 mb-2">📰 Upload Individual Newsletters</p>
-          <p className="text-green-800 text-xs leading-relaxed">
-            Paste URLs to specific newsletter articles (one per line). The system will analyze each URL directly 
-            and extract the content - no crawling or scraping needed.
-          </p>
-        </div>
+    <div className="space-y-6">
+      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="w-5 h-5 text-green-600" />
+            Upload from URLs
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-green-100 border border-green-300 rounded-lg p-4 text-sm">
+            <p className="font-semibold text-green-900 mb-2">📰 Analyze Newsletter URLs</p>
+            <p className="text-green-800 text-xs leading-relaxed">
+              Paste URLs to specific newsletter articles (one per line). The system will analyze each URL directly 
+              and extract the content using AI.
+            </p>
+          </div>
 
-        <Textarea
-          placeholder="https://rockhealthfhc.com/newsletter/jan-2024&#10;https://example.com/article/healthcare-trends&#10;https://another-site.com/post/123"
-          value={urls}
-          onChange={(e) => setUrls(e.target.value)}
-          rows={8}
-          className="font-mono text-sm"
-          disabled={processing}
-        />
+          <Textarea
+            placeholder="https://rockhealthfhc.com/newsletter/jan-2024&#10;https://example.com/article/healthcare-trends&#10;https://another-site.com/post/123"
+            value={urls}
+            onChange={(e) => setUrls(e.target.value)}
+            rows={6}
+            className="font-mono text-sm"
+            disabled={processing}
+          />
 
-        {results.length > 0 && (
-          <div className="border rounded-lg p-4 bg-white space-y-2 max-h-64 overflow-y-auto">
-            <p className="text-sm font-semibold text-slate-900 mb-2">Processing Results:</p>
-            {results.map((result, idx) => (
-              <div key={idx} className="flex items-start gap-2 text-xs">
-                {result.status === "success" ? (
+          <div className="flex gap-2">
+            <Button
+              onClick={processNewsletters}
+              disabled={processing || !urls.trim()}
+              className="bg-green-600 hover:bg-green-700 flex-1"
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Analyze URLs
+                </>
+              )}
+            </Button>
+            {urls.trim() && !processing && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setUrls("");
+                  setResults([]);
+                }}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-blue-600" />
+            Upload PDF
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-blue-100 border border-blue-300 rounded-lg p-4 text-sm">
+            <p className="font-semibold text-blue-900 mb-2">📄 Extract from PDF</p>
+            <p className="text-blue-800 text-xs leading-relaxed">
+              Upload a PDF file. The system will extract the title, summary, and key players using AI 
+              and automatically create a Newsletter record.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="pdf-upload">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-blue-300 hover:bg-blue-50"
+                onClick={() => document.getElementById('pdf-upload')?.click()}
+                disabled={processingPdfs}
+              >
+                {processingPdfs ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-900 truncate">{result.title}</p>
-                      <p className="text-slate-500 truncate">{result.url}</p>
-                    </div>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing PDF...
                   </>
                 ) : (
                   <>
-                    <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-red-900 truncate">{result.url}</p>
-                      <p className="text-red-600 text-xs">{result.error}</p>
-                    </div>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Choose PDF File
                   </>
                 )}
-              </div>
-            ))}
+              </Button>
+            </label>
+            <input
+              id="pdf-upload"
+              type="file"
+              accept=".pdf"
+              onChange={handlePdfUpload}
+              className="hidden"
+              disabled={processingPdfs}
+            />
           </div>
-        )}
+        </CardContent>
+      </Card>
 
-        <div className="flex gap-2">
-          <Button
-            onClick={processNewsletters}
-            disabled={processing || !urls.trim()}
-            className="bg-green-600 hover:bg-green-700 flex-1"
-          >
-            {processing ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4 mr-2" />
-                Analyze & Upload Newsletters
-              </>
-            )}
-          </Button>
-          {urls.trim() && !processing && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setUrls("");
-                setResults([]);
-              }}
-            >
-              Clear
-            </Button>
-          )}
-        </div>
-
-        <div className="text-xs text-slate-600 space-y-1">
-          <p>• Each URL will be fetched and analyzed using AI</p>
-          <p>• Newsletter records are created immediately</p>
-          <p>• Processing typically takes 5-10 seconds per URL</p>
-        </div>
-      </CardContent>
-    </Card>
+      {results.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Processing Results</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {results.map((result, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-xs">
+                  {result.status === "success" ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-slate-900 truncate">{result.title}</p>
+                        <p className="text-slate-500 truncate">{result.url || result.file}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-red-900 truncate">{result.url || result.file}</p>
+                        <p className="text-red-600 text-xs">{result.error}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
