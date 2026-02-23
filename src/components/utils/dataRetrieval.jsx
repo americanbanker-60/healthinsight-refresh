@@ -92,7 +92,8 @@ export async function retrieveNewslettersForPack(packId, maxItems = 100) {
 }
 
 export async function retrieveNewslettersForCompany(companyName, maxItems = 50) {
-  const newsletters = await base44.entities.Newsletter.list("-publication_date", 500);
+  // Fetch recent newsletters with limit (can't do text search server-side)
+  const newsletters = await base44.entities.Newsletter.filter({}, "-publication_date", 200);
   
   return newsletters.filter(n => {
     const searchText = [
