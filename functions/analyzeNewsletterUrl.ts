@@ -111,6 +111,18 @@ Extract:
     console.log('AI analysis complete:', result.title);
     console.log('Creating newsletter record...');
 
+    // Check if newsletter with this URL already exists
+    const existingNewsletters = await base44.asServiceRole.entities.Newsletter.filter({ source_url: url });
+    if (existingNewsletters.length > 0) {
+      console.log('Newsletter with this URL already exists, skipping...');
+      return Response.json({
+        success: true,
+        message: 'Newsletter with this URL already exists. Skipped to prevent duplicates.',
+        title: existingNewsletters[0].title,
+        source_name: existingNewsletters[0].source_name
+      });
+    }
+
     // Create newsletter using service role (now allowed via RLS)
     await base44.asServiceRole.entities.Newsletter.create(newsletterData);
 
