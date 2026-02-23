@@ -87,29 +87,53 @@ export default function SourceUploadManager() {
   };
 
   const handleCsvUpload = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const text = event.target.result;
-      const rows = text.split('\n').map(row => row.split(',').map(cell => cell.trim()));
-      const headers = rows[0];
-      const sourceColIndex = headers.findIndex(h => h.toLowerCase() === 'source');
-      const urlColIndex = headers.findIndex(h => h.toLowerCase() === 'url');
+      try {
+        const text = event.target?.result;
+        if (typeof text !== 'string') return;
 
-      if (sourceColIndex === -1 || urlColIndex === -1) {
-        toast.error("CSV must have 'Source' and 'URL' columns");
-        return;
+        const rows = text.split('\n')
+          .map(row => row.split(',').map(cell => cell.trim()))
+          .filter(row => row.some(cell => cell));
+        
+        if (rows.length < 2) {
+          toast.error("CSV file is empty or has no data rows");
+          return;
+        }
+
+        const headers = rows[0];
+        const sourceColIndex = headers.findIndex(h => h.toLowerCase() === 'source');
+        const urlColIndex = headers.findIndex(h => h.toLowerCase() === 'url');
+
+        if (sourceColIndex === -1 || urlColIndex === -1) {
+          toast.error("CSV must have 'Source' and 'URL' columns");
+          return;
+        }
+
+        const preview = rows.slice(1, 6).map(row => ({
+          name: row[sourceColIndex] || '',
+          url: row[urlColIndex] || ''
+        })).filter(item => item.name && item.url);
+
+        if (preview.length === 0) {
+          toast.error("No valid rows found in CSV");
+          return;
+        }
+
+        setCsvFile(text);
+        setCsvPreview(preview);
+        toast.success(`Loaded ${preview.length}+ rows from CSV`);
+      } catch (err) {
+        toast.error(`Failed to parse CSV: ${err.message}`);
       }
+    };
 
-      const preview = rows.slice(1, 6).map(row => ({
-        name: row[sourceColIndex],
-        url: row[urlColIndex]
-      })).filter(item => item.name && item.url);
-
-      setCsvPreview(preview);
-      setCsvFile(text);
+    reader.onerror = () => {
+      toast.error("Failed to read file");
     };
 
     reader.readAsText(file);
