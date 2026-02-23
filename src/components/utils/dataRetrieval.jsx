@@ -110,34 +110,30 @@ export async function retrieveNewslettersForCompany(companyName, maxItems = 50) 
 }
 
 export async function retrieveNewslettersForSearch(filters) {
-  const newsletters = await base44.entities.Newsletter.list("-publication_date", 500);
+  // Build server-side query for date range and sources
+  const query = {};
   
-  let filtered = newsletters;
-  
-  // Date range
-  if (filters.startDate) {
-    filtered = filtered.filter(n => {
-      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-      return pubDate >= new Date(filters.startDate);
-    });
+  if (filters.startDate || filters.endDate) {
+    query.publication_date = {};
+    if (filters.startDate) {
+      query.publication_date.$gte = filters.startDate;
+    }
+    if (filters.endDate) {
+      query.publication_date.$lte = filters.endDate;
+    }
   }
   
-  if (filters.endDate) {
-    filtered = filtered.filter(n => {
-      const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-      return pubDate <= new Date(filters.endDate);
-    });
-  }
-  
-  // Sources
   if (filters.sources && filters.sources.length > 0) {
-    filtered = filtered.filter(n => filters.sources.includes(n.source_name));
+    query.source_name = { $in: filters.sources };
   }
   
-  // Keywords
+  const maxItems = filters.maxItems || 100;
+  const newsletters = await base44.entities.Newsletter.filter(query, "-publication_date", maxItems);
+  
+  // Client-side keyword filtering (can't be done server-side)
   if (filters.keywords) {
     const keywords = filters.keywords.toLowerCase().split(/\s+/).filter(k => k.length > 0);
-    filtered = filtered.filter(n => {
+    return newsletters.filter(n => {
       const searchText = [
         n.title || '',
         n.summary || '',
@@ -150,7 +146,7 @@ export async function retrieveNewslettersForSearch(filters) {
     });
   }
   
-  return filtered.slice(0, filters.maxItems || 100);
+  return newsletters;
 }
 
 export async function retrieveCustomPackItems(packId) {
