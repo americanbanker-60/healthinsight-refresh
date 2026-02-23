@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Search, CheckCircle2, AlertCircle, ExternalLink, FileText, Upload, Download } from "lucide-react";
+import { Loader2, Search, CheckCircle2, AlertCircle, ExternalLink, FileText, Upload, Download, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+
+const QUEUE_STORAGE_KEY = "bulkAnalysisQueue";
+const PROCESSED_STORAGE_KEY = "bulkAnalysisProcessed";
 
 export default function BulkAnalysis({ sourceName, onComplete }) {
   const navigate = useNavigate();
@@ -33,6 +36,23 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
   const [consolidatedReport, setConsolidatedReport] = useState(null);
   const [isExportingBatchPDF, setIsExportingBatchPDF] = useState(false);
   const [isBatchAnalyzing, setIsBatchAnalyzing] = useState(false);
+  const [pendingQueue, setPendingQueue] = useState(null);
+
+  // Check for unfinished queue on mount
+  useEffect(() => {
+    const queue = localStorage.getItem(QUEUE_STORAGE_KEY);
+    if (queue) {
+      try {
+        const parsed = JSON.parse(queue);
+        if (parsed && parsed.length > 0) {
+          setPendingQueue(parsed);
+        }
+      } catch (err) {
+        console.error("Failed to parse queue:", err);
+        localStorage.removeItem(QUEUE_STORAGE_KEY);
+      }
+    }
+  }, []);
 
   const extractMainContent = (html) => {
     const parser = new DOMParser();
@@ -340,6 +360,216 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
     setSelectedNewsletters(newSelected);
   };
 
+  const saveQueue = (queue) => {
+    localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
+  };
+
+  const clearQueue = () => {
+    localStorage.removeItem(QUEUE_STORAGE_KEY);
+    localStorage.removeItem(PROCESSED_STORAGE_KEY);
+    setPendingQueue(null);
+  };
+
+  const resumeAnalysis = async () => {
+    if (!pendingQueue || pendingQueue.length === 0) return;
+
+    setIsProcessing(true);
+    setProcessedCount(0);
+    setProcessingProgress(0);
+    let completed = 0;
+    let newProcessedNewsletters = [];
+
+    try {
+      // Load previously processed items
+      const processed = localStorage.getItem(PROCESSED_STORAGE_KEY);
+      if (processed) {
+        newProcessedNewsletters = JSON.parse(processed);
+        setProcessedNewsletters(newProcessedNewsletters);
+      }
+
+      for (let i = 0; i < pendingQueue.length; i++) {
+        const item = pendingQueue[i];
+        
+        // Check if already processed
+        if (newProcessedNewsletters.some(p => p.url === item.url)) {
+          console.log(`Skipping already processed: ${item.url}`);
+          completed++;
+          continue;
+        }
+
+        // Check database for duplicates before processing
+        if (item.url) {
+          const existingRecords = await base44.entities.Newsletter.filter({ source_url: item.url });
+          if (existingRecords.length > 0) {
+            console.log(`Skipping existing in database: ${item.url}`);
+            completed++;
+            // Remove from queue
+            pendingQueue.splice(i, 1);
+            i--;
+            continue;
+          }
+        }
+
+        try {
+          let contentSource;
+          if (item.rawContent) {
+            const cleaned = cleanPastedContent(item.rawContent);
+            contentSource = `Newsletter content:\n\n${cleaned}`;
+          } else {
+            try {
+              const response = await fetch(item.url);
+              const html = await response.text();
+              const cleanContent = extractMainContent(html);
+              contentSource = cleanContent && cleanContent.length > 200 
+                ? `Newsletter content:\n\n${cleanContent}`
+                : `Newsletter URL: ${item.url}`;
+            } catch (fetchErr) {
+              contentSource = `Newsletter URL: ${item.url}`;
+            }
+          }
+
+          const analysis = await base44.integrations.Core.InvokeLLM({
+            prompt: `You are a seasoned healthcare investment banking and private equity analyst.
+
+Analyze this healthcare newsletter and extract ACTIONABLE investment intelligence:
+
+${contentSource}
+
+${!contentSource.includes('Newsletter URL:') ? 'The content above has been extracted and cleaned from the newsletter.' : ''}
+
+Extract structured insights:
+
+**TLDR** - Sharp 2-3 sentence summary for executives
+
+**KEY STATISTICS** - Extract all numbers, metrics, data points (deal values, growth rates, market sizes, patient volumes, cost savings, etc.). For each stat, provide the figure and context.
+
+**KEY TAKEAWAYS** - 5-7 insights for investors:
+- Strategic implications for healthcare investors
+- Market shifts or inflection points
+- Competitive dynamics emerging
+- Regulatory or reimbursement trends to monitor
+
+**RECOMMENDED ACTIONS** - 3-5 concrete next steps healthcare executives should consider
+
+**THEMES** - 3-5 major themes with context:
+- Why this matters NOW
+- Investment opportunities or risks
+- Which sectors/subsectors affected
+- 12-24 month outlook
+
+**M&A ACTIVITIES** - Analyze deals with strategic context:
+- Strategic rationale (scale, tech acquisition, vertical integration)
+- Valuation multiples if available
+- Comparison to recent comparable transactions
+- What this signals about sector consolidation
+
+**FUNDING ROUNDS** - Venture insights:
+- What funding signals about investor confidence
+- Lead investors and their thesis
+- Valuation vs sector benchmarks
+- Milestones or catalysts
+
+**KEY PLAYERS** - Companies making strategic moves
+
+**SENTIMENT** - Overall market tone
+
+**SUMMARY** - 2-3 paragraph executive summary for investment committee`,
+            add_context_from_internet: contentSource.includes('Newsletter URL:'),
+            response_json_schema: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                publication_date: { type: "string" },
+                tldr: { type: "string" },
+                key_statistics: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      figure: { type: "string" },
+                      context: { type: "string" }
+                    }
+                  }
+                },
+                recommended_actions: { type: "array", items: { type: "string" } },
+                key_takeaways: { type: "array", items: { type: "string" } },
+                themes: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      theme: { type: "string" },
+                      description: { type: "string" }
+                    }
+                  }
+                },
+                ma_activities: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      acquirer: { type: "string" },
+                      target: { type: "string" },
+                      deal_value: { type: "string" },
+                      description: { type: "string" }
+                    }
+                  }
+                },
+                funding_rounds: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      company: { type: "string" },
+                      amount: { type: "string" },
+                      round_type: { type: "string" },
+                      description: { type: "string" }
+                    }
+                  }
+                },
+                key_players: { type: "array", items: { type: "string" } },
+                summary: { type: "string" },
+                sentiment: { type: "string", enum: ["positive", "neutral", "negative", "mixed"] }
+              }
+            }
+          });
+
+          const createdNewsletter = await base44.entities.Newsletter.create({
+            ...analysis,
+            source_url: item.url || "Manual Entry",
+            title: analysis.title || item.title,
+            publication_date: analysis.publication_date || item.date,
+            source_name: sourceName || undefined
+          });
+
+          newProcessedNewsletters.push(createdNewsletter);
+          completed++;
+          
+          // Update queue and storage
+          pendingQueue.splice(i, 1);
+          i--;
+          saveQueue(pendingQueue);
+          localStorage.setItem(PROCESSED_STORAGE_KEY, JSON.stringify(newProcessedNewsletters));
+        } catch (err) {
+          console.error(`Error processing ${item.title}:`, err);
+          completed++;
+        }
+
+        setProcessedCount(completed);
+        setProcessingProgress((completed / pendingQueue.length) * 100);
+      }
+
+      setProcessedNewsletters(newProcessedNewsletters);
+      clearQueue();
+      toast.success(`Resumed analysis: ${completed} items processed`);
+    } catch (err) {
+      console.error("Resume error:", err);
+      toast.error("Failed to resume analysis");
+    }
+
+    setIsProcessing(false);
+  };
+
   const batchAnalyzeViaFunction = async () => {
     if (inputMethod !== "manual" || !manualUrls.trim()) {
       toast.error("Please enter URLs in Manual URLs tab");
@@ -356,6 +586,16 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
       return;
     }
 
+    // Save queue to local storage for persistence
+    const queue = urls.map((url, idx) => ({
+      url,
+      title: `Newsletter ${idx + 1}`,
+      date: '',
+      preview: ''
+    }));
+    saveQueue(queue);
+    setPendingQueue(queue);
+
     setIsBatchAnalyzing(true);
     setProcessedCount(0);
     setProcessingProgress(0);
@@ -363,6 +603,15 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
 
     for (let i = 0; i < urls.length; i++) {
       try {
+        // Check database first to avoid duplicates
+        const existing = await base44.entities.Newsletter.filter({ source_url: urls[i] });
+        if (existing.length > 0) {
+          console.log(`Skipping duplicate: ${urls[i]}`);
+          setProcessedCount(i + 1);
+          setProcessingProgress(((i + 1) / urls.length) * 100);
+          continue;
+        }
+
         const response = await base44.functions.invoke('analyzeNewsletterUrl', { url: urls[i] });
         
         if (response.data?.success) {
@@ -382,8 +631,13 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
 
       setProcessedCount(i + 1);
       setProcessingProgress(((i + 1) / urls.length) * 100);
+      
+      // Update queue
+      queue.splice(0, 1);
+      saveQueue(queue);
     }
 
+    clearQueue();
     setIsBatchAnalyzing(false);
     if (processedNewsletters.length > 0) {
       toast.success(`Successfully analyzed ${processedNewsletters.length} newsletters`);
@@ -394,15 +648,20 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
     const selected = newsletters.filter((_, idx) => selectedNewsletters.has(idx));
     if (selected.length === 0) return;
 
+    // Save queue to local storage for persistence
+    saveQueue(selected);
+    setPendingQueue(selected);
+
     setIsProcessing(true);
     setProcessedCount(0);
     setProcessingProgress(0);
     setProcessedNewsletters([]);
 
     let skippedCount = 0;
+    let remaining = [...selected];
 
-    for (let i = 0; i < selected.length; i++) {
-      const newsletter = selected[i];
+    for (let i = 0; i < remaining.length; i++) {
+      const newsletter = remaining[i];
       
       // Check database for each URL before processing
       if (newsletter.url) {
@@ -410,8 +669,11 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
         if (existingRecords.length > 0) {
           console.log(`Skipping duplicate: ${newsletter.url}`);
           skippedCount++;
-          setProcessedCount(i + 1);
-          setProcessingProgress(((i + 1) / selected.length) * 100);
+          remaining.splice(i, 1);
+          i--;
+          saveQueue(remaining);
+          setProcessedCount(selected.length - remaining.length);
+          setProcessingProgress(((selected.length - remaining.length) / selected.length) * 100);
           continue;
         }
       }
@@ -553,14 +815,23 @@ Extract structured insights:
         });
 
         setProcessedNewsletters(prev => [...prev, createdNewsletter]);
+        
+        // Remove from queue
+        remaining.splice(i, 1);
+        i--;
+        saveQueue(remaining);
       } catch (err) {
         console.error(`Error processing ${newsletter.title}:`, err);
+        remaining.splice(i, 1);
+        i--;
+        saveQueue(remaining);
       }
 
-      setProcessedCount(i + 1);
-      setProcessingProgress(((i + 1) / selected.length) * 100);
+      setProcessedCount(selected.length - remaining.length);
+      setProcessingProgress(((selected.length - remaining.length) / selected.length) * 100);
     }
 
+    clearQueue();
     setIsProcessing(false);
     
     // Show summary if duplicates were skipped
@@ -803,6 +1074,39 @@ Format as markdown with clear sections.`,
 
   return (
     <div className="space-y-6">
+      {pendingQueue && pendingQueue.length > 0 && (
+        <Alert className="border-amber-200 bg-amber-50">
+          <RefreshCw className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-900">
+            <div className="flex items-center justify-between">
+              <span>
+                Analysis interrupted: {pendingQueue.length} items remaining in queue
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={resumeAnalysis}
+                  disabled={isProcessing}
+                  className="bg-amber-50 border-amber-300"
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Resume Analysis
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={clearQueue}
+                  className="text-amber-600 hover:text-amber-700"
+                >
+                  Clear Queue
+                </Button>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {error && (
         <Alert variant={error.includes("Found") ? "default" : "destructive"}>
           <AlertCircle className="h-4 w-4" />
