@@ -399,22 +399,21 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
     setProcessingProgress(0);
     setProcessedNewsletters([]);
 
-    // Check for existing newsletters by URL
-    const existingNewsletters = await base44.entities.Newsletter.list();
-    const existingUrls = new Set(existingNewsletters.map(n => n.source_url).filter(Boolean));
-
     let skippedCount = 0;
 
     for (let i = 0; i < selected.length; i++) {
       const newsletter = selected[i];
       
-      // Skip if URL already exists (duplicates)
-      if (newsletter.url && existingUrls.has(newsletter.url)) {
-        console.log(`Skipping duplicate: ${newsletter.url}`);
-        skippedCount++;
-        setProcessedCount(i + 1);
-        setProcessingProgress(((i + 1) / selected.length) * 100);
-        continue;
+      // Check database for each URL before processing
+      if (newsletter.url) {
+        const existingRecords = await base44.entities.Newsletter.filter({ source_url: newsletter.url });
+        if (existingRecords.length > 0) {
+          console.log(`Skipping duplicate: ${newsletter.url}`);
+          skippedCount++;
+          setProcessedCount(i + 1);
+          setProcessingProgress(((i + 1) / selected.length) * 100);
+          continue;
+        }
       }
       
       try {
