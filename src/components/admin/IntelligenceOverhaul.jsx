@@ -72,6 +72,27 @@ export default function IntelligenceOverhaul() {
     }
   };
 
+  const handleScrapeAllSources = async () => {
+    setProcessing(true);
+
+    try {
+      const response = await base44.functions.invoke('scrapeAllSources');
+      
+      if (response.data?.success) {
+        toast.success(
+          `Scraped ${response.data.processed} sources! ${response.data.errors > 0 ? `${response.data.errors} errors` : 'All successful'}`
+        );
+        await fetchStats();
+      } else {
+        toast.error('Scraping failed. Check logs for details.');
+      }
+    } catch (error) {
+      toast.error(`Error: ${error.message}`);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const progressPercent = stats.total > 0 ? (stats.analyzed / stats.total) * 100 : 0;
 
   return (
