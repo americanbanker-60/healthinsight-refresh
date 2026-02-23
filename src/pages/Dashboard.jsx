@@ -10,6 +10,7 @@ import StatsOverview from "../components/dashboard/StatsOverview";
 import PersistentFilters from "../components/filters/PersistentFilters";
 import TrendChart from "../components/dashboard/TrendChart";
 import TrendDiscovery from "../components/trends/TrendDiscovery";
+import SourceDistribution from "../components/dashboard/SourceDistribution";
 import { GridCardSkeleton } from "../components/common/CardSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,6 +49,14 @@ export default function Dashboard() {
   });
 
   const displayVariant = userConfig?.newsletter_display || "full";
+
+  const handleSourceSelect = (sourceName) => {
+    setActiveTab(sourceName);
+    setPersistentFilters(prev => ({
+      ...prev,
+      sources: [sourceName]
+    }));
+  };
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto w-full overflow-x-hidden">
@@ -92,6 +101,10 @@ export default function Dashboard() {
       />
 
       <TrendDiscovery />
+
+      {newsletters.length > 0 && (
+        <SourceDistribution onSourceSelect={handleSourceSelect} />
+      )}
 
       {userConfig.show_charts && newsletters.length > 0 && (
         <TrendChart newsletters={newsletters} />
