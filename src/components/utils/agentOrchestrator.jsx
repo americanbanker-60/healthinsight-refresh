@@ -9,6 +9,42 @@ import { base44 } from "@/api/base44Client";
 
 const MAX_RETRIES = 2;
 
+// Cache for AI config to avoid repeated database calls
+let cachedFormattingRules = null;
+let cachedShortFormPrompt = null;
+
+async function getFormattingRules() {
+  if (cachedFormattingRules) return cachedFormattingRules;
+  
+  try {
+    const configs = await base44.entities.AIConfig.filter({ 
+      config_key: "formatting_rules", 
+      active: true 
+    });
+    cachedFormattingRules = configs[0]?.content || "";
+    return cachedFormattingRules;
+  } catch (error) {
+    console.warn("Failed to fetch formatting rules:", error);
+    return "";
+  }
+}
+
+async function getShortFormPrompt() {
+  if (cachedShortFormPrompt) return cachedShortFormPrompt;
+  
+  try {
+    const configs = await base44.entities.AIConfig.filter({ 
+      config_key: "short_form_system_prompt", 
+      active: true 
+    });
+    cachedShortFormPrompt = configs[0]?.content || "";
+    return cachedShortFormPrompt;
+  } catch (error) {
+    console.warn("Failed to fetch short form prompt:", error);
+    return "";
+  }
+}
+
 export async function orchestrateAgent(config) {
   const {
     agentType,
