@@ -12,14 +12,19 @@ export async function retrieveNewslettersForTopic(topicId, dateRange = 180) {
   
   if (!topic) return [];
   
-  const newsletters = await base44.entities.Newsletter.list("-publication_date", 500);
-  const keywords = Array.isArray(topic.keywords) ? topic.keywords : [topic.keywords];
   const cutoffDate = subDays(new Date(), dateRange);
   
+  // Server-side date filtering
+  const newsletters = await base44.entities.Newsletter.filter(
+    { publication_date: { $gte: cutoffDate.toISOString().split('T')[0] } },
+    "-publication_date",
+    500
+  );
+  
+  // Client-side keyword matching (can't be done server-side)
+  const keywords = Array.isArray(topic.keywords) ? topic.keywords : [topic.keywords];
+  
   return newsletters.filter(n => {
-    const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-    if (pubDate < cutoffDate) return false;
-    
     const searchText = [
       n.title || '',
       n.summary || '',
