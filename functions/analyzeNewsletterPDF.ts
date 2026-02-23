@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { file_url } = await req.json();
+    const { file_url, sourceName } = await req.json();
 
     if (!file_url) {
       return Response.json({ error: 'file_url required' }, { status: 400 });
@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       source_type: 'PDF',
       content_type: 'PDF',
       raw_input: pdfData.summary ? pdfData.summary.substring(0, 50000) : '',
-      source_name: 'PDF Upload',
+      source_name: sourceName || 'PDF Upload',
       publication_date: new Date().toISOString().split('T')[0],
       date_added_to_app: new Date().toISOString(),
       publication_date_confidence: 'medium',
