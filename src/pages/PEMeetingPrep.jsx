@@ -183,6 +183,7 @@ export default function PEMeetingPrep() {
   
   const [generating, setGenerating] = useState(false);
   const [viewingId, setViewingId] = useState(null);
+  const [discoveredHoldings, setDiscoveredHoldings] = useState([]);
 
   const { data: briefs = [] } = useQuery({
     queryKey: ['peMeetingBriefs'],
@@ -223,11 +224,66 @@ export default function PEMeetingPrep() {
 
   const canGenerate = form.companyName.trim() && form.meetingType;
 
+  const discoverHoldings = async (peFirmName) => {
+    try {
+      const holdingsPrompt = `Research the current and past healthcare portfolio companies of ${peFirmName}. 
+      
+Return ONLY a valid JSON array of company objects with this exact structure:
+[
+  {
+    "company_name": "string",
+    "sector": "string",
+    "holding_status": "current|past",
+    "acquisition_date": "YYYY-MM-DD|null",
+    "exit_date": "YYYY-MM-DD|null"
+  }
+]
+
+Use web search to find accurate information about all their healthcare holdings. Be comprehensive. If unsure of exact dates, use null.`;
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: holdingsPrompt,
+        add_context_from_internet: true,
+        response_json_schema: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              company_name: { type: "string" },
+              sector: { type: "string" },
+              holding_status: { type: "string" },
+              acquisition_date: { type: "string" },
+              exit_date: { type: "string" }
+            }
+          }
+        }
+      });
+
+      const holdings = Array.isArray(result) ? result : [];
+      setDiscoveredHoldings(holdings);
+      
+      if (holdings.length > 0) {
+        toast.success(`Discovered ${holdings.length} portfolio companies for ${peFirmName}`);
+      }
+      
+      return holdings;
+    } catch (err) {
+      console.error("Holdings discovery error:", err);
+      toast.error("Failed to discover portfolio companies");
+      return [];
+    }
+  };
+
   const generate = async () => {
     if (!canGenerate || generating) return;
 
     setGenerating(true);
     try {
+      // If a PE Firm name is provided, discover its holdings first
+      if (form.sponsorName.trim()) {
+        await discoverHoldings(form.sponsorName.trim());
+      }
+
       const validUrls = form.urls.filter(u => {
         const trimmed = u.trim();
         if (!trimmed) return false;
