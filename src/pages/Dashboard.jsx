@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Plus, FileText, Settings, HelpCircle } from "lucide-react";
+import { Plus, FileText, Settings, HelpCircle, Loader2 } from "lucide-react";
 import KeyFeaturesModal from "../components/dashboard/KeyFeaturesModal";
 import EmptyState from "../components/common/EmptyState";
 import NewsletterCard from "../components/dashboard/NewsletterCard";
@@ -33,6 +33,9 @@ export default function Dashboard() {
     sources,
     userConfig,
     isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
     persistentFilters,
     setPersistentFilters,
     availableThemes,
@@ -129,20 +132,40 @@ export default function Dashboard() {
               onAction={() => window.location.href = createPageUrl("AnalyzeNewsletter")}
             />
           ) : (
-            filteredNewsletters.map((newsletter, index) => (
-              <div key={newsletter.id}>
-                <NewsletterCard newsletter={newsletter} index={index} variant={displayVariant} />
-                {newsletter.matchedFocusAreas && newsletter.matchedFocusAreas.length > 0 && (
-                  <div className="flex gap-1 mt-2 ml-2">
-                    {newsletter.matchedFocusAreas.map(focus => (
-                      <Badge key={focus} className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
-                        {focus}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))
+            <>
+              {filteredNewsletters.map((newsletter, index) => (
+                <div key={newsletter.id}>
+                  <NewsletterCard newsletter={newsletter} index={index} variant={displayVariant} />
+                  {newsletter.matchedFocusAreas && newsletter.matchedFocusAreas.length > 0 && (
+                    <div className="flex gap-1 mt-2 ml-2">
+                      {newsletter.matchedFocusAreas.map(focus => (
+                        <Badge key={focus} className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
+                          {focus}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {hasMore && !isLoadingMore && (
+                <div className="mt-6 text-center">
+                  <Button
+                    onClick={loadMore}
+                    variant="outline"
+                    className="px-8"
+                  >
+                    Load More
+                  </Button>
+                </div>
+              )}
+              
+              {isLoadingMore && (
+                <div className="mt-6 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-slate-400" />
+                </div>
+              )}
+            </>
           )}
       </div>
 
