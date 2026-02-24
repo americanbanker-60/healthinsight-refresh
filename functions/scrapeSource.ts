@@ -39,8 +39,10 @@ Deno.serve(async (req) => {
     const existingUrls = new Set(allNewsletters.map(n => n.source_url).filter(Boolean));
 
     // Use AI to scrape and extract newsletter data from the source with 40-second timeout
-    const aiPromise = base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: `
+    let aiResponse;
+    try {
+      const aiPromise = base44.asServiceRole.integrations.Core.InvokeLLM({
+        prompt: `
 You are analyzing a healthcare newsletter source website: ${source.url}
 
 Task: Extract the 5 most recent newsletter articles/publications from this source.
@@ -58,103 +60,96 @@ For each newsletter found, extract:
 - key_players: Array of important companies/organizations mentioned
 - sentiment: Overall sentiment (positive, neutral, negative, or mixed)
 
-Only include newsletters that are NOT already in this list of existing URLs:
-${Array.from(existingUrls).slice(0, 20).join('\n')}
+IMPORTANT: Only include newsletters that are NOT already in this list of existing URLs:
+${Array.from(existingUrls).slice(0, 100).join('\n')}
 
 Be thorough and accurate. If you can't find clear newsletters, return an empty array.
-      `,
-      add_context_from_internet: true,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          newsletters: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                title: { type: "string" },
-                source_url: { type: "string" },
-                publication_date: { type: "string" },
-                tldr: { type: "string" },
-                key_takeaways: { type: "array", items: { type: "string" } },
-                key_statistics: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      figure: { type: "string" },
-                      context: { type: "string" }
+        `,
+        add_context_from_internet: true,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            newsletters: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  source_url: { type: "string" },
+                  publication_date: { type: "string" },
+                  tldr: { type: "string" },
+                  key_takeaways: { type: "array", items: { type: "string" } },
+                  key_statistics: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        figure: { type: "string" },
+                        context: { type: "string" }
+                      }
                     }
-                  }
-                },
-                themes: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      theme: { type: "string" },
-                      description: { type: "string" }
+                  },
+                  themes: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        theme: { type: "string" },
+                        description: { type: "string" }
+                      }
                     }
-                  }
-                },
-                ma_activities: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      acquirer: { type: "string" },
-                      target: { type: "string" },
-                      deal_value: { type: "string" },
-                      description: { type: "string" }
+                  },
+                  ma_activities: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        acquirer: { type: "string" },
+                        target: { type: "string" },
+                        deal_value: { type: "string" },
+                        description: { type: "string" }
+                      }
                     }
-                  }
-                },
-                funding_rounds: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      company: { type: "string" },
-                      amount: { type: "string" },
-                      round_type: { type: "string" },
-                      description: { type: "string" }
+                  },
+                  funding_rounds: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        company: { type: "string" },
+                        amount: { type: "string" },
+                        round_type: { type: "string" },
+                        description: { type: "string" }
+                      }
                     }
-                  }
+                  },
+                  key_players: { type: "array", items: { type: "string" } },
+                  sentiment: { type: "string", enum: ["positive", "neutral", "negative", "mixed"] }
                 },
-                key_players: { type: "array", items: { type: "string" } },
-                sentiment: { type: "string", enum: ["positive", "neutral", "negative", "mixed"] }
-              },
-              required: ["title", "source_url"]
+                required: ["title", "source_url"]
+              }
             }
           }
         }
-      }
-    });
+      });
 
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('AI Timeout')), 40000)
-    );
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('AI Timeout')), 40000)
+      );
 
-    let aiResponse;
-    try {
       aiResponse = await Promise.race([aiPromise, timeoutPromise]);
     } catch (error) {
-      if (error.message === 'AI Timeout') {
-        // Update ScrapeJob if this was triggered by scrapeAllSources
-        const scrapeJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
-          { source_id, status: 'running' },
-          '-created_date',
-          1
-        );
-        if (scrapeJobs.length > 0) {
-          await base44.asServiceRole.entities.ScrapeJob.update(scrapeJobs[0].id, {
-            status: 'failed',
-            completed_at: new Date().toISOString(),
-            error_message: 'AI Timeout'
-          });
-        }
-      }
-      throw error;
+      console.error('AI extraction failed:', error);
+      
+      // Return success response with zero count to prevent ScrapeJob from hanging
+      return Response.json({
+        success: true,
+        message: `AI extraction failed: ${error.message}`,
+        source_name: source.name,
+        new_count: 0,
+        error: error.message,
+        checked_at: new Date().toISOString()
+      });
     }
 
     const newsletters = aiResponse.newsletters || [];
