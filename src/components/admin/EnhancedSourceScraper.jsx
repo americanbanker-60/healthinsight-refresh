@@ -25,12 +25,27 @@ export default function EnhancedSourceScraper() {
     queryKey: ['scrapeHistory'],
     queryFn: () => base44.entities.ScrapeJob.list("-created_date", 100),
     initialData: [],
+    refetchInterval: 10000, // Poll every 10 seconds
   });
 
   const { data: schedules = [] } = useQuery({
     queryKey: ['scrapeSchedules'],
     queryFn: () => base44.entities.ScheduledScrape.list("source_name"),
     initialData: [],
+  });
+
+  const resumeAllMutation = useMutation({
+    mutationFn: async () => {
+      const response = await base44.functions.invoke('scrapeAllSources', { mode: 'resume' });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
+      toast.success(`Started processing jobs in background`);
+    },
+    onError: (error) => {
+      toast.error(`Failed to start: ${error.message}`);
+    },
   });
 
   const scrapeMutation = useMutation({
@@ -134,6 +149,9 @@ export default function EnhancedSourceScraper() {
   
   // Calculate progress: completed jobs / total active sources
   const completedJobs = scrapeHistory.filter(j => j.status === 'completed').length;
+  const pendingJobs = scrapeHistory.filter(j => j.status === 'pending').length;
+  const runningJobs = scrapeHistory.filter(j => j.status === 'running').length;
+  const failedJobs = scrapeHistory.filter(j => j.status === 'failed').length;
   const progressPercentage = activeSources.length > 0 
     ? Math.round((completedJobs / activeSources.length) * 100) 
     : 0;
@@ -262,31 +280,24 @@ export default function EnhancedSourceScraper() {
             <span className="text-sm font-bold text-slate-900">{progressPercentage}%</span>
           </div>
           <Progress value={progressPercentage} className="h-2" />
-          <div className="flex items-center justify-between mt-2 text-xs text-slate-600">
-            <span>{completedJobs} completed</span>
-            <span>{activeSources.length} total sources</span>
+          <div className="grid grid-cols-4 gap-2 mt-3 text-xs">
+            <div className="text-center">
+              <div className="font-bold text-green-600">{completedJobs}</div>
+              <div className="text-slate-500">Completed</div>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-blue-600">{runningJobs}</div>
+              <div className="text-slate-500">Running</div>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-amber-600">{pendingJobs}</div>
+              <div className="text-slate-500">Pending</div>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-red-600">{failedJobs}</div>
+              <div className="text-slate-500">Failed</div>
+            </div>
           </div>
-        </div>
-
-        {/* Resume Pending Jobs Button */}
-        <div className="mb-4">
-          <Button
-            onClick={() => resumePendingMutation.mutate()}
-            disabled={resumePendingMutation.isPending}
-            className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
-          >
-            {resumePendingMutation.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Resuming...
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4 mr-2" />
-                Resume Pending Jobs
-              </>
-            )}
-          </Button>
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
@@ -353,34 +364,21 @@ export default function EnhancedSourceScraper() {
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4 mt-4">
-            {/* Progress Bar for History Tab */}
-            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-700">Scraping Progress</span>
-                <span className="text-sm font-bold text-slate-900">{progressPercentage}%</span>
-              </div>
-              <Progress value={progressPercentage} className="h-2" />
-              <div className="flex items-center justify-between mt-2 text-xs text-slate-600">
-                <span>{completedJobs} completed</span>
-                <span>{activeSources.length} total sources</span>
-              </div>
-            </div>
-
-            {/* Retry Failed Jobs Button */}
+            {/* Resume All Button */}
             <Button
-              onClick={() => retryFailedMutation.mutate()}
-              disabled={retryFailedMutation.isPending}
-              className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
+              onClick={() => resumeAllMutation.mutate()}
+              disabled={resumeAllMutation.isPending || (pendingJobs === 0 && failedJobs === 0)}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
             >
-              {retryFailedMutation.isPending ? (
+              {resumeAllMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Retrying...
+                  Processing...
                 </>
               ) : (
                 <>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Retry Failed Jobs
+                  <Play className="w-4 h-4 mr-2" />
+                  Resume Pending Jobs ({pendingJobs + failedJobs})
                 </>
               )}
             </Button>

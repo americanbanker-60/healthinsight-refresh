@@ -9,109 +9,97 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    // Get all active sources
-    const sources = await base44.asServiceRole.entities.Source.list('-created_date', 1000);
-    const activeSources = sources.filter(s => !s.is_deleted && s.url);
+    const { mode } = await req.json().catch(() => ({}));
 
-    // Get today's date range for checking existing jobs
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+    // Find pending or failed jobs (first 10)
+    const pendingJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
+      { status: 'pending' },
+      '-created_date',
+      10
+    );
+    
+    const failedJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
+      { status: 'failed' },
+      '-created_date',
+      10
+    );
 
-    // Get existing jobs from today
-    const existingJobs = await base44.asServiceRole.entities.ScrapeJob.list('-created_date', 1000);
-    const todayJobsBySource = new Map();
-    existingJobs.forEach(job => {
-      const jobDate = new Date(job.created_date);
-      if (jobDate >= todayStart && jobDate <= todayEnd) {
-        todayJobsBySource.set(job.source_id, job);
-      }
-    });
+    const jobsToProcess = [...pendingJobs, ...failedJobs].slice(0, 10);
 
-    // Create pending jobs only for sources without today's job
-    const jobs = [];
-    for (const source of activeSources) {
-      if (!todayJobsBySource.has(source.id)) {
-        const job = await base44.asServiceRole.entities.ScrapeJob.create({
-          source_id: source.id,
-          source_name: source.name,
-          status: 'pending',
-          triggered_by: 'bulk'
+    if (jobsToProcess.length === 0) {
+      return Response.json({
+        success: true,
+        message: 'No pending or failed jobs to process',
+        processed: 0
+      });
+    }
+
+    // Process the chunk
+    const results = [];
+    for (const job of jobsToProcess) {
+      try {
+        // Update to running
+        await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
+          status: 'running',
+          started_at: new Date().toISOString()
         });
-        jobs.push(job);
-      } else {
-        jobs.push(todayJobsBySource.get(source.id));
+
+        // Scrape the source
+        const result = await base44.asServiceRole.functions.invoke('scrapeSource', { 
+          source_id: job.source_id 
+        });
+
+        // Update with results
+        await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          newsletters_found: result.data?.new_count || 0,
+          newsletters_created: result.data?.new_count || 0,
+          metadata: {
+            companies_created: result.data?.companies_created || [],
+            topics_matched: result.data?.topic_assignments?.length || 0
+          }
+        });
+
+        results.push({ success: true, source: job.source_name });
+      } catch (error) {
+        await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
+          status: 'failed',
+          completed_at: new Date().toISOString(),
+          error_message: error.message
+        });
+        results.push({ success: false, source: job.source_name, error: error.message });
       }
     }
 
-    // Start background processing (don't wait for completion)
+    // Self-invoke after 30 seconds if more jobs exist
     setTimeout(async () => {
-      // Check if any jobs are already running
-      const runningJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
-        { status: 'running' },
-        '-created_date',
-        100
-      );
+      try {
+        const moreJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
+          { status: 'pending' },
+          '-created_date',
+          1
+        );
+        
+        const moreFailedJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
+          { status: 'failed' },
+          '-created_date',
+          1
+        );
 
-      if (runningJobs.length > 0) {
-        console.log(`Skipping: ${runningJobs.length} jobs already running`);
-        return;
-      }
-
-      // Get pending jobs
-      const pendingJobs = jobs.filter(j => j.status === 'pending');
-
-      // Process 5 jobs every 20 seconds
-      for (let i = 0; i < pendingJobs.length; i += 5) {
-        const batch = pendingJobs.slice(i, i + 5);
-
-        // Process batch in parallel
-        await Promise.all(batch.map(async (job) => {
-          try {
-            // Update to running
-            await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
-              status: 'running',
-              started_at: new Date().toISOString()
-            });
-
-            // Scrape the source
-            const result = await base44.asServiceRole.functions.invoke('scrapeSource', { 
-              source_id: job.source_id 
-            });
-
-            // Update with results
-            await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
-              status: 'completed',
-              completed_at: new Date().toISOString(),
-              newsletters_found: result.data?.new_count || 0,
-              newsletters_created: result.data?.new_count || 0,
-              metadata: {
-                companies_created: result.data?.companies_created || [],
-                topics_matched: result.data?.topic_assignments?.length || 0
-              }
-            });
-          } catch (error) {
-            await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
-              status: 'failed',
-              completed_at: new Date().toISOString(),
-              error_message: error.message
-            });
-          }
-        }));
-
-        // 20-second delay between batches
-        if (i + 5 < pendingJobs.length) {
-          await new Promise(resolve => setTimeout(resolve, 20000));
+        if (moreJobs.length > 0 || moreFailedJobs.length > 0) {
+          await base44.asServiceRole.functions.invoke('scrapeAllSources', { mode: 'resume' });
         }
+      } catch (error) {
+        console.error('Error self-invoking:', error);
       }
-    }, 0);
+    }, 30000);
 
     return Response.json({
       success: true,
-      message: `Started scraping ${activeSources.length} sources in background`,
-      total_sources: activeSources.length,
-      jobs_created: jobs.length
+      message: `Processed ${jobsToProcess.length} jobs`,
+      processed: jobsToProcess.length,
+      results
     });
   } catch (error) {
     console.error('Error in scrapeAllSources:', error);
