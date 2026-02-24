@@ -316,6 +316,19 @@ export default function EnhancedSourceScraper() {
           </TabsList>
 
           <TabsContent value="scraper" className="space-y-4 mt-4">
+            {/* Activity Indicator */}
+            {(runningJobs > 0 || pendingJobs > 0) && (
+              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                  <span className="text-sm font-medium text-blue-900">
+                    {runningJobs > 0 ? `${runningJobs} jobs running...` : `${pendingJobs} jobs queued`}
+                  </span>
+                </div>
+                <span className="text-xs text-blue-600">Auto-refreshing every 10s</span>
+              </div>
+            )}
+
             {activeSources.length === 0 ? (
               <div className="text-center py-8 text-slate-500">
                 No sources configured. Add sources in Manage Sources.
@@ -364,6 +377,19 @@ export default function EnhancedSourceScraper() {
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4 mt-4">
+            {/* Activity Indicator */}
+            {(runningJobs > 0 || pendingJobs > 0) && (
+              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                  <span className="text-sm font-medium text-blue-900">
+                    {runningJobs > 0 ? `${runningJobs} jobs running...` : `${pendingJobs} jobs queued`}
+                  </span>
+                </div>
+                <span className="text-xs text-blue-600">Auto-refreshing every 10s</span>
+              </div>
+            )}
+
             {/* Resume All Button */}
             <Button
               onClick={() => resumeAllMutation.mutate()}
