@@ -13,7 +13,6 @@ import { format } from "date-fns";
 export default function EnhancedSourceScraper() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("scraper");
-  const [bulkScraping, setBulkScraping] = useState(false);
 
   const { data: sources = [] } = useQuery({
     queryKey: ['sources'],
@@ -21,11 +20,10 @@ export default function EnhancedSourceScraper() {
     initialData: [],
   });
 
-  const { data: scrapeHistory = [], refetch: refetchHistory } = useQuery({
+  const { data: scrapeHistory = [] } = useQuery({
     queryKey: ['scrapeHistory'],
-    queryFn: () => base44.entities.ScrapeJob.list("-created_date", 1000),
+    queryFn: () => base44.entities.ScrapeJob.list("-created_date", 100),
     initialData: [],
-    refetchInterval: bulkScraping ? 5000 : false, // Auto-refresh every 5s during bulk scrape
   });
 
   const { data: schedules = [] } = useQuery({
@@ -33,29 +31,6 @@ export default function EnhancedSourceScraper() {
     queryFn: () => base44.entities.ScheduledScrape.list("source_name"),
     initialData: [],
   });
-
-  const activeSources = sources.filter(s => !s.is_deleted && s.url);
-  
-  // Calculate bulk scrape progress
-  const bulkProgress = React.useMemo(() => {
-    if (scrapeHistory.length === 0 || activeSources.length === 0) {
-      return { completed: 0, total: 0, running: 0, failed: 0, pending: 0, percentage: 0 };
-    }
-    
-    const completed = scrapeHistory.filter(j => j.status === 'completed').length;
-    const running = scrapeHistory.filter(j => j.status === 'running').length;
-    const failed = scrapeHistory.filter(j => j.status === 'failed').length;
-    const pending = scrapeHistory.filter(j => j.status === 'pending').length;
-    
-    return {
-      completed,
-      running,
-      failed,
-      pending,
-      total: activeSources.length,
-      percentage: Math.round((completed / activeSources.length) * 100)
-    };
-  }, [scrapeHistory, activeSources]);
 
   const scrapeMutation = useMutation({
     mutationFn: async ({ sourceId, sourceName }) => {
@@ -154,28 +129,7 @@ export default function EnhancedSourceScraper() {
     },
   });
 
-  const startBulkScrapeMutation = useMutation({
-    mutationFn: async (resume = false) => {
-      const response = await base44.functions.invoke('scrapeAllSources', { resume });
-      return response.data;
-    },
-    onSuccess: (data) => {
-      setBulkScraping(true);
-      toast.success(`Processing ${data.total_jobs} sources (Est: ${data.estimated_time_minutes} min)`);
-      refetchHistory();
-    },
-    onError: (error) => {
-      toast.error(`Bulk scrape failed: ${error.message}`);
-    },
-  });
-
-  // Auto-stop polling when bulk scrape completes
-  React.useEffect(() => {
-    if (bulkScraping && bulkProgress.running === 0 && bulkProgress.pending === 0) {
-      setBulkScraping(false);
-      toast.success(`Bulk scrape complete! ${bulkProgress.completed} succeeded, ${bulkProgress.failed} failed`);
-    }
-  }, [bulkProgress, bulkScraping]);
+  const activeSources = sources.filter(s => !s.is_deleted && s.url);
 
   return (
     <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60">
@@ -189,81 +143,6 @@ export default function EnhancedSourceScraper() {
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
-        
-        {/* Bulk Scrape Controls */}
-        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="font-semibold text-slate-900">Mass Source Processing</h3>
-              <p className="text-xs text-slate-600 mt-1">
-                Process all {activeSources.length} sources with chunked background execution
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => startBulkScrapeMutation.mutate(false)}
-                disabled={bulkScraping || startBulkScrapeMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {bulkScraping ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Start Bulk Scrape
-                  </>
-                )}
-              </Button>
-              {(bulkProgress.pending > 0 || bulkProgress.failed > 0) && (
-                <Button
-                  onClick={() => startBulkScrapeMutation.mutate(true)}
-                  disabled={bulkScraping || startBulkScrapeMutation.isPending}
-                  variant="outline"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Resume ({bulkProgress.pending + bulkProgress.failed})
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          {bulkProgress.total > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-600">
-                <span>Progress: {bulkProgress.completed} / {bulkProgress.total}</span>
-                <span>{bulkProgress.percentage}%</span>
-              </div>
-              <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2.5 transition-all duration-500"
-                  style={{ width: `${bulkProgress.percentage}%` }}
-                />
-              </div>
-              <div className="grid grid-cols-4 gap-2 mt-3">
-                <div className="bg-white rounded p-2 text-center border border-green-200">
-                  <p className="text-xs text-slate-600">Completed</p>
-                  <p className="text-lg font-bold text-green-600">{bulkProgress.completed}</p>
-                </div>
-                <div className="bg-white rounded p-2 text-center border border-blue-200">
-                  <p className="text-xs text-slate-600">Running</p>
-                  <p className="text-lg font-bold text-blue-600">{bulkProgress.running}</p>
-                </div>
-                <div className="bg-white rounded p-2 text-center border border-amber-200">
-                  <p className="text-xs text-slate-600">Pending</p>
-                  <p className="text-lg font-bold text-amber-600">{bulkProgress.pending}</p>
-                </div>
-                <div className="bg-white rounded p-2 text-center border border-red-200">
-                  <p className="text-xs text-slate-600">Failed</p>
-                  <p className="text-lg font-bold text-red-600">{bulkProgress.failed}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="scraper">

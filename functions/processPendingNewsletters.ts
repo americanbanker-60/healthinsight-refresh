@@ -39,9 +39,6 @@ Deno.serve(async (req) => {
         try {
           // Only process URL-based newsletters (skip PDFs)
           if (newsletter.source_type === 'PDF' || newsletter.content_type === 'PDF') {
-            await base44.asServiceRole.entities.Newsletter.update(newsletter.id, {
-              metadata: { analysis_skip_reason: 'PDF source - requires manual upload' }
-            });
             return { id: newsletter.id, status: 'skipped', reason: 'PDF source' };
           }
 
@@ -50,58 +47,36 @@ Deno.serve(async (req) => {
             return { id: newsletter.id, status: 'already_analyzed' };
           }
 
-          try {
-            // Invoke the existing analysis function
-            const analysisResult = await base44.asServiceRole.functions.invoke('analyzeNewsletterUrl', {
-              url: newsletter.source_url,
-              sourceName: newsletter.source_name || 'Unknown Source'
-            });
+          // Invoke the existing analysis function
+          const analysisResult = await base44.asServiceRole.functions.invoke('analyzeNewsletterUrl', {
+            url: newsletter.source_url,
+            sourceName: newsletter.source_name || 'Unknown Source'
+          });
 
-            // Extract analyzed data
-            const analyzedData = analysisResult.data;
+          // Extract analyzed data
+          const analyzedData = analysisResult.data;
 
-            if (!analyzedData) {
-              throw new Error('No analysis data returned');
-            }
-
-            // Update newsletter with analysis results
-            await base44.asServiceRole.entities.Newsletter.update(newsletter.id, {
-              summary: analyzedData.summary || newsletter.summary,
-              tldr: analyzedData.tldr || newsletter.tldr,
-              key_takeaways: analyzedData.key_takeaways || newsletter.key_takeaways,
-              key_players: analyzedData.key_players || newsletter.key_players,
-              key_statistics: analyzedData.key_statistics || newsletter.key_statistics,
-              themes: analyzedData.themes || newsletter.themes,
-              ma_activities: analyzedData.ma_activities || newsletter.ma_activities,
-              funding_rounds: analyzedData.funding_rounds || newsletter.funding_rounds,
-              sentiment: analyzedData.sentiment || newsletter.sentiment,
-              market_sentiment: analyzedData.market_sentiment || newsletter.market_sentiment,
-              primary_sector: analyzedData.primary_sector || newsletter.primary_sector,
-              is_analyzed: true,
-              metadata: { 
-                analysis_completed: new Date().toISOString(),
-                analysis_source: 'batch_processor'
-              }
-            });
-
-            return { id: newsletter.id, status: 'processed' };
-          } catch (error) {
-            // Log failure reason to metadata
-            await base44.asServiceRole.entities.Newsletter.update(newsletter.id, {
-              metadata: { 
-                analysis_error: error.message,
-                analysis_failed_at: new Date().toISOString(),
-                source_url: newsletter.source_url
-              }
-            });
-            
-            errors.push({
-              newsletterId: newsletter.id,
-              url: newsletter.source_url,
-              error: error.message
-            });
-            return { id: newsletter.id, status: 'failed', error: error.message };
+          if (!analyzedData) {
+            throw new Error('No analysis data returned');
           }
+
+          // Update newsletter with analysis results
+          await base44.asServiceRole.entities.Newsletter.update(newsletter.id, {
+            summary: analyzedData.summary || newsletter.summary,
+            tldr: analyzedData.tldr || newsletter.tldr,
+            key_takeaways: analyzedData.key_takeaways || newsletter.key_takeaways,
+            key_players: analyzedData.key_players || newsletter.key_players,
+            key_statistics: analyzedData.key_statistics || newsletter.key_statistics,
+            themes: analyzedData.themes || newsletter.themes,
+            ma_activities: analyzedData.ma_activities || newsletter.ma_activities,
+            funding_rounds: analyzedData.funding_rounds || newsletter.funding_rounds,
+            sentiment: analyzedData.sentiment || newsletter.sentiment,
+            market_sentiment: analyzedData.market_sentiment || newsletter.market_sentiment,
+            primary_sector: analyzedData.primary_sector || newsletter.primary_sector,
+            is_analyzed: true
+          });
+
+          return { id: newsletter.id, status: 'processed' };
         } catch (error) {
           errors.push({
             newsletterId: newsletter.id,
