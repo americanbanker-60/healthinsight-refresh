@@ -34,53 +34,14 @@ export default function ManageSources() {
   return (
     <RoleGuard allowedRoles={["admin"]}>
       <div className="p-6 md:p-10 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">Manage Sources</h1>
-          <p className="text-slate-600 text-lg">Organize and categorize your newsletter sources</p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            variant={showDeleted ? "default" : "outline"} 
-            onClick={() => setShowDeleted(!showDeleted)}
-            className={showDeleted ? "bg-amber-600 hover:bg-amber-700" : ""}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            {showDeleted ? "Hide" : "Show"} Deleted ({deletedSources.length})
-          </Button>
-          <Button onClick={() => setIsAdding(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Source
-          </Button>
+      <div className="mb-8">
+        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-8 text-white shadow-xl">
+          <h1 className="text-4xl font-bold mb-3">Add Newsletters</h1>
+          <p className="text-green-100 text-lg">Paste newsletter URLs or upload PDFs to analyze instantly</p>
         </div>
       </div>
 
-      <div className="mb-6">
-        <DirectNewsletterUpload />
-      </div>
-
-      <div className="mb-6">
-        <SourceDatabaseFix />
-      </div>
-
-      <div className="mb-6">
-        <AISourceDiscovery />
-      </div>
-
-      <div className="mb-6">
-        <SourceUploadManager />
-      </div>
-
-      {isAdding && (
-        <div className="mb-6">
-          <SourceEditor onCancel={() => setIsAdding(false)} />
-        </div>
-      )}
-
-      <SourceList 
-        sources={showDeleted ? sources : sources.filter(s => !s.is_deleted)}
-        showDeleted={showDeleted}
-      />
+      <DirectNewsletterUpload />
     </div>
     </RoleGuard>
   );
