@@ -61,7 +61,7 @@ export default function AdminDashboard() {
       for (let i = 0; i < activeSources.length; i++) {
         const source = activeSources[i];
         try {
-          await base44.functions.invoke('scrapeSource', { sourceId: source.id });
+          await base44.functions.invoke('scrapeSource', { source_id: source.id });
           successCount++;
         } catch (error) {
           failureCount++;
