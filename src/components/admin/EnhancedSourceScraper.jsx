@@ -172,6 +172,40 @@ export default function EnhancedSourceScraper() {
     },
   });
 
+  const retryFailedMutation = useMutation({
+    mutationFn: async () => {
+      // Get sources with failed last jobs
+      const failedSources = [];
+      
+      for (const source of activeSources) {
+        const sourceJobs = scrapeHistory
+          .filter(j => j.source_id === source.id)
+          .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+        
+        const lastJob = sourceJobs[0];
+        if (lastJob && lastJob.status === 'failed') {
+          failedSources.push(source);
+        }
+      }
+
+      if (failedSources.length === 0) {
+        toast.info('No failed jobs to retry');
+        return { retried: 0 };
+      }
+
+      // Trigger scrapeAllSources to retry failed sources
+      const response = await base44.functions.invoke('scrapeAllSources');
+      return { retried: failedSources.length, response: response.data };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
+      toast.success(`Retrying ${data.retried} failed sources`);
+    },
+    onError: (error) => {
+      toast.error(`Retry failed: ${error.message}`);
+    },
+  });
+
   return (
     <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60">
       <CardHeader className="border-b border-slate-200/60">
@@ -282,6 +316,38 @@ export default function EnhancedSourceScraper() {
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4 mt-4">
+            {/* Progress Bar for History Tab */}
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-700">Scraping Progress</span>
+                <span className="text-sm font-bold text-slate-900">{progressPercentage}%</span>
+              </div>
+              <Progress value={progressPercentage} className="h-2" />
+              <div className="flex items-center justify-between mt-2 text-xs text-slate-600">
+                <span>{completedJobs} completed</span>
+                <span>{activeSources.length} total sources</span>
+              </div>
+            </div>
+
+            {/* Retry Failed Jobs Button */}
+            <Button
+              onClick={() => retryFailedMutation.mutate()}
+              disabled={retryFailedMutation.isPending}
+              className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
+            >
+              {retryFailedMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Retrying...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry Failed Jobs
+                </>
+              )}
+            </Button>
+
             <ScrapeHistory history={scrapeHistory} />
           </TabsContent>
         </Tabs>
