@@ -13,16 +13,36 @@ Deno.serve(async (req) => {
     const sources = await base44.asServiceRole.entities.Source.list('-created_date', 1000);
     const activeSources = sources.filter(s => !s.is_deleted && s.url);
 
-    // Create a scrape job for each source
+    // Get today's date range for checking existing jobs
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Get existing jobs from today
+    const existingJobs = await base44.asServiceRole.entities.ScrapeJob.list('-created_date', 1000);
+    const todayJobsBySource = new Map();
+    existingJobs.forEach(job => {
+      const jobDate = new Date(job.created_date);
+      if (jobDate >= todayStart && jobDate <= todayEnd) {
+        todayJobsBySource.set(job.source_id, job);
+      }
+    });
+
+    // Create pending jobs only for sources without today's job
     const jobs = [];
     for (const source of activeSources) {
-      const job = await base44.asServiceRole.entities.ScrapeJob.create({
-        source_id: source.id,
-        source_name: source.name,
-        status: 'pending',
-        triggered_by: 'bulk'
-      });
-      jobs.push(job);
+      if (!todayJobsBySource.has(source.id)) {
+        const job = await base44.asServiceRole.entities.ScrapeJob.create({
+          source_id: source.id,
+          source_name: source.name,
+          status: 'pending',
+          triggered_by: 'bulk'
+        });
+        jobs.push(job);
+      } else {
+        jobs.push(todayJobsBySource.get(source.id));
+      }
     }
 
     // Start background processing (don't wait for completion)
@@ -39,9 +59,12 @@ Deno.serve(async (req) => {
         return;
       }
 
-      // Process 10 jobs at a time
-      for (let i = 0; i < jobs.length; i += 10) {
-        const batch = jobs.slice(i, i + 10);
+      // Get pending jobs
+      const pendingJobs = jobs.filter(j => j.status === 'pending');
+
+      // Process 5 jobs every 20 seconds
+      for (let i = 0; i < pendingJobs.length; i += 5) {
+        const batch = pendingJobs.slice(i, i + 5);
 
         // Process batch in parallel
         await Promise.all(batch.map(async (job) => {
@@ -77,9 +100,9 @@ Deno.serve(async (req) => {
           }
         }));
 
-        // 3-second delay between batches
-        if (i + 10 < jobs.length) {
-          await new Promise(resolve => setTimeout(resolve, 3000));
+        // 20-second delay between batches
+        if (i + 5 < pendingJobs.length) {
+          await new Promise(resolve => setTimeout(resolve, 20000));
         }
       }
     }, 0);
