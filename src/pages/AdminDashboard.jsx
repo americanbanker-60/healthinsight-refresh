@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Shield, Lightbulb, Building2, Settings, Users, BarChart3, Newspaper, Calendar, Sparkles, Loader2 } from "lucide-react";
+import { Shield, Lightbulb, Building2, Settings, Users, BarChart3, Newspaper, Calendar, Sparkles, Loader2, Database } from "lucide-react";
 import { useUserRole } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
