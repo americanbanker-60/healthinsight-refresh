@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Clock, Calendar, History, Play } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -130,6 +131,46 @@ export default function EnhancedSourceScraper() {
   });
 
   const activeSources = sources.filter(s => !s.is_deleted && s.url);
+  
+  // Calculate progress: completed jobs / total active sources
+  const completedJobs = scrapeHistory.filter(j => j.status === 'completed').length;
+  const progressPercentage = activeSources.length > 0 
+    ? Math.round((completedJobs / activeSources.length) * 100) 
+    : 0;
+
+  const resumePendingMutation = useMutation({
+    mutationFn: async () => {
+      // Get sources with pending or failed last jobs
+      const sourcesWithIssues = [];
+      
+      for (const source of activeSources) {
+        const sourceJobs = scrapeHistory
+          .filter(j => j.source_id === source.id)
+          .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+        
+        const lastJob = sourceJobs[0];
+        if (!lastJob || lastJob.status === 'pending' || lastJob.status === 'failed') {
+          sourcesWithIssues.push(source);
+        }
+      }
+
+      if (sourcesWithIssues.length === 0) {
+        toast.info('No pending or failed jobs to resume');
+        return { resumed: 0 };
+      }
+
+      // Trigger scrapeAllSources for these specific sources
+      const response = await base44.functions.invoke('scrapeAllSources');
+      return { resumed: sourcesWithIssues.length, response: response.data };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
+      toast.success(`Resuming ${data.resumed} pending/failed sources`);
+    },
+    onError: (error) => {
+      toast.error(`Resume failed: ${error.message}`);
+    },
+  });
 
   return (
     <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60">
@@ -143,6 +184,39 @@ export default function EnhancedSourceScraper() {
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
+        {/* Progress Bar */}
+        <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-slate-700">Overall Progress</span>
+            <span className="text-sm font-bold text-slate-900">{progressPercentage}%</span>
+          </div>
+          <Progress value={progressPercentage} className="h-2" />
+          <div className="flex items-center justify-between mt-2 text-xs text-slate-600">
+            <span>{completedJobs} completed</span>
+            <span>{activeSources.length} total sources</span>
+          </div>
+        </div>
+
+        {/* Resume Pending Jobs Button */}
+        <div className="mb-4">
+          <Button
+            onClick={() => resumePendingMutation.mutate()}
+            disabled={resumePendingMutation.isPending}
+            className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+          >
+            {resumePendingMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Resuming...
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 mr-2" />
+                Resume Pending Jobs
+              </>
+            )}
+          </Button>
+        </div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="scraper">
