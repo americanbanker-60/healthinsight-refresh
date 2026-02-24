@@ -19,6 +19,7 @@ export default function IntelligenceOverhaul() {
     running: 0,
     failed: 0
   });
+  const [activeSourceCount, setActiveSourceCount] = React.useState(0);
   const [isPolling, setIsPolling] = React.useState(false);
 
   // Fetch current stats
@@ -37,6 +38,7 @@ export default function IntelligenceOverhaul() {
       // Fetch sources and scrape job progress
       const sources = await base44.entities.Source.list("name", 1000);
       const activeSources = sources.filter(s => !s.is_deleted && s.url);
+      setActiveSourceCount(activeSources.length);
       
       const jobs = await base44.entities.ScrapeJob.list('-created_date', 1000);
       const completed = jobs.filter(j => j.status === 'completed').length;
@@ -211,7 +213,7 @@ export default function IntelligenceOverhaul() {
               ) : (
                 <>
                   <Zap className="w-4 h-4 mr-2" />
-                  Scrape All 525 Sources First
+                  Scrape All {activeSourceCount} Sources First
                 </>
               )}
             </Button>
