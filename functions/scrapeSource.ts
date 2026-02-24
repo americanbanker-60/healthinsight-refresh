@@ -34,14 +34,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Source has no URL configured' }, { status: 400 });
     }
 
-    // Get existing newsletters for this source to avoid duplicates
-    const existingNewsletters = await base44.asServiceRole.entities.Newsletter.filter({
-      source_name: source.name
-    });
-    const existingUrls = new Set(existingNewsletters.map(n => n.source_url).filter(Boolean));
+    // Get ALL existing newsletter URLs to prevent duplicates across all sources
+    const allNewsletters = await base44.asServiceRole.entities.Newsletter.list('-created_date', 10000);
+    const existingUrls = new Set(allNewsletters.map(n => n.source_url).filter(Boolean));
 
-    // Use AI to scrape and extract newsletter data from the source
-    const aiResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    // Use AI to scrape and extract newsletter data from the source with 40-second timeout
+    const aiPromise = base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt: `
 You are analyzing a healthcare newsletter source website: ${source.url}
 
@@ -132,6 +130,32 @@ Be thorough and accurate. If you can't find clear newsletters, return an empty a
         }
       }
     });
+
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('AI Timeout')), 40000)
+    );
+
+    let aiResponse;
+    try {
+      aiResponse = await Promise.race([aiPromise, timeoutPromise]);
+    } catch (error) {
+      if (error.message === 'AI Timeout') {
+        // Update ScrapeJob if this was triggered by scrapeAllSources
+        const scrapeJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
+          { source_id, status: 'running' },
+          '-created_date',
+          1
+        );
+        if (scrapeJobs.length > 0) {
+          await base44.asServiceRole.entities.ScrapeJob.update(scrapeJobs[0].id, {
+            status: 'failed',
+            completed_at: new Date().toISOString(),
+            error_message: 'AI Timeout'
+          });
+        }
+      }
+      throw error;
+    }
 
     const newsletters = aiResponse.newsletters || [];
     
