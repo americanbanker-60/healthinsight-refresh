@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Upload, Loader2, CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function DirectNewsletterUpload() {
   const [urls, setUrls] = useState("");
+  const [sourceName, setSourceName] = useState("");
   const [processing, setProcessing] = useState(false);
   const [results, setResults] = useState([]);
   const [processingPdfs, setProcessingPdfs] = useState(false);
@@ -36,7 +39,10 @@ export default function DirectNewsletterUpload() {
     for (const url of urlList) {
       try {
         // Call backend function to analyze and create newsletter
-        const response = await base44.functions.invoke('analyzeNewsletterUrl', { url });
+        const response = await base44.functions.invoke('analyzeNewsletterUrl', { 
+          url,
+          sourceName: sourceName.trim() || undefined
+        });
 
         if (response.data.success) {
           processResults.push({
@@ -79,7 +85,10 @@ export default function DirectNewsletterUpload() {
       const fileUrl = uploadResponse.file_url;
 
       // Call backend function to analyze PDF and create newsletter
-      const response = await base44.functions.invoke('analyzeNewsletterPDF', { file_url: fileUrl });
+      const response = await base44.functions.invoke('analyzeNewsletterPDF', { 
+        file_url: fileUrl,
+        sourceName: sourceName.trim() || undefined
+      });
 
       if (response.data.success) {
         toast.success(`✓ PDF uploaded: ${response.data.title}`);
@@ -121,6 +130,23 @@ export default function DirectNewsletterUpload() {
             <p className="text-green-800 text-xs leading-relaxed">
               Paste URLs to specific newsletter articles (one per line). The system will analyze each URL directly 
               and extract the content using AI.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="source-name" className="text-sm font-medium">
+              Source Name (Optional)
+            </Label>
+            <Input
+              id="source-name"
+              placeholder="e.g., Health Tech Nerds, Hospitalogy, Elion Health, TripleTree"
+              value={sourceName}
+              onChange={(e) => setSourceName(e.target.value)}
+              disabled={processing}
+              className="bg-white"
+            />
+            <p className="text-xs text-slate-500">
+              If not provided, the source will be detected from the URL
             </p>
           </div>
 
@@ -179,6 +205,23 @@ export default function DirectNewsletterUpload() {
             <p className="text-blue-800 text-xs leading-relaxed">
               Upload a PDF file. The system will extract the title, summary, and key players using AI 
               and automatically create a Newsletter record.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="source-name-pdf" className="text-sm font-medium">
+              Source Name (Optional)
+            </Label>
+            <Input
+              id="source-name-pdf"
+              placeholder="e.g., Health Tech Nerds, Hospitalogy, Elion Health, TripleTree"
+              value={sourceName}
+              onChange={(e) => setSourceName(e.target.value)}
+              disabled={processingPdfs}
+              className="bg-white"
+            />
+            <p className="text-xs text-slate-500">
+              If not provided, the source will be detected from the document
             </p>
           </div>
 
