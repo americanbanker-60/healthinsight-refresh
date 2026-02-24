@@ -129,9 +129,11 @@ Be thorough and accurate. If you can't find clear newsletters, return an empty a
               required: ["title", "source_url"]
             }
           }
-        }
-      }
-    });
+          }
+          }
+          }),
+          SCRAPE_TIMEOUT
+          );
 
     const newsletters = aiResponse.newsletters || [];
     
