@@ -1,9 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, Newspaper, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen, Globe, Briefcase } from "lucide-react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen, Globe, Briefcase } from "lucide-react";
 import { WalkthroughProvider, useWalkthrough } from "@/components/walkthrough/WalkthroughManager";
 import { useUserRole } from "@/components/auth/RoleGuard";
 import { Badge } from "@/components/ui/badge";
@@ -145,7 +143,7 @@ const navigationGroups = [
   },
 ];
 
-function LayoutContent({ children, currentPageName, location, sources }) {
+function LayoutContent({ children, currentPageName, location }) {
   const { setOpen, isMobile } = useSidebar();
   const { role } = useUserRole();
   const { startWalkthrough } = useWalkthrough();
@@ -163,19 +161,6 @@ function LayoutContent({ children, currentPageName, location, sources }) {
       setOpen(false);
     }
   };
-
-  const activeSourcesByCategory = React.useMemo(() => {
-    if (!sources || !Array.isArray(sources)) return {};
-    
-    const active = sources.filter(s => s && typeof s === 'object' && !s.is_deleted && s.name && s.id);
-    const grouped = {};
-    active.forEach(source => {
-      const category = source.category || "General";
-      if (!grouped[category]) grouped[category] = [];
-      grouped[category].push(source);
-    });
-    return grouped;
-  }, [sources]);
 
   return (
     <div className="min-h-screen flex w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
@@ -312,25 +297,18 @@ function LayoutContent({ children, currentPageName, location, sources }) {
       }
 
       export default function Layout({ children, currentPageName }) {
-      const location = useLocation();
+        const location = useLocation();
 
-      const { data: sources = [] } = useQuery({
-      queryKey: ['sources'],
-      queryFn: () => base44.entities.Source.list("name"),
-      initialData: [],
-      });
-
-      return (
-      <WalkthroughProvider>
-        <SidebarProvider>
-          <LayoutContent 
-            children={children} 
-            currentPageName={currentPageName}
-            location={location}
-            sources={sources}
-          />
-          <Toaster />
-        </SidebarProvider>
-      </WalkthroughProvider>
-      );
+        return (
+          <WalkthroughProvider>
+            <SidebarProvider>
+              <LayoutContent 
+                children={children} 
+                currentPageName={currentPageName}
+                location={location}
+              />
+              <Toaster />
+            </SidebarProvider>
+          </WalkthroughProvider>
+        );
       }
