@@ -72,33 +72,26 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Self-invoke after 30 seconds if more jobs exist
-    setTimeout(async () => {
-      try {
-        const moreJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
-          { status: 'pending' },
-          '-created_date',
-          1
-        );
-        
-        const moreFailedJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
-          { status: 'failed' },
-          '-created_date',
-          1
-        );
+    // Check if more jobs exist
+    const moreJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
+      { status: 'pending' },
+      '-created_date',
+      1
+    );
+    
+    const moreFailedJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
+      { status: 'failed' },
+      '-created_date',
+      1
+    );
 
-        if (moreJobs.length > 0 || moreFailedJobs.length > 0) {
-          await base44.asServiceRole.functions.invoke('scrapeAllSources', { mode: 'resume' });
-        }
-      } catch (error) {
-        console.error('Error self-invoking:', error);
-      }
-    }, 30000);
+    const hasMoreJobs = moreJobs.length > 0 || moreFailedJobs.length > 0;
 
     return Response.json({
       success: true,
       message: `Processed ${jobsToProcess.length} jobs`,
       processed: jobsToProcess.length,
+      has_more: hasMoreJobs,
       results
     });
   } catch (error) {

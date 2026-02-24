@@ -36,15 +36,32 @@ export default function EnhancedSourceScraper() {
 
   const resumeAllMutation = useMutation({
     mutationFn: async () => {
-      const response = await base44.functions.invoke('scrapeAllSources', { mode: 'resume' });
-      return response.data;
+      let totalProcessed = 0;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const response = await base44.functions.invoke('scrapeAllSources', { mode: 'resume' });
+        totalProcessed += response.data.processed || 0;
+        hasMore = response.data.has_more;
+        
+        // Refresh UI after each batch
+        queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
+        
+        // Small delay between batches to prevent overwhelming
+        if (hasMore) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+      
+      return { totalProcessed };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
-      toast.success(`Started processing jobs in background`);
+      toast.success(`Completed! Processed ${data.totalProcessed} jobs total`);
     },
     onError: (error) => {
-      toast.error(`Failed to start: ${error.message}`);
+      queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
+      toast.error(`Failed: ${error.message}`);
     },
   });
 
