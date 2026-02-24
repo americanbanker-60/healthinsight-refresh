@@ -5,20 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Shield, Database, Lightbulb, Building2, BookOpen, Settings, Users, BarChart3, Newspaper, Calendar, Sparkles, Loader2, RefreshCw } from "lucide-react";
+import { Shield, Lightbulb, Building2, Settings, Users, BarChart3, Newspaper, Calendar, Sparkles, Loader2 } from "lucide-react";
 import { useUserRole } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import EnhancedSourceScraper from "../components/admin/EnhancedSourceScraper";
-import IntelligenceOverhaul from "../components/admin/IntelligenceOverhaul";
+
 
 export default function AdminDashboard() {
   const { user } = useUserRole();
   const queryClient = useQueryClient();
   const [generatingTopics, setGeneratingTopics] = React.useState(false);
-  const [refreshing, setRefreshing] = React.useState(false);
-  const [refreshProgress, setRefreshProgress] = React.useState({ current: 0, total: 0 });
 
   const generateTopicsMutation = useMutation({
     mutationFn: async () => {
@@ -43,50 +40,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleRefreshIntelligence = async () => {
-    setRefreshing(true);
-    setRefreshProgress({ current: 0, total: 0 });
-    
-    try {
-      // Fetch all non-deleted sources
-      const sources = await base44.entities.Source.list();
-      const activeSources = sources.filter(s => !s.is_deleted);
-      
-      setRefreshProgress({ current: 0, total: activeSources.length });
-      
-      let successCount = 0;
-      let failureCount = 0;
-      
-      // Scrape each source
-      for (let i = 0; i < activeSources.length; i++) {
-        const source = activeSources[i];
-        try {
-          await base44.functions.invoke('scrapeSource', { source_id: source.id });
-          successCount++;
-        } catch (error) {
-          failureCount++;
-          console.error(`Failed to scrape ${source.name}:`, error);
-        }
-        setRefreshProgress({ current: i + 1, total: activeSources.length });
-      }
-      
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
-      queryClient.invalidateQueries({ queryKey: ['newsletters'] });
-      
-      // Show summary toast
-      if (failureCount === 0) {
-        toast.success(`Successfully refreshed all ${successCount} sources!`);
-      } else {
-        toast.warning(`Refreshed ${successCount} sources, ${failureCount} failed`);
-      }
-    } catch (error) {
-      toast.error(`Failed to refresh intelligence: ${error.message}`);
-    } finally {
-      setRefreshing(false);
-      setRefreshProgress({ current: 0, total: 0 });
-    }
-  };
+
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['adminStats'],
@@ -121,51 +75,7 @@ export default function AdminDashboard() {
                 <p className="text-slate-600 text-lg">System management and configuration</p>
               </div>
             </div>
-            <Button
-              onClick={handleRefreshIntelligence}
-              disabled={refreshing}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-            >
-              {refreshing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Refreshing ({refreshProgress.current}/{refreshProgress.total})
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh Intelligence
-                </>
-              )}
-            </Button>
           </div>
-          
-          {refreshing && (
-            <div className="mb-3">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-blue-900">
-                    Refreshing sources...
-                  </span>
-                  <span className="text-sm text-blue-700">
-                    {refreshProgress.current} / {refreshProgress.total}
-                  </span>
-                </div>
-                <div className="w-full bg-blue-200 rounded-full h-2 overflow-hidden">
-                  <div 
-                    className="bg-blue-600 h-2 transition-all duration-300"
-                    style={{ 
-                      width: refreshProgress.total > 0 
-                        ? `${(refreshProgress.current / refreshProgress.total) * 100}%` 
-                        : '0%' 
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-          
-          
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
             <Shield className="w-5 h-5 text-amber-600 mt-0.5" />
             <div>
@@ -238,33 +148,34 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Intelligence Overhaul */}
+        {/* Direct Newsletter Upload - Primary Action */}
         <div className="mb-6">
-          <IntelligenceOverhaul />
-        </div>
-
-        {/* Source Scraper */}
-        <div className="mb-6">
-          <EnhancedSourceScraper />
-        </div>
-
-        {/* Admin Actions */}
-        <h2 className="text-2xl font-bold text-slate-900 mb-4">Content Management</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Database className="w-5 h-5 text-green-600" />
-                Newsletter Sources
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                  <Newspaper className="w-6 h-6 text-white" />
+                </div>
+                Add Newsletters
               </CardTitle>
-              <CardDescription>Add, edit, and categorize sources</CardDescription>
+              <CardDescription className="text-base">
+                Paste newsletter URLs or upload PDFs to analyze and add to your database
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Link to={createPageUrl("ManageSources")}>
-                <Button className="w-full">Manage Sources</Button>
+                <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 text-lg py-6">
+                  <Newspaper className="w-5 h-5 mr-2" />
+                  Add Newsletters
+                </Button>
               </Link>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Admin Actions */}
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">System Management</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
 
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
             <CardHeader className="flex-1">
