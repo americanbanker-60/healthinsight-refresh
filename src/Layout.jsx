@@ -251,6 +251,33 @@ function LayoutContent({ children, currentPageName, location }) {
                 </SidebarGroupContent>
               </SidebarGroup>
             ))}
+
+            {Object.keys(activeSourcesByCategory).sort().map(category => (
+              <SidebarGroup key={category} className="mt-4">
+                <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-3">
+                  {category}
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {activeSourcesByCategory[category]?.map((source) => source && source.id && source.name ? (
+                      <SidebarMenuItem key={source.id}>
+                        <SidebarMenuButton 
+                          asChild 
+                          className={`hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl mb-1 ${
+                            location.pathname === createPageUrl("SourcePage") && location.search.includes(source.name) ? 'bg-blue-50 text-blue-700 shadow-sm' : ''
+                          }`}
+                        >
+                          <Link to={createPageUrl("SourcePage") + "?name=" + encodeURIComponent(source.name)} onClick={handleLinkClick} className="flex items-center gap-3 px-4 py-3">
+                            <Newspaper className="w-4 h-4" />
+                            <span className="font-medium">{source.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ) : null)}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
           </SidebarContent>
 
           <SidebarFooter className="border-t border-slate-200/60 p-4 space-y-3">
