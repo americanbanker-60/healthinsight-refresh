@@ -63,16 +63,16 @@ export default function IntelligenceOverhaul() {
     fetchStats();
   }, [fetchStats]);
 
-  // Start polling when processing
+  // Start polling when processing or when jobs are running
   React.useEffect(() => {
     let interval;
-    if (isPolling) {
+    if (isPolling || scrapeProgress.running > 0) {
       interval = setInterval(() => {
         fetchStats();
-      }, 2000);
+      }, 5000); // Poll every 5 seconds
     }
     return () => clearInterval(interval);
-  }, [isPolling, fetchStats]);
+  }, [isPolling, scrapeProgress.running, fetchStats]);
 
   const handleStartProcessing = async () => {
     setProcessing(true);
@@ -218,10 +218,17 @@ export default function IntelligenceOverhaul() {
         {/* Scrape Progress */}
         {scrapeProgress.total > 0 && (
           <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-slate-700">Source Scraping Progress</p>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-slate-700">Source Scraping Progress</p>
+                {scrapeProgress.running > 0 && (
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                )}
+              </div>
               {scrapeProgress.running > 0 && (
-                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                <span className="text-xs text-blue-600 font-medium">
+                  Auto-refreshing every 5s
+                </span>
               )}
             </div>
             <div className="grid grid-cols-4 gap-2 text-xs">
