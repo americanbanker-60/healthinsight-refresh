@@ -27,40 +27,60 @@ Deno.serve(async (req) => {
 
     // Start background processing (don't wait for completion)
     setTimeout(async () => {
-      for (const job of jobs) {
-        try {
-          // Update to running
-          await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
-            status: 'running',
-            started_at: new Date().toISOString()
-          });
+      // Check if any jobs are already running
+      const runningJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
+        { status: 'running' },
+        '-created_date',
+        100
+      );
 
-          // Scrape the source
-          const result = await base44.asServiceRole.functions.invoke('scrapeSource', { 
-            source_id: job.source_id 
-          });
+      if (runningJobs.length > 0) {
+        console.log(`Skipping: ${runningJobs.length} jobs already running`);
+        return;
+      }
 
-          // Update with results
-          await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-            newsletters_found: result.data?.new_count || 0,
-            newsletters_created: result.data?.new_count || 0,
-            metadata: {
-              companies_created: result.data?.companies_created || [],
-              topics_matched: result.data?.topic_assignments?.length || 0
-            }
-          });
-        } catch (error) {
-          await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
-            status: 'failed',
-            completed_at: new Date().toISOString(),
-            error_message: error.message
-          });
+      // Process 10 jobs at a time
+      for (let i = 0; i < jobs.length; i += 10) {
+        const batch = jobs.slice(i, i + 10);
+
+        // Process batch in parallel
+        await Promise.all(batch.map(async (job) => {
+          try {
+            // Update to running
+            await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
+              status: 'running',
+              started_at: new Date().toISOString()
+            });
+
+            // Scrape the source
+            const result = await base44.asServiceRole.functions.invoke('scrapeSource', { 
+              source_id: job.source_id 
+            });
+
+            // Update with results
+            await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+              newsletters_found: result.data?.new_count || 0,
+              newsletters_created: result.data?.new_count || 0,
+              metadata: {
+                companies_created: result.data?.companies_created || [],
+                topics_matched: result.data?.topic_assignments?.length || 0
+              }
+            });
+          } catch (error) {
+            await base44.asServiceRole.entities.ScrapeJob.update(job.id, {
+              status: 'failed',
+              completed_at: new Date().toISOString(),
+              error_message: error.message
+            });
+          }
+        }));
+
+        // 3-second delay between batches
+        if (i + 10 < jobs.length) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
-
-        // Small delay to avoid rate limits
-        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }, 0);
 
