@@ -13,6 +13,12 @@ export default function IntelligenceOverhaul() {
     analyzed: 0,
     pending: 0
   });
+  const [scrapeProgress, setScrapeProgress] = React.useState({
+    total: 0,
+    completed: 0,
+    running: 0,
+    failed: 0
+  });
   const [isPolling, setIsPolling] = React.useState(false);
 
   // Fetch current stats
@@ -27,10 +33,30 @@ export default function IntelligenceOverhaul() {
         analyzed,
         pending: total - analyzed
       });
+
+      // Fetch scrape job progress
+      const jobs = await base44.entities.ScrapeJob.list('-created_date', 1000);
+      const completed = jobs.filter(j => j.status === 'completed').length;
+      const running = jobs.filter(j => j.status === 'running').length;
+      const failed = jobs.filter(j => j.status === 'failed').length;
+      
+      setScrapeProgress({
+        total: jobs.length,
+        completed,
+        running,
+        failed
+      });
+
+      // Auto-poll if jobs are running
+      if (running > 0 && !isPolling) {
+        setIsPolling(true);
+      } else if (running === 0 && isPolling) {
+        setIsPolling(false);
+      }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     }
-  }, []);
+  }, [isPolling]);
 
   // Initial fetch
   React.useEffect(() => {
@@ -77,31 +103,20 @@ export default function IntelligenceOverhaul() {
     setIsPolling(true);
 
     try {
-      // Set a timeout since scraping can take a while
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Scraping timed out after 10 minutes')), 600000)
-      );
-      
-      const response = await Promise.race([
-        base44.functions.invoke('scrapeAllSources'),
-        timeoutPromise
-      ]);
+      const response = await base44.functions.invoke('scrapeAllSources');
       
       if (response.data?.success) {
-        // Wait a moment for stats to update, then poll
-        setTimeout(() => fetchStats(), 1000);
-        
         toast.success(
-          `Scraping started! ${response.data.processed} sources scraped. Newsletters will populate shortly.`
+          `Scraping ${response.data.total_sources} sources in background! Check progress below.`
         );
+        await fetchStats();
       } else {
-        toast.error('Scraping failed. Check logs for details.');
+        toast.error('Failed to start scraping');
       }
     } catch (error) {
-      toast.error(`Scraping error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     } finally {
       setProcessing(false);
-      setIsPolling(false);
     }
   };
 
@@ -200,11 +215,41 @@ export default function IntelligenceOverhaul() {
           )}
         </div>
 
+        {/* Scrape Progress */}
+        {scrapeProgress.total > 0 && (
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-slate-700">Source Scraping Progress</p>
+              {scrapeProgress.running > 0 && (
+                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+              )}
+            </div>
+            <div className="grid grid-cols-4 gap-2 text-xs">
+              <div className="bg-white p-2 rounded border border-slate-200">
+                <p className="text-slate-600">Total</p>
+                <p className="font-bold text-slate-900">{scrapeProgress.total}</p>
+              </div>
+              <div className="bg-white p-2 rounded border border-green-200">
+                <p className="text-slate-600">Done</p>
+                <p className="font-bold text-green-600">{scrapeProgress.completed}</p>
+              </div>
+              <div className="bg-white p-2 rounded border border-blue-200">
+                <p className="text-slate-600">Running</p>
+                <p className="font-bold text-blue-600">{scrapeProgress.running}</p>
+              </div>
+              <div className="bg-white p-2 rounded border border-red-200">
+                <p className="text-slate-600">Failed</p>
+                <p className="font-bold text-red-600">{scrapeProgress.failed}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {processing && (
           <p className="text-xs text-slate-600 text-center">
             {stats.pending > 0 
               ? `Real-time progress updates • Processing ${stats.pending} remaining newsletters`
-              : 'Scraping sources and creating newsletters...'}
+              : 'Starting background scrape...'}
           </p>
         )}
       </CardContent>
