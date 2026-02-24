@@ -140,32 +140,51 @@ export default function EnhancedSourceScraper() {
 
   const resumePendingMutation = useMutation({
     mutationFn: async () => {
-      // Get sources with pending or failed last jobs
-      const sourcesWithIssues = [];
-      
-      for (const source of activeSources) {
-        const sourceJobs = scrapeHistory
-          .filter(j => j.source_id === source.id)
-          .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-        
-        const lastJob = sourceJobs[0];
-        if (!lastJob || lastJob.status === 'pending' || lastJob.status === 'failed') {
-          sourcesWithIssues.push(source);
-        }
-      }
+      // Get all pending jobs from history
+      const pendingJobs = scrapeHistory.filter(j => j.status === 'pending');
 
-      if (sourcesWithIssues.length === 0) {
-        toast.info('No pending or failed jobs to resume');
+      if (pendingJobs.length === 0) {
+        toast.info('No pending jobs to resume');
         return { resumed: 0 };
       }
 
-      // Trigger scrapeAllSources for these specific sources
-      const response = await base44.functions.invoke('scrapeAllSources');
-      return { resumed: sourcesWithIssues.length, response: response.data };
+      // Process each pending job
+      const results = await Promise.allSettled(
+        pendingJobs.map(async (job) => {
+          try {
+            await base44.entities.ScrapeJob.update(job.id, {
+              status: 'running',
+              started_at: new Date().toISOString()
+            });
+
+            const response = await base44.functions.invoke('scrapeSource', { source_id: job.source_id });
+            
+            await base44.entities.ScrapeJob.update(job.id, {
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+              newsletters_found: response.data.new_count || 0,
+              newsletters_created: response.data.new_count || 0,
+              metadata: response.data
+            });
+
+            return response.data;
+          } catch (error) {
+            await base44.entities.ScrapeJob.update(job.id, {
+              status: 'failed',
+              completed_at: new Date().toISOString(),
+              error_message: error.message
+            });
+            throw error;
+          }
+        })
+      );
+
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      return { resumed: pendingJobs.length, succeeded };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
-      toast.success(`Resuming ${data.resumed} pending/failed sources`);
+      toast.success(`Processed ${data.resumed} pending jobs (${data.succeeded} succeeded)`);
     },
     onError: (error) => {
       toast.error(`Resume failed: ${error.message}`);
@@ -174,32 +193,50 @@ export default function EnhancedSourceScraper() {
 
   const retryFailedMutation = useMutation({
     mutationFn: async () => {
-      // Get sources with failed last jobs
-      const failedSources = [];
-      
-      for (const source of activeSources) {
-        const sourceJobs = scrapeHistory
-          .filter(j => j.source_id === source.id)
-          .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-        
-        const lastJob = sourceJobs[0];
-        if (lastJob && lastJob.status === 'failed') {
-          failedSources.push(source);
-        }
-      }
+      // Get all failed jobs from history
+      const failedJobs = scrapeHistory.filter(j => j.status === 'failed');
 
-      if (failedSources.length === 0) {
+      if (failedJobs.length === 0) {
         toast.info('No failed jobs to retry');
         return { retried: 0 };
       }
 
-      // Trigger scrapeAllSources to retry failed sources
-      const response = await base44.functions.invoke('scrapeAllSources');
-      return { retried: failedSources.length, response: response.data };
+      // Create new jobs for failed sources and run them
+      const results = await Promise.allSettled(
+        failedJobs.map(async (failedJob) => {
+          try {
+            // Create new job
+            const newJob = await base44.entities.ScrapeJob.create({
+              source_id: failedJob.source_id,
+              source_name: failedJob.source_name,
+              status: 'running',
+              started_at: new Date().toISOString(),
+              triggered_by: 'manual'
+            });
+
+            const response = await base44.functions.invoke('scrapeSource', { source_id: failedJob.source_id });
+            
+            await base44.entities.ScrapeJob.update(newJob.id, {
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+              newsletters_found: response.data.new_count || 0,
+              newsletters_created: response.data.new_count || 0,
+              metadata: response.data
+            });
+
+            return response.data;
+          } catch (error) {
+            throw error;
+          }
+        })
+      );
+
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      return { retried: failedJobs.length, succeeded };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
-      toast.success(`Retrying ${data.retried} failed sources`);
+      toast.success(`Retried ${data.retried} failed jobs (${data.succeeded} succeeded)`);
     },
     onError: (error) => {
       toast.error(`Retry failed: ${error.message}`);
