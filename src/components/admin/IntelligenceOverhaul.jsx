@@ -34,14 +34,17 @@ export default function IntelligenceOverhaul() {
         pending: total - analyzed
       });
 
-      // Fetch scrape job progress
+      // Fetch sources and scrape job progress
+      const sources = await base44.entities.Source.list("name", 1000);
+      const activeSources = sources.filter(s => !s.is_deleted && s.url);
+      
       const jobs = await base44.entities.ScrapeJob.list('-created_date', 1000);
       const completed = jobs.filter(j => j.status === 'completed').length;
       const running = jobs.filter(j => j.status === 'running').length;
       const failed = jobs.filter(j => j.status === 'failed').length;
       
       setScrapeProgress({
-        total: jobs.length,
+        total: activeSources.length,
         completed,
         running,
         failed
