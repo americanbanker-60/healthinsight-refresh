@@ -178,6 +178,8 @@ Be thorough and accurate. If you can't find clear newsletters, return an empty a
           ma_activities: newsletter.ma_activities || [],
           funding_rounds: newsletter.funding_rounds || [],
           key_players: newsletter.key_players || [],
+          is_analyzed: true, // Mark as analyzed since we extracted all data
+          date_added_to_app: new Date().toISOString()
         });
         created.push(created_newsletter);
 
