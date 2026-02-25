@@ -10,6 +10,7 @@ import { useUserRole } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import IntelligenceOverhaul from "../components/admin/IntelligenceOverhaul";
 
 
 export default function AdminDashboard() {
@@ -171,6 +172,11 @@ export default function AdminDashboard() {
               </Link>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Intelligence Overhaul - Process Newsletters */}
+        <div className="mb-6">
+          <IntelligenceOverhaul />
         </div>
 
         {/* Admin Actions */}
