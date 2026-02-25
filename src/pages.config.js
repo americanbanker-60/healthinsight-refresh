@@ -74,6 +74,7 @@ import TopicsDirectory from './pages/TopicsDirectory';
 import Unauthorized from './pages/Unauthorized';
 import UserSettings from './pages/UserSettings';
 import VariousSources from './pages/VariousSources';
+import AnalyzeNewsletter from './pages/AnalyzeNewsletter';
 import __Layout from './Layout.jsx';
 
 
@@ -105,6 +106,7 @@ export const PAGES = {
     "Unauthorized": Unauthorized,
     "UserSettings": UserSettings,
     "VariousSources": VariousSources,
+    "AnalyzeNewsletter": AnalyzeNewsletter,
 }
 
 export const pagesConfig = {
