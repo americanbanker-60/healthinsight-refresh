@@ -4,6 +4,7 @@ import { createPageUrl } from "@/utils";
 import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen, Globe, Briefcase } from "lucide-react";
 import { WalkthroughProvider, useWalkthrough } from "@/components/walkthrough/WalkthroughManager";
 import { useUserRole } from "@/components/auth/RoleGuard";
+import { AdminGuard } from "@/components/auth/AdminGuard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, PlayCircle } from "lucide-react";
@@ -273,15 +274,17 @@ function LayoutContent({ children, currentPageName, location }) {
         const location = useLocation();
 
         return (
-          <WalkthroughProvider>
-            <SidebarProvider>
-              <LayoutContent 
-                children={children} 
-                currentPageName={currentPageName}
-                location={location}
-              />
-              <Toaster />
-            </SidebarProvider>
-          </WalkthroughProvider>
+          <AdminGuard>
+            <WalkthroughProvider>
+              <SidebarProvider>
+                <LayoutContent 
+                  children={children} 
+                  currentPageName={currentPageName}
+                  location={location}
+                />
+                <Toaster />
+              </SidebarProvider>
+            </WalkthroughProvider>
+          </AdminGuard>
         );
       }
