@@ -357,6 +357,29 @@ Return:
 
   } catch (error) {
     console.error('Scrape error:', error);
+    
+    // Try to update any running ScrapeJob to failed status
+    try {
+      const { source_id } = await req.json();
+      if (source_id) {
+        const runningJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
+          { source_id, status: 'running' },
+          '-created_date',
+          1
+        );
+        
+        if (runningJobs.length > 0) {
+          await base44.asServiceRole.entities.ScrapeJob.update(runningJobs[0].id, {
+            status: 'failed',
+            completed_at: new Date().toISOString(),
+            error_message: error.message || 'Failed to scrape source'
+          });
+        }
+      }
+    } catch (updateError) {
+      console.error('Failed to update job status:', updateError);
+    }
+    
     return Response.json({ 
       success: false,
       error: error.message || 'Failed to scrape source' 

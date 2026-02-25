@@ -34,36 +34,42 @@ export default function EnhancedSourceScraper() {
     initialData: [],
   });
 
-  const resumeAllMutation = useMutation({
-    mutationFn: async () => {
-      let totalProcessed = 0;
-      let hasMore = true;
-      
-      while (hasMore) {
-        const response = await base44.functions.invoke('scrapeAllSources', { mode: 'resume' });
-        totalProcessed += response.data.processed || 0;
-        hasMore = response.data.has_more;
+  // Poll for completion - triggered once, polls automatically
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (!isProcessing) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await base44.functions.invoke('scrapeAllSources');
         
-        // Refresh UI after each batch
-        queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
-        
-        // Small delay between batches to prevent overwhelming
-        if (hasMore) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
+        if (!response.data.has_pending) {
+          setIsProcessing(false);
+          queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
+          toast.success('All jobs completed!');
+          clearInterval(pollInterval);
+        } else {
+          queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
         }
+      } catch (error) {
+        console.error('Polling error:', error);
+        queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
       }
-      
-      return { totalProcessed };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
-      toast.success(`Completed! Processed ${data.totalProcessed} jobs total`);
-    },
-    onError: (error) => {
-      queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
+  }, [isProcessing, queryClient]);
+
+  const startProcessing = async () => {
+    setIsProcessing(true);
+    try {
+      await base44.functions.invoke('scrapeAllSources');
+    } catch (error) {
+      setIsProcessing(false);
       toast.error(`Failed: ${error.message}`);
-    },
-  });
+    }
+  };
 
   const scrapeMutation = useMutation({
     mutationFn: async ({ sourceId, sourceName }) => {
@@ -173,110 +179,7 @@ export default function EnhancedSourceScraper() {
     ? Math.round((completedJobs / activeSources.length) * 100) 
     : 0;
 
-  const resumePendingMutation = useMutation({
-    mutationFn: async () => {
-      // Get all pending jobs from history
-      const pendingJobs = scrapeHistory.filter(j => j.status === 'pending');
 
-      if (pendingJobs.length === 0) {
-        toast.info('No pending jobs to resume');
-        return { resumed: 0 };
-      }
-
-      // Process each pending job
-      const results = await Promise.allSettled(
-        pendingJobs.map(async (job) => {
-          try {
-            await base44.entities.ScrapeJob.update(job.id, {
-              status: 'running',
-              started_at: new Date().toISOString()
-            });
-
-            const response = await base44.functions.invoke('scrapeSource', { source_id: job.source_id });
-            
-            await base44.entities.ScrapeJob.update(job.id, {
-              status: 'completed',
-              completed_at: new Date().toISOString(),
-              newsletters_found: response.data.new_count || 0,
-              newsletters_created: response.data.new_count || 0,
-              metadata: response.data
-            });
-
-            return response.data;
-          } catch (error) {
-            await base44.entities.ScrapeJob.update(job.id, {
-              status: 'failed',
-              completed_at: new Date().toISOString(),
-              error_message: error.message
-            });
-            throw error;
-          }
-        })
-      );
-
-      const succeeded = results.filter(r => r.status === 'fulfilled').length;
-      return { resumed: pendingJobs.length, succeeded };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
-      toast.success(`Processed ${data.resumed} pending jobs (${data.succeeded} succeeded)`);
-    },
-    onError: (error) => {
-      toast.error(`Resume failed: ${error.message}`);
-    },
-  });
-
-  const retryFailedMutation = useMutation({
-    mutationFn: async () => {
-      // Get all failed jobs from history
-      const failedJobs = scrapeHistory.filter(j => j.status === 'failed');
-
-      if (failedJobs.length === 0) {
-        toast.info('No failed jobs to retry');
-        return { retried: 0 };
-      }
-
-      // Create new jobs for failed sources and run them
-      const results = await Promise.allSettled(
-        failedJobs.map(async (failedJob) => {
-          try {
-            // Create new job
-            const newJob = await base44.entities.ScrapeJob.create({
-              source_id: failedJob.source_id,
-              source_name: failedJob.source_name,
-              status: 'running',
-              started_at: new Date().toISOString(),
-              triggered_by: 'manual'
-            });
-
-            const response = await base44.functions.invoke('scrapeSource', { source_id: failedJob.source_id });
-            
-            await base44.entities.ScrapeJob.update(newJob.id, {
-              status: 'completed',
-              completed_at: new Date().toISOString(),
-              newsletters_found: response.data.new_count || 0,
-              newsletters_created: response.data.new_count || 0,
-              metadata: response.data
-            });
-
-            return response.data;
-          } catch (error) {
-            throw error;
-          }
-        })
-      );
-
-      const succeeded = results.filter(r => r.status === 'fulfilled').length;
-      return { retried: failedJobs.length, succeeded };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['scrapeHistory'] });
-      toast.success(`Retried ${data.retried} failed jobs (${data.succeeded} succeeded)`);
-    },
-    onError: (error) => {
-      toast.error(`Retry failed: ${error.message}`);
-    },
-  });
 
   return (
     <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60">
@@ -407,21 +310,21 @@ export default function EnhancedSourceScraper() {
               </div>
             )}
 
-            {/* Resume All Button */}
+            {/* Start Queue Processing */}
             <Button
-              onClick={() => resumeAllMutation.mutate()}
-              disabled={resumeAllMutation.isPending || (pendingJobs === 0 && failedJobs === 0)}
+              onClick={startProcessing}
+              disabled={isProcessing || pendingJobs === 0}
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
             >
-              {resumeAllMutation.isPending ? (
+              {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
+                  Processing Queue...
                 </>
               ) : (
                 <>
                   <Play className="w-4 h-4 mr-2" />
-                  Resume Pending Jobs ({pendingJobs + failedJobs})
+                  Start Queue ({pendingJobs} pending)
                 </>
               )}
             </Button>
