@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
 
     // Process in batches of 5
     for (let i = 0; i < unanalyzedNewsletters.length; i += 5) {
-      const batch = unanalyzedNewsletters.slice(i, i + 5);
+      const batch = Array.from(unanalyzedNewsletters.slice(i, i + 5));
 
       // Process batch in parallel
       const batchPromises = batch.map(async (newsletter) => {
