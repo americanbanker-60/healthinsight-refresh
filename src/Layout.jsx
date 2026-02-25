@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, PlayCircle } from "lucide-react";
 import { AdminBadge } from "@/components/admin/AdminOnlyButton";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import {
   Sidebar,
   SidebarContent,
@@ -258,7 +259,9 @@ function LayoutContent({ children, currentPageName, location }) {
           </header>
 
           <div className="flex-1 overflow-x-hidden overflow-y-auto w-full">
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </div>
         </main>
       </div>
@@ -269,17 +272,19 @@ function LayoutContent({ children, currentPageName, location }) {
         const location = useLocation();
 
         return (
-          <AdminGuard>
-            <WalkthroughProvider>
-              <SidebarProvider>
-                <LayoutContent 
-                  children={children} 
-                  currentPageName={currentPageName}
-                  location={location}
-                />
-                <Toaster />
-              </SidebarProvider>
-            </WalkthroughProvider>
-          </AdminGuard>
+          <ErrorBoundary>
+            <AdminGuard>
+              <WalkthroughProvider>
+                <SidebarProvider>
+                  <LayoutContent 
+                    children={children} 
+                    currentPageName={currentPageName}
+                    location={location}
+                  />
+                  <Toaster />
+                </SidebarProvider>
+              </WalkthroughProvider>
+            </AdminGuard>
+          </ErrorBoundary>
         );
       }

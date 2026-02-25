@@ -28,6 +28,8 @@ export function WalkthroughProvider({ children }) {
         return null;
       }
     },
+    staleTime: 300000, // 5 minutes
+    retry: false,
   });
 
   const saveMutation = useMutation({
