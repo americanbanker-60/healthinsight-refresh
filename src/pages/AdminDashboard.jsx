@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Shield, Lightbulb, Building2, Settings, Users, BarChart3, Newspaper, Sparkles, Loader2, Database } from "lucide-react";
-import { toast } from "sonner";
 import { useUserRole } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
