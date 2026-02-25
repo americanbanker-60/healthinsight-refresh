@@ -128,12 +128,7 @@ const navigationGroups = [
         icon: Shield,
         roles: ["admin"],
       },
-      {
-        title: "Cleanup Tool",
-        url: createPageUrl("Cleanup"),
-        icon: Shield,
-        roles: ["admin"],
-      },
+
       {
         title: "System Documentation",
         url: createPageUrl("SystemDocumentation"),

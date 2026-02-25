@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Shield, Lightbulb, Building2, Settings, Users, BarChart3, Newspaper, Calendar, Sparkles, Loader2, Database } from "lucide-react";
+import { Shield, Lightbulb, Building2, Settings, Users, BarChart3, Newspaper, Sparkles, Loader2, Database } from "lucide-react";
+import { toast } from "sonner";
 import { useUserRole } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -231,15 +232,30 @@ export default function AdminDashboard() {
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
             <CardHeader className="flex-1">
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-purple-600" />
-                Publication Date Migration
+                <Settings className="w-5 h-5 text-slate-600" />
+                Data Cleanup
               </CardTitle>
-              <CardDescription>Extract actual publication dates from newsletters</CardDescription>
+              <CardDescription>Deduplicate newsletters and manage database integrity</CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to={createPageUrl("PublicationDateMigration")}>
-                <Button className="w-full">Manage Dates</Button>
-              </Link>
+              <Button 
+                onClick={async () => {
+                  if (!confirm('Run deduplication scan? This will merge duplicate newsletters.')) return;
+                  try {
+                    const response = await base44.functions.invoke('deduplicateNewsletters', {});
+                    if (response.data.success) {
+                      toast.success(`Merged ${response.data.merged} duplicate groups, deleted ${response.data.deleted} records`);
+                    } else {
+                      toast.error('Deduplication failed');
+                    }
+                  } catch (error) {
+                    toast.error(`Error: ${error.message}`);
+                  }
+                }}
+                className="w-full"
+              >
+                Run Deduplication
+              </Button>
             </CardContent>
           </Card>
 

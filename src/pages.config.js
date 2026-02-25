@@ -51,7 +51,6 @@ import AIContentGenerator from './pages/AIContentGenerator';
 import AdminDashboard from './pages/AdminDashboard';
 import AgentWorkspace from './pages/AgentWorkspace';
 import AnalyzeNewsletter from './pages/AnalyzeNewsletter';
-import Cleanup from './pages/Cleanup';
 import CompaniesDirectory from './pages/CompaniesDirectory';
 import CompanyPage from './pages/CompanyPage';
 import CustomPackDetail from './pages/CustomPackDetail';
@@ -66,7 +65,6 @@ import MyLibrary from './pages/MyLibrary';
 import NewsletterDetail from './pages/NewsletterDetail';
 import PEMeetingPrep from './pages/PEMeetingPrep';
 import PrivacyPolicy from './pages/PrivacyPolicy';
-import PublicationDateMigration from './pages/PublicationDateMigration';
 import SourcePage from './pages/SourcePage';
 import SystemDocumentation from './pages/SystemDocumentation';
 import TermsOfService from './pages/TermsOfService';
@@ -83,7 +81,6 @@ export const PAGES = {
     "AdminDashboard": AdminDashboard,
     "AgentWorkspace": AgentWorkspace,
     "AnalyzeNewsletter": AnalyzeNewsletter,
-    "Cleanup": Cleanup,
     "CompaniesDirectory": CompaniesDirectory,
     "CompanyPage": CompanyPage,
     "CustomPackDetail": CustomPackDetail,
@@ -98,7 +95,6 @@ export const PAGES = {
     "NewsletterDetail": NewsletterDetail,
     "PEMeetingPrep": PEMeetingPrep,
     "PrivacyPolicy": PrivacyPolicy,
-    "PublicationDateMigration": PublicationDateMigration,
     "SourcePage": SourcePage,
     "SystemDocumentation": SystemDocumentation,
     "TermsOfService": TermsOfService,
