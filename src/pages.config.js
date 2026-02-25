@@ -50,6 +50,7 @@
 import AIContentGenerator from './pages/AIContentGenerator';
 import AdminDashboard from './pages/AdminDashboard';
 import AgentWorkspace from './pages/AgentWorkspace';
+import AnalyzeNewsletter from './pages/AnalyzeNewsletter';
 import Cleanup from './pages/Cleanup';
 import CompaniesDirectory from './pages/CompaniesDirectory';
 import CompanyPage from './pages/CompanyPage';
@@ -74,7 +75,6 @@ import TopicsDirectory from './pages/TopicsDirectory';
 import Unauthorized from './pages/Unauthorized';
 import UserSettings from './pages/UserSettings';
 import VariousSources from './pages/VariousSources';
-import AnalyzeNewsletter from './pages/AnalyzeNewsletter';
 import __Layout from './Layout.jsx';
 
 
@@ -82,6 +82,7 @@ export const PAGES = {
     "AIContentGenerator": AIContentGenerator,
     "AdminDashboard": AdminDashboard,
     "AgentWorkspace": AgentWorkspace,
+    "AnalyzeNewsletter": AnalyzeNewsletter,
     "Cleanup": Cleanup,
     "CompaniesDirectory": CompaniesDirectory,
     "CompanyPage": CompanyPage,
@@ -106,7 +107,6 @@ export const PAGES = {
     "Unauthorized": Unauthorized,
     "UserSettings": UserSettings,
     "VariousSources": VariousSources,
-    "AnalyzeNewsletter": AnalyzeNewsletter,
 }
 
 export const pagesConfig = {
