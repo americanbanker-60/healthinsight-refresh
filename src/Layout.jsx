@@ -5,6 +5,7 @@ import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, BookOpen, Library, 
 import { WalkthroughProvider, useWalkthrough } from "@/components/walkthrough/WalkthroughManager";
 import { useUserRole } from "@/components/auth/RoleGuard";
 import { AdminGuard } from "@/components/auth/AdminGuard";
+import { ErrorBoundary } from "@/components/utils/ErrorBoundary";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, PlayCircle } from "lucide-react";
@@ -258,7 +259,9 @@ function LayoutContent({ children, currentPageName, location }) {
           </header>
 
           <div className="flex-1 overflow-x-hidden overflow-y-auto w-full">
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </div>
         </main>
       </div>

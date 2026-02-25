@@ -28,6 +28,8 @@ export function WalkthroughProvider({ children }) {
         return null;
       }
     },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes to avoid blocking
+    retry: false, // Don't retry on failure to prevent blocking
   });
 
   const saveMutation = useMutation({
