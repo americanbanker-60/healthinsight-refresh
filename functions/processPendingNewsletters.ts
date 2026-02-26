@@ -42,11 +42,6 @@ Deno.serve(async (req) => {
             return { id: newsletter.id, status: 'skipped', reason: 'PDF source' };
           }
 
-          // Skip if already has analysis
-          if (newsletter.summary || newsletter.themes?.length > 0) {
-            return { id: newsletter.id, status: 'already_analyzed' };
-          }
-
           // Invoke the existing analysis function
           const analysisResult = await base44.asServiceRole.functions.invoke('analyzeNewsletterUrl', {
             url: newsletter.source_url,
