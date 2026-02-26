@@ -264,11 +264,11 @@ function LayoutContent({ children, currentPageName, location }) {
             </ErrorBoundary>
           </div>
         </main>
-      </div>
-      );
-      }
+    </div>
+  );
+}
 
-      export default function Layout({ children, currentPageName }) {
+export default function Layout({ children, currentPageName }) {
         const location = useLocation();
 
         return (
