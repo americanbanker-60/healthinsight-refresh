@@ -68,35 +68,45 @@ export default function IntelligenceOverhaul() {
   // Start polling when processing or when jobs are running
   React.useEffect(() => {
     let interval;
-    if (isPolling || scrapeProgress.running > 0) {
+    if (isPolling || processing || scrapeProgress.running > 0) {
       interval = setInterval(() => {
         fetchStats();
-      }, 5000); // Poll every 5 seconds
+      }, 8000); // Poll every 8 seconds to reduce memory usage
     }
-    return () => clearInterval(interval);
-  }, [isPolling, scrapeProgress.running, fetchStats]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isPolling, processing, scrapeProgress.running, fetchStats]);
 
   const handleStartProcessing = async () => {
     setProcessing(true);
     setIsPolling(true);
 
     try {
-      const response = await base44.functions.invoke('processPendingNewsletters');
+      // Fire and forget - don't wait for completion
+      base44.functions.invoke('processPendingNewsletters').then((response) => {
+        if (response.data?.success) {
+          toast.success(
+            `Batch complete! ${response.data.processed} analyzed, ${response.data.skipped} skipped.`
+          );
+        }
+        setProcessing(false);
+        fetchStats();
+      }).catch((error) => {
+        toast.error(`Error: ${error.message}`);
+        setProcessing(false);
+        setIsPolling(false);
+      });
+
+      // Show immediate feedback
+      toast.success('Batch processing started! Progress will update automatically.');
       
-      if (response.data?.success) {
-        await fetchStats();
-        toast.success(
-          `Processing complete! ${response.data.processed} newsletters analyzed, ${response.data.skipped} skipped.`
-        );
-      } else {
-        toast.error('Processing failed. Check logs for details.');
-      }
+      // Start polling for updates
+      await fetchStats();
     } catch (error) {
-      toast.error(`Error: ${error.message}`);
-    } finally {
+      toast.error(`Error starting batch: ${error.message}`);
       setProcessing(false);
       setIsPolling(false);
-      await fetchStats();
     }
   };
 
@@ -255,11 +265,16 @@ export default function IntelligenceOverhaul() {
         )}
 
         {processing && (
-          <p className="text-xs text-slate-600 text-center">
-            {stats.pending > 0 
-              ? `Real-time progress updates • Processing ${stats.pending} remaining newsletters`
-              : 'Starting background scrape...'}
-          </p>
+          <div className="text-xs text-slate-600 text-center space-y-1">
+            <p className="font-medium">
+              {stats.pending > 0 
+                ? `Processing in background • ${stats.pending} remaining`
+                : 'Starting background processing...'}
+            </p>
+            <p className="text-slate-500">
+              Safe to navigate away - updates every 8 seconds
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>
