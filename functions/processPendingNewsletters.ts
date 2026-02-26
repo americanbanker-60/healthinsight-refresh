@@ -10,11 +10,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    // Get all unanalyzed newsletters
+    // Get unanalyzed newsletters in smaller batches to prevent timeouts
     const unanalyzedNewsletters = await base44.asServiceRole.entities.Newsletter.filter(
       { is_analyzed: { $ne: true } },
       '-created_date',
-      1000
+      50
     );
 
     if (unanalyzedNewsletters.length === 0) {
@@ -30,9 +30,9 @@ Deno.serve(async (req) => {
     let skipped = 0;
     const errors = [];
 
-    // Process in batches of 5
-    for (let i = 0; i < unanalyzedNewsletters.length; i += 5) {
-      const batch = Array.from(unanalyzedNewsletters.slice(i, i + 5));
+    // Process in batches of 3 to reduce load
+    for (let i = 0; i < unanalyzedNewsletters.length; i += 3) {
+      const batch = Array.from(unanalyzedNewsletters.slice(i, i + 3));
 
       // Process batch in parallel
       const batchPromises = batch.map(async (newsletter) => {
@@ -97,9 +97,9 @@ Deno.serve(async (req) => {
         }
       });
 
-      // Rate limiting: wait 2 seconds between batches
-      if (i + 5 < unanalyzedNewsletters.length) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+      // Rate limiting: wait 3 seconds between batches to prevent overwhelming LLM
+      if (i + 3 < unanalyzedNewsletters.length) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
     }
 

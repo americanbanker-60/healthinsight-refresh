@@ -53,15 +53,12 @@ export default function IntelligenceOverhaul() {
       });
 
       // Auto-poll if jobs are running
-      if (running > 0 && !isPolling) {
-        setIsPolling(true);
-      } else if (running === 0 && isPolling) {
-        setIsPolling(false);
-      }
+      setIsPolling(running > 0);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      setIsPolling(false);
     }
-  }, [isPolling]);
+  }, []);
 
   // Initial fetch
   React.useEffect(() => {
