@@ -3,16 +3,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FileText, TrendingUp, Briefcase, DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 export default function StatsOverview({ newsletters, isLoading, visibleStats = ["newsletters", "ma_deals", "funding", "themes"] }) {
-  const totalNewsletters = newsletters.length;
-  const totalMADeals = newsletters.reduce((sum, n) => sum + (n.ma_activities?.length || 0), 0);
-  const totalFunding = newsletters.reduce((sum, n) => sum + (n.funding_rounds?.length || 0), 0);
+  // Fetch ALL analyzed newsletters for accurate counts (not limited by display pagination)
+  const { data: allNewsletters = [] } = useQuery({
+    queryKey: ['allNewslettersForStats'],
+    queryFn: () => base44.entities.Newsletter.filter({ is_analyzed: true }, '-publication_date', 10000),
+    initialData: [],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const totalNewsletters = allNewsletters.length;
+  const totalMADeals = allNewsletters.reduce((sum, n) => sum + (n.ma_activities?.length || 0), 0);
+  const totalFunding = allNewsletters.reduce((sum, n) => sum + (n.funding_rounds?.length || 0), 0);
   
   // Count unique themes across all newsletters (not total theme occurrences)
   const uniqueThemes = React.useMemo(() => {
     const themesSet = new Set();
-    newsletters.forEach(n => {
+    allNewsletters.forEach(n => {
       if (n.themes) {
         n.themes.forEach(t => {
           if (t.theme) themesSet.add(t.theme);
@@ -20,7 +30,7 @@ export default function StatsOverview({ newsletters, isLoading, visibleStats = [
       }
     });
     return themesSet.size;
-  }, [newsletters]);
+  }, [allNewsletters]);
 
   const stats = [
     { label: "Newsletters Analyzed", value: totalNewsletters, icon: FileText, color: "blue" },
