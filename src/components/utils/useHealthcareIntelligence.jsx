@@ -11,7 +11,7 @@ import { subDays, startOfYear } from "date-fns";
 export function useHealthcareIntelligence(options = {}) {
   const {
     activeTab = "all",
-    maxItems = 100,
+    maxItems = 1000,
     enableInvestmentFocus = false,
   } = options;
 
