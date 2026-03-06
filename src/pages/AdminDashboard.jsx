@@ -64,6 +64,7 @@ export default function AdminDashboard() {
   });
 
   return (
+    <RoleGuard allowedRoles={["admin"]}>
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
