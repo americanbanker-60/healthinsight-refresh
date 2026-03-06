@@ -303,22 +303,32 @@ function LayoutContent({ children, currentPageName, location }) {
 }
 
 export default function Layout({ children, currentPageName }) {
-        const location = useLocation();
+  const location = useLocation();
 
-        return (
-          <ErrorBoundary>
-            <AdminGuard>
-              <WalkthroughProvider>
-                <SidebarProvider>
-                  <LayoutContent 
-                    children={children} 
-                    currentPageName={currentPageName}
-                    location={location}
-                  />
-                  <Toaster />
-                </SidebarProvider>
-              </WalkthroughProvider>
-            </AdminGuard>
-          </ErrorBoundary>
-        );
-      }
+  // Render the landing page without sidebar/auth wrappers
+  if (currentPageName === "LandingPage") {
+    return (
+      <ErrorBoundary>
+        {children}
+        <Toaster />
+      </ErrorBoundary>
+    );
+  }
+
+  return (
+    <ErrorBoundary>
+      <AdminGuard>
+        <WalkthroughProvider>
+          <SidebarProvider>
+            <LayoutContent
+              children={children}
+              currentPageName={currentPageName}
+              location={location}
+            />
+            <Toaster />
+          </SidebarProvider>
+        </WalkthroughProvider>
+      </AdminGuard>
+    </ErrorBoundary>
+  );
+}
