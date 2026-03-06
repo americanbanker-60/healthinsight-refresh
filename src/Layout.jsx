@@ -142,7 +142,7 @@ const navigationGroups = [
 
 function LayoutContent({ children, currentPageName, location }) {
   const { setOpen, isMobile } = useSidebar();
-  const { role } = useUserRole();
+  const { role, isAdmin } = useUserRole();
   const { startWalkthrough } = useWalkthrough();
 
   // Close sidebar on mobile when route changes
