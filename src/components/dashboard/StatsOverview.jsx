@@ -8,10 +8,9 @@ import { base44 } from "@/api/base44Client";
 
 export default function StatsOverview({ newsletters, isLoading, visibleStats = ["newsletters", "ma_deals", "funding", "themes"] }) {
   // Fetch ALL analyzed newsletters for accurate counts (not limited by display pagination)
-  const { data: allNewsletters = [] } = useQuery({
+  const { data: allNewsletters = [], isLoading: isLoadingStats } = useQuery({
     queryKey: ['allNewslettersForStats'],
     queryFn: () => base44.entities.Newsletter.filter({ is_analyzed: true }, '-publication_date', 10000),
-    initialData: [],
     staleTime: 5 * 60 * 1000,
   });
 
