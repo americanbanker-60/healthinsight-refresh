@@ -215,33 +215,46 @@ function LayoutContent({ children, currentPageName, location }) {
           </SidebarHeader>
           
           <SidebarContent className="p-3">
-            {navigationGroups.filter(group => !group.adminOnly || isAdmin).map((group) => (
-              <SidebarGroup key={group.label}>
-                <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-3 flex items-center justify-between">
-                  <span>{group.label}</span>
-                  {group.adminOnly && <AdminBadge size="xs" />}
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {group.items.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton 
-                          asChild 
-                          className={`hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl mb-1 ${
-                            location.pathname === item.url ? 'bg-blue-50 text-blue-700 shadow-sm' : ''
-                          }`}
-                        >
-                          <Link to={item.url} onClick={handleLinkClick} className="flex items-center gap-3 px-4 py-3">
-                            <item.icon className="w-4 h-4" />
-                            <span className="font-medium">{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            ))}
+            {navigationGroups.filter(group => !group.adminOnly || isAdmin).map((group) => {
+              const isCollapsed = collapsedGroups.includes(group.label);
+              return (
+                <SidebarGroup key={group.label}>
+                  <SidebarGroupLabel
+                    className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-3 flex items-center justify-between cursor-pointer hover:text-slate-700 transition-colors select-none"
+                    onClick={() => toggleGroup(group.label)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{group.label}</span>
+                      {group.adminOnly && <AdminBadge size="xs" />}
+                    </div>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                    />
+                  </SidebarGroupLabel>
+                  {!isCollapsed && (
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {group.items.map((item) => (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton
+                              asChild
+                              className={`hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl mb-1 ${
+                                location.pathname === item.url ? 'bg-blue-50 text-blue-700 shadow-sm' : ''
+                              }`}
+                            >
+                              <Link to={item.url} onClick={handleLinkClick} className="flex items-center gap-3 px-4 py-3">
+                                <item.icon className="w-4 h-4" />
+                                <span className="font-medium">{item.title}</span>
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  )}
+                </SidebarGroup>
+              );
+            })}
           </SidebarContent>
 
           <SidebarFooter className="border-t border-slate-200/60 p-4 space-y-3">
