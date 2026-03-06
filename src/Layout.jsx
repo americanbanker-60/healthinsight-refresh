@@ -140,10 +140,32 @@ const navigationGroups = [
   },
 ];
 
+const COLLAPSED_STORAGE_KEY = "sidebar_collapsed_groups";
+const DEFAULT_COLLAPSED = ["Settings", "Admin"];
+
 function LayoutContent({ children, currentPageName, location }) {
   const { setOpen, isMobile } = useSidebar();
   const { role, isAdmin } = useUserRole();
   const { startWalkthrough } = useWalkthrough();
+
+  const [collapsedGroups, setCollapsedGroups] = useState(() => {
+    try {
+      const stored = localStorage.getItem(COLLAPSED_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : DEFAULT_COLLAPSED;
+    } catch {
+      return DEFAULT_COLLAPSED;
+    }
+  });
+
+  const toggleGroup = useCallback((label) => {
+    setCollapsedGroups(prev => {
+      const next = prev.includes(label)
+        ? prev.filter(g => g !== label)
+        : [...prev, label];
+      try { localStorage.setItem(COLLAPSED_STORAGE_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
 
   // Close sidebar on mobile when route changes
   React.useEffect(() => {
@@ -153,7 +175,6 @@ function LayoutContent({ children, currentPageName, location }) {
   }, [location.pathname, location.search, isMobile, setOpen]);
 
   const handleLinkClick = () => {
-    // Close sidebar on mobile when a link is clicked
     if (isMobile) {
       setOpen(false);
     }
