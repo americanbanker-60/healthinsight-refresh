@@ -15,34 +15,42 @@ export function AdminGuard({ children }) {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    // Safety timeout — never block the UI for more than 4 seconds
+    const timeout = setTimeout(() => setIsChecking(false), 4000);
+
     const ensureAdminRole = async () => {
       try {
         const user = await base44.auth.me();
         if (!user) {
+          clearTimeout(timeout);
           setIsChecking(false);
           return;
         }
 
-        // Check if user needs admin role assignment
-        if (user.role !== 'admin') {
-          // Get all users to determine if this is the first user
+        // If already admin, nothing to do
+        if (user.role === 'admin') {
+          clearTimeout(timeout);
+          setIsChecking(false);
+          return;
+        }
+
+        // Only do the expensive user-list check if they don't have a role set yet
+        // (i.e. brand-new account — role will be null/undefined)
+        if (!user.role) {
           const allUsers = await base44.asServiceRole.entities.User.list();
-          
-          // If this is the only user OR the first user, make them admin
           if (allUsers.length === 1 || user.id === allUsers[0]?.id) {
-            await base44.asServiceRole.entities.User.update(user.id, { 
-              role: 'admin' 
-            });
-            
-            // Reload to refresh user data
+            await base44.asServiceRole.entities.User.update(user.id, { role: 'admin' });
+            clearTimeout(timeout);
             window.location.reload();
             return;
           }
         }
-        
+
+        clearTimeout(timeout);
         setIsChecking(false);
       } catch (error) {
         console.error('Admin guard check failed:', error);
+        clearTimeout(timeout);
         setIsChecking(false);
       }
     };
