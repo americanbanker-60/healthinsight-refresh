@@ -96,6 +96,8 @@ export default function Dashboard() {
 
       <DashboardGuidance />
 
+      {!isLoading && newsletters.length === 0 && <GettingStartedGuide />}
+
       <StatsOverview 
         newsletters={newsletters} 
         isLoading={isLoading}
