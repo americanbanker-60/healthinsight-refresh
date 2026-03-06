@@ -16,6 +16,7 @@ import { GridCardSkeleton } from "../components/common/CardSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardGuidance from "../components/dashboard/DashboardGuidance";
+import GettingStartedGuide from "../components/dashboard/GettingStartedGuide";
 import { useHealthcareIntelligence } from "../components/utils/useHealthcareIntelligence";
 
 const defaultUserConfig = {
