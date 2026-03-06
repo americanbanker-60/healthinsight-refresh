@@ -73,7 +73,7 @@ const navigationGroups = [
           roles: ["admin", "power", "user"],
         },
         {
-          title: "Various Sources",
+          title: "Additional Publishers",
           url: createPageUrl("VariousSources"),
           icon: Globe,
           roles: ["admin", "power", "user"],

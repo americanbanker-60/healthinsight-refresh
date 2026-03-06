@@ -167,12 +167,12 @@ Be thorough and extract all relevant details.`;
 
       const result = await base44.integrations.Core.InvokeLLM(llmParams);
 
-      const fileName = file?.name ? file.name.replace(/\.pdf$/i, "") : "Various Sources";
+      const fileName = file?.name ? file.name.replace(/\.pdf$/i, "") : "Additional Publishers";
       
       setAnalysisResult({ 
         ...result, 
         source_url: activeTab === "url" ? url : fileUrl,
-        source_name: result.source_name || (activeTab === "pdf" ? fileName : "Various Sources")
+        source_name: result.source_name || (activeTab === "pdf" ? fileName : "Additional Publishers")
       });
     } catch (err) {
       setError("Failed to analyze. Please check your input and try again.");
@@ -183,7 +183,7 @@ Be thorough and extract all relevant details.`;
 
   const saveNewsletter = async () => {
     try {
-      const sourceName = analysisResult.source_name?.trim() || "Various Sources";
+      const sourceName = analysisResult.source_name?.trim() || "Additional Publishers";
       await base44.entities.Newsletter.create({
         ...analysisResult,
         source_name: sourceName
@@ -217,7 +217,7 @@ Be thorough and extract all relevant details.`;
             <Globe className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">Various Sources</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">Additional Publishers</h1>
             <p className="text-slate-600 text-lg mt-1">
               Analyze any healthcare article or newsletter by URL or PDF
             </p>
