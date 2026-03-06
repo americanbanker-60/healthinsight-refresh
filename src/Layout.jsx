@@ -194,7 +194,7 @@ function LayoutContent({ children, currentPageName, location }) {
           </SidebarHeader>
           
           <SidebarContent className="p-3">
-            {navigationGroups.map((group) => (
+            {navigationGroups.filter(group => !group.adminOnly || isAdmin).map((group) => (
               <SidebarGroup key={group.label}>
                 <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-3 flex items-center justify-between">
                   <span>{group.label}</span>
