@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Lightbulb, Search, TrendingUp, Plus, X, ArrowUpDown } from "lucide-react";
+import { Lightbulb, Search, TrendingUp, Plus, X, ArrowUpDown, RefreshCw } from "lucide-react";
 import SortControl from "../components/common/SortControl";
 import { GridCardSkeleton } from "../components/common/CardSkeleton";
 import { toast } from "sonner";
