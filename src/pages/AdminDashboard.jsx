@@ -188,6 +188,21 @@ export default function AdminDashboard() {
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
             <CardHeader className="flex-1">
               <CardTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-green-600" />
+                Manage Sources
+              </CardTitle>
+              <CardDescription>Add, edit, and scrape newsletter sources</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to={createPageUrl("ManageSources")}>
+                <Button className="w-full bg-green-600 hover:bg-green-700">Manage Sources</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader className="flex-1">
+              <CardTitle className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-blue-600" />
                 Companies
               </CardTitle>
