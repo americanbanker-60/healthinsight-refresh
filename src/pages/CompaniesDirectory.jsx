@@ -10,11 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Search, TrendingUp, Plus, X, Scan, ArrowUpDown } from "lucide-react";
+import { Building2, Search, TrendingUp, Plus, X, Scan, ArrowUpDown, RefreshCw } from "lucide-react";
 import SortControl from "../components/common/SortControl";
 import { GridCardSkeleton } from "../components/common/CardSkeleton";
 import { toast } from "sonner";
-import { AdminOnlyButton } from "../components/admin/AdminOnlyButton";
+import { AdminOnlyButton, AdminOrPowerButton } from "../components/admin/AdminOnlyButton";
 import EmptyState from "../components/common/EmptyState";
 
 export default function CompaniesDirectory() {
