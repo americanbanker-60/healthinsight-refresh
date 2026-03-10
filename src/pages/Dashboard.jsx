@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardGuidance from "../components/dashboard/DashboardGuidance";
 import GettingStartedGuide from "../components/dashboard/GettingStartedGuide";
 import DailyIntelligenceBrief from "../components/dashboard/DailyIntelligenceBrief";
+import DashboardSearch from "../components/dashboard/DashboardSearch";
 import { useHealthcareIntelligence } from "../components/utils/useHealthcareIntelligence";
 
 const defaultUserConfig = {
