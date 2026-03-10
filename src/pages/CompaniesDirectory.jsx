@@ -206,12 +206,18 @@ export default function CompaniesDirectory() {
               </p>
             </div>
             </div>
-            <AdminOnlyButton>
-            <Button onClick={() => setShowAddDialog(true)} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Company
-            </Button>
-            </AdminOnlyButton>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isFetching}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+              <AdminOnlyButton>
+                <Button onClick={() => setShowAddDialog(true)} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Company
+                </Button>
+              </AdminOnlyButton>
+            </div>
             </div>
       </div>
 
