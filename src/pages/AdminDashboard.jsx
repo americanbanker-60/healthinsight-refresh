@@ -259,6 +259,39 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
+          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader className="flex-1">
+              <CardTitle className="flex items-center gap-2">
+                <Database className="w-5 h-5 text-amber-600" />
+                Fix Dashboard Stats
+              </CardTitle>
+              <CardDescription>Mark all analyzed newsletters with the correct flag so they appear in dashboard stats and search</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={async () => {
+                  if (!confirm('This will scan all newsletters and mark those with content as analyzed. Run now?')) return;
+                  try {
+                    toast.info('Running fix... this may take a moment');
+                    const response = await base44.functions.invoke('fixAnalyzedFlag', {});
+                    if (response.data.success) {
+                      toast.success(`Fixed! ${response.data.newly_fixed} newsletters updated. ${response.data.already_flagged} were already correct.`);
+                      queryClient.invalidateQueries({ queryKey: ['allNewslettersForStats'] });
+                      queryClient.invalidateQueries({ queryKey: ['newsletters'] });
+                    } else {
+                      toast.error('Fix failed');
+                    }
+                  } catch (error) {
+                    toast.error(`Error: ${error.message}`);
+                  }
+                }}
+                className="w-full bg-amber-600 hover:bg-amber-700"
+              >
+                Fix Analyzed Flag
+              </Button>
+            </CardContent>
+          </Card>
+
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
             <CardHeader className="flex-1">
               <CardTitle className="flex items-center gap-2">
