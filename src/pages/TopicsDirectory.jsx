@@ -31,11 +31,16 @@ export default function TopicsDirectory() {
   });
   const [keywordInput, setKeywordInput] = useState("");
 
-  const { data: topics = [], isLoading } = useQuery({
+  const { data: topics = [], isLoading, isFetching } = useQuery({
     queryKey: ['topics'],
     queryFn: () => base44.entities.Topic.list("sort_order"),
     initialData: [],
   });
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['topics'] });
+    toast.success('Data refreshed');
+  };
 
   const createTopicMutation = useMutation({
     mutationFn: (topicData) => base44.entities.Topic.create(topicData),
