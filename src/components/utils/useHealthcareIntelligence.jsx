@@ -24,7 +24,8 @@ export function useHealthcareIntelligence(options = {}) {
   const { data: newsletters = [], isLoading: isLoadingNewsletters, isFetching } = useQuery({
     queryKey: ['newsletters', persistentFilters, activeTab, skip],
     queryFn: async () => {
-      const query = { is_analyzed: true };
+      // Include all newsletters that have been analyzed OR have content (handles legacy data without flag)
+      const query = {};
       
       // Source filter (from tab or persistent filters)
       if (activeTab !== "all") {
