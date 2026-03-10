@@ -299,6 +299,8 @@ function LayoutContent({ children, currentPageName, location }) {
             </ErrorBoundary>
           </div>
         </main>
+
+        <AIResearchAssistant currentPageName={currentPageName} />
     </div>
   );
 }
