@@ -10,7 +10,7 @@ export default function StatsOverview({ newsletters, isLoading, visibleStats = [
   // Fetch ALL analyzed newsletters for accurate counts (not limited by display pagination)
   const { data: allNewsletters = [], isLoading: isLoadingStats } = useQuery({
     queryKey: ['allNewslettersForStats'],
-    queryFn: () => base44.entities.Newsletter.filter({ is_analyzed: true }, '-publication_date', 10000),
+    queryFn: () => base44.entities.Newsletter.list('-publication_date', 10000),
     staleTime: 5 * 60 * 1000,
   });
 
