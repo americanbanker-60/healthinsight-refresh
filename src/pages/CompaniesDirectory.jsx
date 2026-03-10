@@ -35,11 +35,17 @@ export default function CompaniesDirectory() {
   const [keywordInput, setKeywordInput] = useState("");
   const [scanningCompanyId, setScanningCompanyId] = useState(null);
 
-  const { data: companies = [], isLoading } = useQuery({
+  const { data: companies = [], isLoading, isFetching } = useQuery({
     queryKey: ['companies'],
     queryFn: () => base44.entities.Company.list("company_name"),
     initialData: [],
   });
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['companies'] });
+    queryClient.invalidateQueries({ queryKey: ['newsletters'] });
+    toast.success('Data refreshed');
+  };
 
   const { data: newsletters = [] } = useQuery({
     queryKey: ['newsletters'],
