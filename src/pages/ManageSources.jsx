@@ -8,6 +8,7 @@ import { Plus, Trash2 } from "lucide-react";
 import SourceDatabaseFix from "../components/admin/SourceDatabaseFix";
 import AISourceDiscovery from "../components/admin/AISourceDiscovery";
 import DirectNewsletterUpload from "../components/admin/DirectNewsletterUpload";
+import CSVBulkImport from "../components/admin/CSVBulkImport";
 import SourceUploadManager from "../components/admin/SourceUploadManager";
 import SourceEditor from "../components/admin/SourceEditor";
 import SourceList from "../components/admin/SourceList";
