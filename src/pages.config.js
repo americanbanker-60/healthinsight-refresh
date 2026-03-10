@@ -59,6 +59,7 @@ import DashboardSettings from './pages/DashboardSettings';
 import DeepDiveResults from './pages/DeepDiveResults';
 import ExploreAllSources from './pages/ExploreAllSources';
 import KnowledgeHub from './pages/KnowledgeHub';
+import LandingPage from './pages/LandingPage';
 import ManageSources from './pages/ManageSources';
 import MyCustomPacks from './pages/MyCustomPacks';
 import MyLibrary from './pages/MyLibrary';
@@ -73,7 +74,6 @@ import TopicsDirectory from './pages/TopicsDirectory';
 import Unauthorized from './pages/Unauthorized';
 import UserSettings from './pages/UserSettings';
 import VariousSources from './pages/VariousSources';
-import LandingPage from './pages/LandingPage';
 import __Layout from './Layout.jsx';
 
 
@@ -90,6 +90,7 @@ export const PAGES = {
     "DeepDiveResults": DeepDiveResults,
     "ExploreAllSources": ExploreAllSources,
     "KnowledgeHub": KnowledgeHub,
+    "LandingPage": LandingPage,
     "ManageSources": ManageSources,
     "MyCustomPacks": MyCustomPacks,
     "MyLibrary": MyLibrary,
@@ -104,7 +105,6 @@ export const PAGES = {
     "Unauthorized": Unauthorized,
     "UserSettings": UserSettings,
     "VariousSources": VariousSources,
-    "LandingPage": LandingPage,
 }
 
 export const pagesConfig = {
