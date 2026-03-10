@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-const BATCH_SIZE = 20;
-const CONCURRENCY = 4;
+const BATCH_SIZE = 10;
+const CONCURRENCY = 1;
 
 Deno.serve(async (req) => {
   try {
