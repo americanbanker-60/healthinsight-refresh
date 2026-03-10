@@ -98,6 +98,8 @@ export default function Dashboard() {
 
       <DashboardGuidance />
 
+      <DashboardSearch />
+
       {!isLoading && newsletters.length > 0 && <DailyIntelligenceBrief />}
 
       {!isLoading && newsletters.length === 0 && <GettingStartedGuide />}
