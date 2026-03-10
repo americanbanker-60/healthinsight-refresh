@@ -14,7 +14,11 @@ export default function StatsOverview({ newsletters, isLoading, visibleStats = [
     staleTime: 5 * 60 * 1000,
   });
 
-  const totalNewsletters = allNewsletters.length;
+  // Count newsletters that have been processed (have content regardless of is_analyzed flag)
+  const processedNewsletters = allNewsletters.filter(n =>
+    n.is_analyzed || n.summary || n.tldr || (n.key_takeaways && n.key_takeaways.length > 0)
+  );
+  const totalNewsletters = processedNewsletters.length;
   const totalMADeals = allNewsletters.reduce((sum, n) => sum + (n.ma_activities?.length || 0), 0);
   const totalFunding = allNewsletters.reduce((sum, n) => sum + (n.funding_rounds?.length || 0), 0);
   
