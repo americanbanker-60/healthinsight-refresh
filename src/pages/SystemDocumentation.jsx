@@ -18,6 +18,7 @@ import {
 import SystemArchitecture from "../components/documentation/SystemArchitecture";
 import FeaturesWorkflows from "../components/documentation/FeaturesWorkflows";
 import FeatureStatus from "../components/documentation/FeatureStatus";
+import SystemHealthStatus from "../components/documentation/SystemHealthStatus";
 import TechnicalImplementation from "../components/documentation/TechnicalImplementation";
 import OperationsMaintenance from "../components/documentation/OperationsMaintenance";
 
