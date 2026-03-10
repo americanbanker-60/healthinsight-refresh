@@ -270,10 +270,11 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <Button 
+                disabled={fixingFlag}
                 onClick={async () => {
                   if (!confirm('This will scan all newsletters and mark those with content as analyzed. Run now?')) return;
+                  setFixingFlag(true);
                   try {
-                    toast.info('Running fix... this may take a moment');
                     const response = await base44.functions.invoke('fixAnalyzedFlag', {});
                     if (response.data.success) {
                       toast.success(`Fixed! ${response.data.newly_fixed} newsletters updated. ${response.data.already_flagged} were already correct.`);
@@ -284,11 +285,17 @@ export default function AdminDashboard() {
                     }
                   } catch (error) {
                     toast.error(`Error: ${error.message}`);
+                  } finally {
+                    setFixingFlag(false);
                   }
                 }}
                 className="w-full bg-amber-600 hover:bg-amber-700"
               >
-                Fix Analyzed Flag
+                {fixingFlag ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Running Fix...</>
+                ) : (
+                  'Fix Analyzed Flag'
+                )}
               </Button>
             </CardContent>
           </Card>
