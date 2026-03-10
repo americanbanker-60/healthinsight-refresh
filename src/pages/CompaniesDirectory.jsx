@@ -285,19 +285,21 @@ export default function CompaniesDirectory() {
                 )}
 
                 <div className="flex gap-2 pt-2 border-t border-slate-100">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-slate-500 hover:text-slate-700"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      scanNewslettersForCompany(company);
-                    }}
-                    disabled={scanningCompanyId === company.id}
-                  >
-                    <Scan className="w-4 h-4" />
-                  </Button>
+                  <AdminOrPowerButton>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-500 hover:text-slate-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        scanNewslettersForCompany(company);
+                      }}
+                      disabled={scanningCompanyId === company.id}
+                    >
+                      <Scan className="w-4 h-4" />
+                    </Button>
+                  </AdminOrPowerButton>
                   <Button
                     size="sm"
                     className="flex-1 bg-blue-600 hover:bg-blue-700"
