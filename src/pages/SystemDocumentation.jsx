@@ -83,7 +83,8 @@ export default function SystemDocumentation() {
             <FeaturesWorkflows />
           </TabsContent>
 
-          <TabsContent value="status">
+          <TabsContent value="status" className="space-y-8">
+            <SystemHealthStatus />
             <FeatureStatus />
           </TabsContent>
 
