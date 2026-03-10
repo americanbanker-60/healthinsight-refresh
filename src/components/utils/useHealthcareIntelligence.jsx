@@ -46,7 +46,8 @@ export function useHealthcareIntelligence(options = {}) {
       }
       
       const result = await base44.entities.Newsletter.filter(query, '-publication_date', maxItems);
-      return result;
+      // Filter client-side to only newsletters with actual content
+      return result.filter(n => n.is_analyzed || n.summary || n.tldr || (n.key_takeaways && n.key_takeaways.length > 0));
     },
     initialData: [],
   });
