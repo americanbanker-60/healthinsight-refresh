@@ -17,6 +17,7 @@ export default function AdminDashboard() {
   const { user } = useUserRole();
   const queryClient = useQueryClient();
   const [generatingTopics, setGeneratingTopics] = React.useState(false);
+  const [fixingFlag, setFixingFlag] = React.useState(false);
 
   const generateTopicsMutation = useMutation({
     mutationFn: async () => {
