@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Shield, PlayCircle } from "lucide-react";
 import { AdminBadge } from "@/components/admin/AdminOnlyButton";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import AIResearchAssistant from "@/components/layout/AIResearchAssistant";
 import {
   Sidebar,
   SidebarContent,
