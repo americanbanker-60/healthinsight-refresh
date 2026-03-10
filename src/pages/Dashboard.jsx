@@ -97,6 +97,8 @@ export default function Dashboard() {
 
       <DashboardGuidance />
 
+      {!isLoading && newsletters.length > 0 && <DailyIntelligenceBrief />}
+
       {!isLoading && newsletters.length === 0 && <GettingStartedGuide />}
 
       <StatsOverview 
