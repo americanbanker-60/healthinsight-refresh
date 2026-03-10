@@ -127,12 +127,18 @@ export default function TopicsDirectory() {
               </p>
             </div>
           </div>
-          <AdminOnlyButton>
-            <Button onClick={() => setShowAddDialog(true)} className="bg-amber-600 hover:bg-amber-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Topic
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isFetching}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
+              Refresh
             </Button>
-          </AdminOnlyButton>
+            <AdminOnlyButton>
+              <Button onClick={() => setShowAddDialog(true)} className="bg-amber-600 hover:bg-amber-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Topic
+              </Button>
+            </AdminOnlyButton>
+          </div>
         </div>
       </div>
 
