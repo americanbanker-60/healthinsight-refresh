@@ -25,7 +25,7 @@ export default function StatsOverview({ newsletters, isLoading, visibleStats = [
   // Count unique themes across all newsletters (not total theme occurrences)
   const uniqueThemes = React.useMemo(() => {
     const themesSet = new Set();
-    allNewsletters.forEach(n => {
+    processedNewsletters.forEach(n => {
       if (n.themes) {
         n.themes.forEach(t => {
           if (t.theme) themesSet.add(t.theme);
