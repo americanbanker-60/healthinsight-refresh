@@ -30,6 +30,20 @@ export function AdminOnlyButton({ children, fallback = null }) {
 }
 
 /**
+ * Wrapper component that renders children for admin OR power users
+ * Use this for edit/action buttons that power users can also access
+ */
+export function AdminOrPowerButton({ children, fallback = null }) {
+  const { role } = useUserRole();
+  
+  if (role !== 'admin' && role !== 'power') {
+    return fallback;
+  }
+  
+  return children;
+}
+
+/**
  * Higher-order component to wrap any component with admin-only visibility
  */
 export function withAdminOnly(Component) {
