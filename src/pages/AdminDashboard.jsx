@@ -191,7 +191,7 @@ export default function AdminDashboard() {
                 <Globe className="w-5 h-5 text-green-600" />
                 Manage Sources
               </CardTitle>
-              <CardDescription>Add, edit, and scrape newsletter sources</CardDescription>
+              <CardDescription>Add and manage newsletter sources</CardDescription>
             </CardHeader>
             <CardContent>
               <Link to={createPageUrl("ManageSources")}>
