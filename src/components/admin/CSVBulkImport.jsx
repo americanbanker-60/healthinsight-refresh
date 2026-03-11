@@ -234,6 +234,16 @@ export default function CSVBulkImport() {
     }
   };
 
+  const reprocessFailed = async (batchId) => {
+    const failedJobs = allJobs.filter(j => j.batch_id === batchId && j.status === 'failed');
+    await Promise.all(failedJobs.map(j =>
+      base44.entities.BulkImportJob.update(j.id, { status: 'pending', error_message: null })
+    ));
+    queryClient.invalidateQueries({ queryKey: ['bulkImportJobs'] });
+    toast.success(`Reset ${failedJobs.length} failed URL${failedJobs.length > 1 ? 's' : ''} to pending — processing will resume shortly.`);
+    triggerProcessing();
+  };
+
   const deleteBatch = async (batchId) => {
     const jobs = allJobs.filter(j => j.batch_id === batchId);
     for (const job of jobs) {
