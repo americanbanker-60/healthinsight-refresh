@@ -163,17 +163,41 @@ export default function CSVBulkImport() {
       return;
     }
 
-    toast.info(`Found ${parsed.length} URLs — saving to queue...`);
+    toast.info(`Found ${parsed.length} URLs — checking for duplicates...`);
     setEnqueueing(true);
 
     const batchId = `batch_${Date.now()}`;
     const batchName = file.name.replace(/\.csv$/i, '');
 
-    // Bulk create all jobs
-    const CHUNK = 100;
     try {
-      for (let i = 0; i < parsed.length; i += CHUNK) {
-        const slice = parsed.slice(i, i + CHUNK);
+      // Deduplicate: collect all existing URLs (from queue + newsletters)
+      const existingQueueUrls = new Set(allJobs.map(j => j.url));
+
+      // Also check Newsletter entity for already-processed URLs
+      const existingNewsletters = await base44.entities.Newsletter.list('-created_date', 5000);
+      const existingNewsletterUrls = new Set(existingNewsletters.map(n => n.source_url));
+
+      const newItems = parsed.filter(item => {
+        const url = item.url.trim();
+        return !existingQueueUrls.has(url) && !existingNewsletterUrls.has(url);
+      });
+      const dupCount = parsed.length - newItems.length;
+
+      if (newItems.length === 0) {
+        toast.warning(`All ${parsed.length} URLs already exist in the system — nothing new to import.`);
+        setEnqueueing(false);
+        setFileName('');
+        return;
+      }
+
+      if (dupCount > 0) {
+        toast.info(`Skipping ${dupCount} duplicate URL${dupCount > 1 ? 's' : ''} already in the system.`);
+      }
+
+      // Bulk create only new jobs
+      const CHUNK = 100;
+      for (let i = 0; i < newItems.length; i += CHUNK) {
+        const slice = newItems.slice(i, i + CHUNK);
         await base44.entities.BulkImportJob.bulkCreate(
           slice.map(item => ({
             batch_id: batchId,
@@ -185,7 +209,7 @@ export default function CSVBulkImport() {
         );
       }
 
-      toast.success(`Queued ${parsed.length} URLs — processing will start automatically every 5 minutes, or click "Process Now"`);
+      toast.success(`Queued ${newItems.length} new URLs — processing will start automatically every 5 minutes, or click "Process Now"`);
       queryClient.invalidateQueries({ queryKey: ['bulkImportJobs'] });
 
       // Trigger immediately
