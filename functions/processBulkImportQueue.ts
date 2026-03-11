@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
     let succeeded = 0, failed = 0, skipped = 0;
 
     for (let i = 0; i < pendingJobs.length; i += CONCURRENCY) {
+      if (i > 0) await sleep(DELAY_BETWEEN_JOBS_MS);
       const chunk = pendingJobs.slice(i, i + CONCURRENCY);
       await Promise.all(chunk.map(async (job) => {
         try {
