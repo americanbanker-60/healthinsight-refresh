@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,17 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Play, RefreshCw, FileSpreadsheet, RotateCcw, ExternalLink } from "lucide-react";
+import { Play, RefreshCw, FileSpreadsheet, RotateCcw, ExternalLink, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 export default function BulkImportStatus() {
-  const [triggering, setTriggering] = useState(false);
+  const [isActivelyProcessing, setIsActivelyProcessing] = useState(false);
+  const [processedCount, setProcessedCount] = useState(0);
+  const processingRef = useRef(false);
   const queryClient = useQueryClient();
 
   const { data: allJobs = [], refetch } = useQuery({
     queryKey: ['bulkImportJobs'],
     queryFn: () => base44.entities.BulkImportJob.list('-created_date', 2000),
-    refetchInterval: 15000,
+    refetchInterval: isActivelyProcessing ? 3000 : 15000,
     initialData: []
   });
 
