@@ -224,17 +224,46 @@ export default function CSVBulkImport() {
     }
   };
 
-  const triggerProcessing = async () => {
-    setTriggering(true);
-    try {
-      await base44.functions.invoke('processBulkImportQueue', {});
-      refetch();
-    } catch (err) {
-      toast.error(`Error: ${err.message}`);
-    } finally {
-      setTriggering(false);
+  const startProcessingLoop = async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setIsActivelyProcessing(true);
+    setProcessedCount(0);
+
+    let count = 0;
+    while (processingRef.current) {
+      try {
+        const result = await base44.functions.invoke('processBulkImportQueue', {});
+        const { succeeded = 0, skipped = 0 } = result?.data || {};
+        count += succeeded + skipped;
+        setProcessedCount(count);
+        await refetch();
+
+        const fresh = await base44.entities.BulkImportJob.filter({ status: 'pending' }, 'created_date', 1);
+        const processing = await base44.entities.BulkImportJob.filter({ status: 'processing' }, 'created_date', 1);
+        if (fresh.length === 0 && processing.length === 0) break;
+
+        await new Promise(r => setTimeout(r, 2000));
+      } catch (err) {
+        console.error('Processing loop error:', err.message);
+        await new Promise(r => setTimeout(r, 5000));
+      }
     }
+
+    processingRef.current = false;
+    setIsActivelyProcessing(false);
+    await refetch();
+    toast.success(`Processing complete! ${count} jobs processed.`);
   };
+
+  const stopProcessing = () => {
+    processingRef.current = false;
+    setIsActivelyProcessing(false);
+    toast.info('Processing stopped');
+  };
+
+  // Keep backward compat for internal callers
+  const triggerProcessing = startProcessingLoop;
 
   const reprocessFailed = async (batchId) => {
     const failedJobs = allJobs.filter(j => j.batch_id === batchId && j.status === 'failed');
