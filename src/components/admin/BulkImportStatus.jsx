@@ -11,7 +11,7 @@ import { Play, RefreshCw, FileSpreadsheet, RotateCcw, ExternalLink } from "lucid
 import { toast } from "sonner";
 
 export default function BulkImportStatus() {
-  const [triggering, setTriggering] = React.useState(false);
+  const [triggering, setTriggering] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: allJobs = [], refetch } = useQuery({
@@ -21,7 +21,7 @@ export default function BulkImportStatus() {
     initialData: []
   });
 
-  const batches = React.useMemo(() => {
+  const batches = useMemo(() => {
     const map = {};
     for (const job of allJobs) {
       if (!map[job.batch_id]) {
