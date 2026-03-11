@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
 
     // Reset jobs stuck in "processing" for > 20 minutes
-    const stuckCutoff = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+    const stuckCutoff = new Date(Date.now() - 3 * 60 * 1000).toISOString();
     const processingJobs = await base44.asServiceRole.entities.BulkImportJob.filter({ status: 'processing' }, 'created_date', 500);
     const stuckJobs = processingJobs.filter(j => j.updated_date && j.updated_date < stuckCutoff);
     if (stuckJobs.length > 0) {
