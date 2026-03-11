@@ -8,16 +8,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin only' }, { status: 403 });
     }
 
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
     // Fetch ALL jobs in batches
     let allJobs = [];
     let skip = 0;
-    const pageSize = 500;
+    const pageSize = 200;
     while (true) {
       const batch = await base44.asServiceRole.entities.BulkImportJob.list('-created_date', pageSize, skip);
       if (!batch || batch.length === 0) break;
       allJobs = allJobs.concat(batch);
       skip += pageSize;
       if (batch.length < pageSize) break;
+      await sleep(1000); // avoid rate limit between pages
     }
 
     console.log(`Total jobs fetched: ${allJobs.length}`);
