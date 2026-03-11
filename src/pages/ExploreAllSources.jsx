@@ -200,7 +200,7 @@ export default function ExploreAllSources() {
 
   const clearFilters = () => {
     setSearchText("");
-    setDateRangePreset("30d");
+    setDateRangePreset("all");
     setCustomStartDate(null);
     setCustomEndDate(null);
     setSelectedSources(availableSources);
