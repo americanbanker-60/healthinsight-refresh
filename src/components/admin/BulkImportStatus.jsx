@@ -43,18 +43,49 @@ export default function BulkImportStatus() {
   const totalDone = allJobs.filter(j => j.status === 'done').length;
   const totalFailed = allJobs.filter(j => j.status === 'failed').length;
 
-  const triggerProcessing = async () => {
-    setTriggering(true);
-    try {
-      await base44.functions.invoke('processBulkImportQueue', {});
-      await refetch();
-      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
-      toast.success('Processing triggered — check back in a minute for updates');
-    } catch (err) {
-      toast.error(`Error: ${err.message}`);
-    } finally {
-      setTriggering(false);
+  // Continuously process until no pending jobs remain
+  const startProcessingLoop = async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setIsActivelyProcessing(true);
+    setProcessedCount(0);
+    toast.success('Processing started — running continuously until all jobs are done');
+
+    let count = 0;
+    while (processingRef.current) {
+      try {
+        const result = await base44.functions.invoke('processBulkImportQueue', {});
+        const { succeeded = 0, skipped = 0 } = result?.data || {};
+        count += succeeded + skipped;
+        setProcessedCount(count);
+        await refetch();
+        queryClient.invalidateQueries({ queryKey: ['adminStats'] });
+
+        // Check if anything is still pending
+        const fresh = await base44.entities.BulkImportJob.filter({ status: 'pending' }, 'created_date', 1);
+        const processing = await base44.entities.BulkImportJob.filter({ status: 'processing' }, 'created_date', 1);
+        if (fresh.length === 0 && processing.length === 0) {
+          break;
+        }
+        // Small pause between calls
+        await new Promise(r => setTimeout(r, 2000));
+      } catch (err) {
+        console.error('Processing loop error:', err.message);
+        await new Promise(r => setTimeout(r, 5000)); // wait longer on error
+      }
     }
+
+    processingRef.current = false;
+    setIsActivelyProcessing(false);
+    await refetch();
+    queryClient.invalidateQueries({ queryKey: ['adminStats'] });
+    toast.success(`Processing complete! ${count} jobs processed.`);
+  };
+
+  const stopProcessing = () => {
+    processingRef.current = false;
+    setIsActivelyProcessing(false);
+    toast.info('Processing stopped');
   };
 
   const reprocessFailed = async () => {
@@ -65,7 +96,7 @@ export default function BulkImportStatus() {
     ));
     queryClient.invalidateQueries({ queryKey: ['bulkImportJobs'] });
     toast.success(`Reset ${failedJobs.length} failed jobs to pending`);
-    triggerProcessing();
+    startProcessingLoop();
   };
 
   if (allJobs.length === 0) return null;
