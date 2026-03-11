@@ -48,7 +48,7 @@ function parseCSV(text) {
   return result;
 }
 
-function BatchProgressCard({ batch, onDelete, onTrigger }) {
+function BatchProgressCard({ batch, onDelete, onTrigger, onReprocessFailed }) {
   const total = batch.jobs.length;
   const done = batch.jobs.filter(j => j.status === 'done').length;
   const failed = batch.jobs.filter(j => j.status === 'failed').length;
