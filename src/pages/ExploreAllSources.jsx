@@ -82,6 +82,8 @@ export default function ExploreAllSources() {
   const getDateRange = () => {
     const today = new Date();
     switch (dateRangePreset) {
+      case "all":
+        return { start: null, end: null };
       case "7d":
         return { start: subDays(today, 7), end: today };
       case "30d":
@@ -93,7 +95,7 @@ export default function ExploreAllSources() {
       case "custom":
         return { start: customStartDate, end: customEndDate };
       default:
-        return { start: subDays(today, 30), end: today };
+        return { start: null, end: null };
     }
   };
 
