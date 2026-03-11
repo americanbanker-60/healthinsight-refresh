@@ -33,7 +33,7 @@ export default function ExploreAllSources() {
   const queryClient = useQueryClient();
   
   const [searchText, setSearchText] = useState("");
-  const [dateRangePreset, setDateRangePreset] = useState("30d");
+  const [dateRangePreset, setDateRangePreset] = useState("all");
   const [customStartDate, setCustomStartDate] = useState(null);
   const [customEndDate, setCustomEndDate] = useState(null);
   const [selectedSources, setSelectedSources] = useState([]);
