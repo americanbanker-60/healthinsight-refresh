@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
+// Processes one page at a time - call repeatedly until duplicates_removed = 0
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -8,74 +9,50 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin only' }, { status: 403 });
     }
 
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    // Fetch all jobs (use a generous limit - we need all to find dupes)
+    const page1 = await base44.asServiceRole.entities.BulkImportJob.list('created_date', 500, 0);
+    const page2 = await base44.asServiceRole.entities.BulkImportJob.list('created_date', 500, 500);
+    const page3 = await base44.asServiceRole.entities.BulkImportJob.list('created_date', 500, 1000);
 
-    // Fetch ALL jobs in batches
-    let allJobs = [];
-    let skip = 0;
-    const pageSize = 200;
-    while (true) {
-      const batch = await base44.asServiceRole.entities.BulkImportJob.list('-created_date', pageSize, skip);
-      if (!batch || batch.length === 0) break;
-      allJobs = allJobs.concat(batch);
-      skip += pageSize;
-      if (batch.length < pageSize) break;
-      await sleep(1000); // avoid rate limit between pages
-    }
-
-    console.log(`Total jobs fetched: ${allJobs.length}`);
+    const allJobs = [...(page1 || []), ...(page2 || []), ...(page3 || [])];
+    console.log(`Fetched ${allJobs.length} total jobs`);
 
     // Group by URL
     const urlMap = {};
     for (const job of allJobs) {
-      const url = job.url;
-      if (!urlMap[url]) {
-        urlMap[url] = [];
-      }
-      urlMap[url].push(job);
+      if (!urlMap[job.url]) urlMap[job.url] = [];
+      urlMap[job.url].push(job);
     }
 
     const uniqueUrls = Object.keys(urlMap).length;
-    console.log(`Unique URLs: ${uniqueUrls}, Total jobs: ${allJobs.length}, Duplicates to remove: ${allJobs.length - uniqueUrls}`);
+    console.log(`Unique URLs: ${uniqueUrls} out of ${allJobs.length} total`);
 
-    // For each URL, keep only ONE job (prefer pending > failed > done > skipped)
-    const statusPriority = { pending: 0, failed: 1, processing: 2, done: 3, skipped: 4 };
+    // Collect duplicate IDs to delete
+    // Priority: keep pending first, then processing, then failed, then done/skipped
+    const statusPriority = { pending: 0, processing: 1, failed: 2, done: 3, skipped: 4 };
     const toDelete = [];
 
     for (const [url, jobs] of Object.entries(urlMap)) {
       if (jobs.length <= 1) continue;
-
-      // Sort: keep the one with highest priority status (lowest number), then newest
-      jobs.sort((a, b) => {
-        const aPriority = statusPriority[a.status] ?? 99;
-        const bPriority = statusPriority[b.status] ?? 99;
-        if (aPriority !== bPriority) return aPriority - bPriority;
-        return new Date(b.created_date) - new Date(a.created_date);
-      });
-
-      // Keep first, delete the rest
-      const [keep, ...dupes] = jobs;
-      console.log(`URL: ${url} - keeping ${keep.id} (${keep.status}), deleting ${dupes.length} dupes`);
+      jobs.sort((a, b) => (statusPriority[a.status] ?? 99) - (statusPriority[b.status] ?? 99));
+      const [, ...dupes] = jobs;
       toDelete.push(...dupes.map(d => d.id));
     }
 
-    console.log(`Deleting ${toDelete.length} duplicate jobs...`);
+    console.log(`Deleting ${toDelete.length} duplicate jobs`);
 
-    // Delete in batches of 50
-    let deleted = 0;
-    for (let i = 0; i < toDelete.length; i += 50) {
-      const chunk = toDelete.slice(i, i + 50);
+    // Delete all dupes in parallel chunks of 20
+    for (let i = 0; i < toDelete.length; i += 20) {
+      const chunk = toDelete.slice(i, i + 20);
       await Promise.all(chunk.map(id => base44.asServiceRole.entities.BulkImportJob.delete(id)));
-      deleted += chunk.length;
-      console.log(`Deleted ${deleted}/${toDelete.length}`);
     }
 
     return Response.json({
       success: true,
-      total_jobs_before: allJobs.length,
+      total_before: allJobs.length,
       unique_urls: uniqueUrls,
-      duplicates_removed: deleted,
-      jobs_remaining: allJobs.length - deleted
+      duplicates_removed: toDelete.length,
+      remaining: allJobs.length - toDelete.length
     });
 
   } catch (error) {
