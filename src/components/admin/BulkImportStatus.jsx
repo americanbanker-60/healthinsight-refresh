@@ -153,19 +153,29 @@ export default function BulkImportStatus() {
           </div>
         )}
 
+        {/* Active processing banner */}
+        {isActivelyProcessing && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-blue-600 animate-pulse" />
+              <span className="text-sm font-semibold text-blue-800">
+                Actively processing... {processedCount > 0 ? `${processedCount} done this session` : 'starting up'}
+              </span>
+            </div>
+            <Button size="sm" variant="outline" onClick={stopProcessing} className="border-blue-300 text-blue-700 text-xs shrink-0">
+              Stop
+            </Button>
+          </div>
+        )}
+
         {/* Action buttons */}
         <div className="flex gap-2 flex-wrap">
-          {totalPending > 0 && (
+          {totalPending > 0 && !isActivelyProcessing && (
             <Button
               className="bg-violet-600 hover:bg-violet-700"
-              onClick={triggerProcessing}
-              disabled={triggering}
+              onClick={startProcessingLoop}
             >
-              {triggering ? (
-                <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Processing...</>
-              ) : (
-                <><Play className="w-4 h-4 mr-2" />Process {totalPending} Pending Now</>
-              )}
+              <Play className="w-4 h-4 mr-2" />Process {totalPending} Pending Now
             </Button>
           )}
           {totalFailed > 0 && (
