@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Upload, FileSpreadsheet, Download, RefreshCw, Trash2, Play, RotateCcw } from "lucide-react";
+import { Upload, FileSpreadsheet, Download, RefreshCw, Trash2, Play, RotateCcw, Zap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 function parseCSV(text) {
