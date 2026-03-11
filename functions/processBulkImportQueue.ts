@@ -73,8 +73,8 @@ Deno.serve(async (req) => {
 URL: ${job.url}
 Domain: ${domain}
 
-HTML Content (truncated to first 15000 chars):
-${htmlContent.substring(0, 15000)}
+HTML Content (truncated to first 8000 chars):
+${htmlContent.substring(0, 8000)}
 
 Extract:
 - title: Clear article title
