@@ -98,9 +98,14 @@ function BatchProgressCard({ batch, onDelete, onTrigger }) {
             </Button>
           )}
           {failedJobs.length > 0 && (
-            <Button size="sm" variant="outline" onClick={downloadErrors} className="text-xs">
-              <Download className="w-3 h-3 mr-1" /> Download Failed
-            </Button>
+            <>
+              <Button size="sm" variant="outline" onClick={() => onReprocessFailed(batch.id)} className="text-xs text-orange-700 border-orange-300 hover:bg-orange-50">
+                <RotateCcw className="w-3 h-3 mr-1" /> Reprocess Failed
+              </Button>
+              <Button size="sm" variant="outline" onClick={downloadErrors} className="text-xs">
+                <Download className="w-3 h-3 mr-1" /> Download Failed
+              </Button>
+            </>
           )}
           {isComplete && (
             <Button size="sm" variant="ghost" onClick={() => onDelete(batch.id)} className="text-xs text-slate-400 hover:text-red-600">
