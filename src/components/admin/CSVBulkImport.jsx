@@ -328,6 +328,7 @@ export default function CSVBulkImport() {
                 batch={batch}
                 onDelete={deleteBatch}
                 onTrigger={triggerProcessing}
+                onReprocessFailed={reprocessFailed}
               />
             ))}
           </div>
