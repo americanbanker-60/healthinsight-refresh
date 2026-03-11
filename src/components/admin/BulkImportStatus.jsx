@@ -90,15 +90,35 @@ export default function BulkImportStatus() {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Summary stats */}
-        <div className="flex gap-4 text-sm">
+        <div className="flex gap-4 text-sm flex-wrap">
           {totalPending > 0 && (
             <span className="text-blue-700 font-semibold">⏳ {totalPending} pending</span>
           )}
-          <span className="text-green-700">✓ {totalDone} processed</span>
+          {totalDone > 0 && (
+            <span className="text-green-700 font-semibold">✓ {totalDone} analyzed &amp; saved to database</span>
+          )}
           {totalFailed > 0 && (
             <span className="text-red-600">✗ {totalFailed} failed</span>
           )}
         </div>
+
+        {totalDone > 0 && totalPending === 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
+            <strong>✅ Processing complete!</strong> Your newsletters have been analyzed by AI and are ready to view.
+            <div className="flex gap-2 mt-2">
+              <Link to={createPageUrl("ExploreAllSources")}>
+                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-xs">
+                  View Analyzed Newsletters →
+                </Button>
+              </Link>
+              <Link to={createPageUrl("Dashboard")}>
+                <Button size="sm" variant="outline" className="text-xs border-green-300">
+                  Go to Dashboard →
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex gap-2 flex-wrap">
