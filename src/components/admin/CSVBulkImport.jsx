@@ -122,14 +122,16 @@ export default function CSVBulkImport() {
   const [defaultSourceName, setDefaultSourceName] = useState('');
   const [fileName, setFileName] = useState('');
   const [enqueueing, setEnqueueing] = useState(false);
-  const [triggering, setTriggering] = useState(false);
+  const [isActivelyProcessing, setIsActivelyProcessing] = useState(false);
+  const [processedCount, setProcessedCount] = useState(0);
+  const processingRef = useRef(false);
   const queryClient = useQueryClient();
 
-  // Poll for job status every 15s
+  // Poll faster when actively processing
   const { data: allJobs = [], refetch } = useQuery({
     queryKey: ['bulkImportJobs'],
     queryFn: () => base44.entities.BulkImportJob.list('-created_date', 2000),
-    refetchInterval: 15000,
+    refetchInterval: isActivelyProcessing ? 3000 : 15000,
     initialData: []
   });
 
