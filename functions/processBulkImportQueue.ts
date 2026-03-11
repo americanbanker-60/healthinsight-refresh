@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 5;
 const CONCURRENCY = 1;
 
 Deno.serve(async (req) => {
@@ -32,7 +32,6 @@ Deno.serve(async (req) => {
 
     let succeeded = 0, failed = 0, skipped = 0;
 
-    // Process in concurrent chunks
     for (let i = 0; i < pendingJobs.length; i += CONCURRENCY) {
       const chunk = pendingJobs.slice(i, i + CONCURRENCY);
       await Promise.all(chunk.map(async (job) => {
@@ -107,12 +106,24 @@ Extract:
             }
           });
 
+          // IMPORTANT: Do NOT store raw_input (large HTML blob causes create to fail silently)
           const newsletterData = {
-            ...result,
+            title: result.title || 'Untitled',
             source_url: job.url,
             source_name: job.source_name || result.source_name || domain,
+            source_type: 'URL',
             content_type: 'URL',
-            raw_input: htmlContent.substring(0, 50000),
+            publication_date: result.publication_date || null,
+            tldr: result.tldr || null,
+            summary: result.summary || null,
+            key_takeaways: result.key_takeaways || [],
+            key_statistics: result.key_statistics || [],
+            themes: result.themes || [],
+            key_players: result.key_players || [],
+            sentiment: result.sentiment || null,
+            market_sentiment: result.market_sentiment || null,
+            deal_value: result.deal_value || null,
+            primary_sector: result.primary_sector || null,
             date_added_to_app: new Date().toISOString(),
             is_analyzed: true,
             publication_date_confidence: "medium",
@@ -120,22 +131,26 @@ Extract:
             publication_date_notes: "Bulk CSV import"
           };
 
+          console.log(`Creating newsletter: ${newsletterData.title}`);
           const created = await base44.asServiceRole.entities.Newsletter.create(newsletterData);
-          const newsletterId = created?.id;
-
-          if (newsletterId) {
-            // Create company/topic relations in background
-            base44.asServiceRole.functions.invoke('createNewsletterRelations', {
-              newsletter_id: newsletterId
-            }).catch(err => console.error('Relation creation failed:', err.message));
+          
+          // CRITICAL: verify the record was actually created
+          if (!created || !created.id) {
+            throw new Error(`Newsletter.create() returned no ID - record was not saved`);
           }
+
+          console.log(`✓ Created newsletter ID: ${created.id} - ${created.title}`);
+
+          // Create company/topic relations in background
+          base44.asServiceRole.functions.invoke('createNewsletterRelations', {
+            newsletter_id: created.id
+          }).catch(err => console.error('Relation creation failed:', err.message));
 
           await base44.asServiceRole.entities.BulkImportJob.update(job.id, {
             status: 'done',
             result_title: result.title
           });
           succeeded++;
-          console.log(`✓ ${result.title}`);
 
         } catch (err) {
           console.error(`✗ ${job.url}: ${err.message}`);
