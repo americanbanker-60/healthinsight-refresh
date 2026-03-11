@@ -152,6 +152,11 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* Bulk Import Queue Status */}
+        <div className="mb-6">
+          <BulkImportStatus />
+        </div>
+
         {/* Direct Newsletter Upload - Primary Action */}
         <div className="mb-6">
           <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-xl">
