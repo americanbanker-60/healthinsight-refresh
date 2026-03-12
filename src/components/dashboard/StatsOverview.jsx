@@ -11,7 +11,7 @@ export default function StatsOverview({ newsletters, isLoading, visibleStats = [
   const { data: allNewsletters = [], isLoading: isLoadingStats } = useQuery({
     queryKey: ['allNewslettersForStats'],
     queryFn: () => base44.entities.Newsletter.list('-publication_date', 10000),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
   });
 
   // Count newsletters that have been processed (have content regardless of is_analyzed flag)
