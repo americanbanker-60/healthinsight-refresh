@@ -332,6 +332,27 @@ export default function CSVBulkImport() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* System-wide stats */}
+        {systemStats && (
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+              <CheckCircle className="w-4 h-4 text-green-600 mx-auto mb-1" />
+              <p className="text-lg font-bold text-green-800">{systemStats.analyzed.toLocaleString()}</p>
+              <p className="text-xs text-green-700">Analyzed</p>
+            </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
+              <FileSpreadsheet className="w-4 h-4 text-slate-500 mx-auto mb-1" />
+              <p className="text-lg font-bold text-slate-700">{systemStats.total.toLocaleString()}</p>
+              <p className="text-xs text-slate-500">Total in DB</p>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+              <Clock className="w-4 h-4 text-amber-600 mx-auto mb-1" />
+              <p className="text-lg font-bold text-amber-800">{allJobs.filter(j => j.status === 'pending' || j.status === 'processing').length.toLocaleString()}</p>
+              <p className="text-xs text-amber-700">In Queue</p>
+            </div>
+          </div>
+        )}
+
         <div className="bg-violet-100 border border-violet-300 rounded-lg p-4 text-sm">
           <p className="font-semibold text-violet-900 mb-1">📊 Import 500+ URLs from CSV</p>
           <p className="text-violet-800 text-xs leading-relaxed">
