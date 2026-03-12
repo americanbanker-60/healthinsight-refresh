@@ -123,8 +123,10 @@ export default function CSVBulkImport() {
   const [fileName, setFileName] = useState('');
   const [enqueueing, setEnqueueing] = useState(false);
   const [isActivelyProcessing, setIsActivelyProcessing] = useState(false);
+  const [isPauseRequested, setIsPauseRequested] = useState(false);
   const [processedCount, setProcessedCount] = useState(0);
   const processingRef = useRef(false);
+  const pauseRequestedRef = useRef(false);
   const queryClient = useQueryClient();
 
   // Poll faster when actively processing
@@ -133,6 +135,26 @@ export default function CSVBulkImport() {
     queryFn: () => base44.entities.BulkImportJob.list('-created_date', 2000),
     refetchInterval: isActivelyProcessing ? 3000 : 15000,
     initialData: []
+  });
+
+  // System-wide stats query
+  const { data: systemStats } = useQuery({
+    queryKey: ['systemStats'],
+    queryFn: async () => {
+      const [analyzed, all] = await Promise.all([
+        base44.entities.NewsletterItem.filter({ is_analyzed: true }, '-created_date', 1),
+        base44.entities.NewsletterItem.list('-created_date', 1)
+      ]);
+      // Use list with a large limit to get real counts
+      const [analyzedAll, allAll] = await Promise.all([
+        base44.entities.NewsletterItem.filter({ is_analyzed: true }, '-created_date', 5000),
+        base44.entities.NewsletterItem.list('-created_date', 5000)
+      ]);
+      const pendingJobs = allJobs.filter(j => j.status === 'pending' || j.status === 'processing').length;
+      return { analyzed: analyzedAll.length, total: allAll.length, pendingJobs };
+    },
+    refetchInterval: isActivelyProcessing ? 5000 : 30000,
+    enabled: true
   });
 
   // Group jobs by batch_id
