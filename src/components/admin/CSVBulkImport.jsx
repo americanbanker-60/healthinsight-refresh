@@ -249,11 +249,18 @@ export default function CSVBulkImport() {
   const startProcessingLoop = async () => {
     if (processingRef.current) return;
     processingRef.current = true;
+    pauseRequestedRef.current = false;
     setIsActivelyProcessing(true);
+    setIsPauseRequested(false);
     setProcessedCount(0);
 
     let count = 0;
     while (processingRef.current) {
+      // Check pause BEFORE invoking the next chunk — gracefully finishes current chunk first
+      if (pauseRequestedRef.current) {
+        console.log('Pause requested — stopping after current chunk');
+        break;
+      }
       try {
         const result = await base44.functions.invoke('processBulkImportQueue', {});
         const { succeeded = 0, skipped = 0 } = result?.data || {};
@@ -273,15 +280,18 @@ export default function CSVBulkImport() {
     }
 
     processingRef.current = false;
+    pauseRequestedRef.current = false;
     setIsActivelyProcessing(false);
+    setIsPauseRequested(false);
     await refetch();
-    toast.success(`Processing complete! ${count} jobs processed.`);
+    queryClient.invalidateQueries({ queryKey: ['systemStats'] });
+    toast.success(count > 0 ? `Processing paused. ${count} jobs processed this session.` : 'Processing complete!');
   };
 
-  const stopProcessing = () => {
-    processingRef.current = false;
-    setIsActivelyProcessing(false);
-    toast.info('Processing stopped');
+  const requestPause = () => {
+    pauseRequestedRef.current = true;
+    setIsPauseRequested(true);
+    toast.info('Finishing current batch then pausing...');
   };
 
   // Keep backward compat for internal callers
