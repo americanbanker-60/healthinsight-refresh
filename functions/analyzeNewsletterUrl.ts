@@ -115,7 +115,7 @@ Extract:
     console.log('Creating newsletter record...');
 
     // Check if newsletter with this URL already exists
-    const existingNewsletters = await base44.asServiceRole.entities.Newsletter.filter({ source_url: url });
+    const existingNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: url });
     if (existingNewsletters.length > 0) {
       console.log('Newsletter with this URL already exists, skipping...');
       return Response.json({
@@ -127,12 +127,12 @@ Extract:
     }
 
     // Create newsletter using service role (now allowed via RLS)
-    await base44.asServiceRole.entities.Newsletter.create(newsletterData);
+    await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
 
     console.log('Newsletter created successfully');
 
     // Fetch created newsletter to get its ID
-    const createdNewsletter = await base44.asServiceRole.entities.Newsletter.filter({ source_url: url });
+    const createdNewsletter = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: url });
     if (createdNewsletter[0]) {
       const newsletterId = createdNewsletter[0].id;
 
@@ -162,7 +162,7 @@ Extract:
             }
 
             // Create NewsletterRelation
-            await base44.asServiceRole.entities.NewsletterRelation.create({
+            await base44.asServiceRole.entities.NewsletterItemRelation.create({
               newsletter_id: newsletterId,
               entity_type: 'company',
               entity_id: companyId,
@@ -206,7 +206,7 @@ Extract:
             }
 
             // Create NewsletterRelation for topic
-            await base44.asServiceRole.entities.NewsletterRelation.create({
+            await base44.asServiceRole.entities.NewsletterItemRelation.create({
               newsletter_id: newsletterId,
               entity_type: 'topic',
               entity_id: topicId,

@@ -45,7 +45,7 @@ export function useHealthcareIntelligence(options = {}) {
         }
       }
       
-      const result = await base44.entities.Newsletter.filter(query, '-publication_date', maxItems);
+      const result = await base44.entities.NewsletterItem.filter(query, '-publication_date', maxItems);
       // Filter client-side to only newsletters with actual content
       return result.filter(n => n.is_analyzed || n.summary || n.tldr || (n.key_takeaways && n.key_takeaways.length > 0));
     },
@@ -247,7 +247,7 @@ export async function retrieveNewslettersForSearch(filters) {
   }
   
   const maxItems = filters.maxItems || 100;
-  const newsletters = await base44.entities.Newsletter.filter(query, "-publication_date", maxItems);
+  const newsletters = await base44.entities.NewsletterItem.filter(query, "-publication_date", maxItems);
   
   if (filters.keywords) {
     const keywords = filters.keywords.toLowerCase().split(/\s+/).filter(k => k.length > 0);

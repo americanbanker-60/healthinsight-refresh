@@ -123,7 +123,7 @@ Be thorough and extract all relevant details.`;
   };
 
   const saveNewsletter = async () => {
-    await base44.entities.Newsletter.create({
+    await base44.entities.NewsletterItem.create({
       ...analysisResult,
       source_name: sourceName
     });

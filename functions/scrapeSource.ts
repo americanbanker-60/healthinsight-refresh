@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     }
 
     // Get ALL existing newsletter URLs to prevent duplicates across all sources
-    const allNewsletters = await base44.asServiceRole.entities.Newsletter.list('-created_date', 10000);
+    const allNewsletters = await base44.asServiceRole.entities.NewsletterItem.list('-created_date', 10000);
     const existingUrls = new Set(allNewsletters.map(n => n.source_url).filter(Boolean));
 
     // Use AI to scrape and extract newsletter data from the source with 40-second timeout
@@ -188,7 +188,7 @@ Be thorough and accurate. If you can't find clear newsletters, return an empty a
 
     for (const newsletter of newNewsletters) {
       try {
-        const created_newsletter = await base44.asServiceRole.entities.Newsletter.create({
+        const created_newsletter = await base44.asServiceRole.entities.NewsletterItem.create({
           ...newsletter,
           source_name: source.name,
           key_takeaways: newsletter.key_takeaways || [],

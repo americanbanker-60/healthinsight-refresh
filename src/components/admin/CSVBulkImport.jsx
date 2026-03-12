@@ -176,7 +176,7 @@ export default function CSVBulkImport() {
       const existingQueueUrls = new Set(allJobs.map(j => j.url));
 
       // Also check Newsletter entity for already-processed URLs
-      const existingNewsletters = await base44.entities.Newsletter.list('-created_date', 5000);
+      const existingNewsletters = await base44.entities.NewsletterItem.list('-created_date', 5000);
       const existingNewsletterUrls = new Set(existingNewsletters.map(n => n.source_url));
 
       const newItems = parsed.filter(item => {

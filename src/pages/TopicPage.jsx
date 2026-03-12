@@ -40,7 +40,7 @@ export default function TopicPage() {
     queryKey: ['topic-relations', topicId],
     queryFn: async () => {
       if (!topicId) return [];
-      return base44.entities.NewsletterRelation.filter({ entity_type: 'topic', entity_id: topicId }, '-relevance_score');
+      return base44.entities.NewsletterItemRelation.filter({ entity_type: 'topic', entity_id: topicId }, '-relevance_score');
     },
     enabled: !!topicId,
     initialData: [],
@@ -51,7 +51,7 @@ export default function TopicPage() {
     queryFn: async () => {
       if (relations.length === 0) return [];
       const newsletterIds = relations.map(r => r.newsletter_id);
-      return base44.entities.Newsletter.filter({ id: { $in: newsletterIds } }, '-publication_date');
+      return base44.entities.NewsletterItem.filter({ id: { $in: newsletterIds } }, '-publication_date');
     },
     enabled: relations.length > 0,
     initialData: [],

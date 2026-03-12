@@ -25,7 +25,7 @@ export default function IntelligenceOverhaul() {
   // Fetch current stats
   const fetchStats = React.useCallback(async () => {
     try {
-      const newsletters = await base44.entities.Newsletter.list('-created_date', 10000);
+      const newsletters = await base44.entities.NewsletterItem.list('-created_date', 10000);
       const analyzed = newsletters.filter(n => n.is_analyzed).length;
       const total = newsletters.length;
       

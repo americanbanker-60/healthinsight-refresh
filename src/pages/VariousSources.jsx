@@ -184,7 +184,7 @@ Be thorough and extract all relevant details.`;
   const saveNewsletter = async () => {
     try {
       const sourceName = analysisResult.source_name?.trim() || "Additional Publishers";
-      await base44.entities.Newsletter.create({
+      await base44.entities.NewsletterItem.create({
         ...analysisResult,
         source_name: sourceName
       });

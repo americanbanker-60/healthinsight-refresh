@@ -15,7 +15,7 @@ export async function retrieveNewslettersForTopic(topicId, dateRange = 180) {
   const cutoffDate = subDays(new Date(), dateRange);
   
   // Server-side date filtering
-  const newsletters = await base44.entities.Newsletter.filter(
+  const newsletters = await base44.entities.NewsletterItem.filter(
     { publication_date: { $gte: cutoffDate.toISOString().split('T')[0] } },
     "-publication_date",
     500
@@ -72,7 +72,7 @@ export async function retrieveNewslettersForPack(packId, maxItems = 100) {
     query.source_name = { $in: pack.sources_selected };
   }
   
-  const newsletters = await base44.entities.Newsletter.filter(query, "-publication_date", maxItems);
+  const newsletters = await base44.entities.NewsletterItem.filter(query, "-publication_date", maxItems);
   
   // Client-side keyword filter (can't be done server-side)
   if (pack.keywords) {
@@ -93,7 +93,7 @@ export async function retrieveNewslettersForPack(packId, maxItems = 100) {
 
 export async function retrieveNewslettersForCompany(companyName, maxItems = 50) {
   // Fetch recent newsletters with limit (can't do text search server-side)
-  const newsletters = await base44.entities.Newsletter.filter({}, "-publication_date", 500);
+  const newsletters = await base44.entities.NewsletterItem.filter({}, "-publication_date", 500);
   
   return newsletters.filter(n => {
     const searchText = [
@@ -130,7 +130,7 @@ export async function retrieveNewslettersForSearch(filters) {
   const limit = filters.limit || 500;
   const skip = filters.skip || 0;
   
-  const newsletters = await base44.entities.Newsletter.filter(query, "-publication_date", limit);
+  const newsletters = await base44.entities.NewsletterItem.filter(query, "-publication_date", limit);
   
   // Client-side text-based search across title, summary, tldr, and themes
   if (filters.keywords) {
@@ -159,7 +159,7 @@ export async function retrieveCustomPackItems(packId) {
   
   if (newsletterIds.length === 0) return [];
   
-  const newsletters = await base44.entities.Newsletter.filter({ id: { $in: newsletterIds } });
+  const newsletters = await base44.entities.NewsletterItem.filter({ id: { $in: newsletterIds } });
   
   return sortedItems.map(item => {
     const newsletter = newsletters.find(n => n.id === item.item_id);
@@ -173,7 +173,7 @@ export async function retrieveCustomPackItems(packId) {
 
 export async function retrieveSourceStats() {
   // Fetch all newsletters
-  const newsletters = await base44.entities.Newsletter.list('-publication_date', 10000);
+  const newsletters = await base44.entities.NewsletterItem.list('-publication_date', 10000);
   
   // Group by source_name and count
   const stats = {};

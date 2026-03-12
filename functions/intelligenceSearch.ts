@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch a broad pool of analyzed newsletters
-    const newsletters = await base44.asServiceRole.entities.Newsletter.filter(
+    const newsletters = await base44.asServiceRole.entities.NewsletterItem.filter(
       { is_analyzed: true },
       '-publication_date',
       maxNewsletters

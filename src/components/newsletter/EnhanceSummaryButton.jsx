@@ -57,7 +57,7 @@ Make sure all content is insightful, actionable, and tailored for healthcare exe
         file_urls: newsletter.source_url
       });
 
-      await base44.entities.Newsletter.update(newsletter.id, {
+      await base44.entities.NewsletterItem.update(newsletter.id, {
         tldr: result.tldr,
         summary: result.summary,
         key_takeaways: result.key_takeaways,

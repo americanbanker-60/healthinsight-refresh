@@ -31,7 +31,7 @@ export default function SourcePage() {
 
   const { data: newsletters, isLoading: newslettersLoading, refetch } = useQuery({
     queryKey: ['newsletters', sourceName],
-    queryFn: () => base44.entities.Newsletter.filter({ source_name: sourceName }, "-created_date", 500),
+    queryFn: () => base44.entities.NewsletterItem.filter({ source_name: sourceName }, "-created_date", 500),
     initialData: [],
     enabled: !!sourceName,
   });

@@ -37,7 +37,7 @@ export default function CompanyPage() {
     queryKey: ['company-relations', companyId],
     queryFn: async () => {
       if (!companyId) return [];
-      return base44.entities.NewsletterRelation.filter({ entity_type: 'company', entity_id: companyId }, '-relevance_score');
+      return base44.entities.NewsletterItemRelation.filter({ entity_type: 'company', entity_id: companyId }, '-relevance_score');
     },
     enabled: !!companyId,
     initialData: [],
@@ -48,7 +48,7 @@ export default function CompanyPage() {
     queryFn: async () => {
       if (relations.length === 0) return [];
       const newsletterIds = relations.map(r => r.newsletter_id);
-      return base44.entities.Newsletter.filter({ id: { $in: newsletterIds } }, '-publication_date');
+      return base44.entities.NewsletterItem.filter({ id: { $in: newsletterIds } }, '-publication_date');
     },
     enabled: relations.length > 0,
     initialData: [],

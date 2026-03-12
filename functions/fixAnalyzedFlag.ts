@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch all newsletters in batches
-    const all = await base44.asServiceRole.entities.Newsletter.list('-created_date', 10000);
+    const all = await base44.asServiceRole.entities.NewsletterItem.list('-created_date', 10000);
 
     // Mark any newsletter with real content as analyzed
     const toFix = all.filter(n =>
@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     for (let i = 0; i < toFix.length; i += batchSize) {
       const batch = toFix.slice(i, i + batchSize);
       await Promise.all(
-        batch.map(n => base44.asServiceRole.entities.Newsletter.update(n.id, { is_analyzed: true }))
+        batch.map(n => base44.asServiceRole.entities.NewsletterItem.update(n.id, { is_analyzed: true }))
       );
       fixed += batch.length;
     }

@@ -89,7 +89,7 @@ export default function SystemHealthStatus() {
     });
 
     // Check analyzeNewsletterUrl: look for recently analyzed newsletters
-    const recentAnalyzed = await base44.entities.Newsletter.filter(
+    const recentAnalyzed = await base44.entities.NewsletterItem.filter(
       { is_analyzed: true },
       "-updated_date",
       5

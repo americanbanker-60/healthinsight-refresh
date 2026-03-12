@@ -399,7 +399,7 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
 
         // Check database for duplicates before processing
         if (item.url) {
-          const existingRecords = await base44.entities.Newsletter.filter({ source_url: item.url });
+          const existingRecords = await base44.entities.NewsletterItem.filter({ source_url: item.url });
           if (existingRecords.length > 0) {
             console.log(`Skipping existing in database: ${item.url}`);
             completed++;
@@ -534,7 +534,7 @@ Extract structured insights:
             }
           });
 
-          const createdNewsletter = await base44.entities.Newsletter.create({
+          const createdNewsletter = await base44.entities.NewsletterItem.create({
             ...analysis,
             source_url: item.url || "Manual Entry",
             title: analysis.title || item.title,
@@ -604,7 +604,7 @@ Extract structured insights:
     for (let i = 0; i < urls.length; i++) {
       try {
         // Check database first to avoid duplicates
-        const existing = await base44.entities.Newsletter.filter({ source_url: urls[i] });
+        const existing = await base44.entities.NewsletterItem.filter({ source_url: urls[i] });
         if (existing.length > 0) {
           console.log(`Skipping duplicate: ${urls[i]}`);
           setProcessedCount(i + 1);
@@ -616,7 +616,7 @@ Extract structured insights:
         
         if (response.data?.success) {
           // Fetch the created newsletter
-          const newsletters = await base44.entities.Newsletter.filter({ source_url: urls[i] });
+          const newsletters = await base44.entities.NewsletterItem.filter({ source_url: urls[i] });
           if (newsletters.length > 0) {
             setProcessedNewsletters(prev => [...prev, newsletters[0]]);
           }
@@ -665,7 +665,7 @@ Extract structured insights:
       
       // Check database for each URL before processing
       if (newsletter.url) {
-        const existingRecords = await base44.entities.Newsletter.filter({ source_url: newsletter.url });
+        const existingRecords = await base44.entities.NewsletterItem.filter({ source_url: newsletter.url });
         if (existingRecords.length > 0) {
           console.log(`Skipping duplicate: ${newsletter.url}`);
           skippedCount++;
@@ -806,7 +806,7 @@ Extract structured insights:
           }
         });
 
-        const createdNewsletter = await base44.entities.Newsletter.create({
+        const createdNewsletter = await base44.entities.NewsletterItem.create({
           ...analysis,
           source_url: newsletter.url || "Manual Entry",
           title: analysis.title || newsletter.title,

@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
     const pdfData = extractResponse.output;
 
     // Check if newsletter with this file_url already exists
-    const existingNewsletters = await base44.asServiceRole.entities.Newsletter.filter({ source_url: file_url });
+    const existingNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: file_url });
     if (existingNewsletters.length > 0) {
       console.log('Newsletter with this PDF already exists, skipping...');
       return Response.json({
@@ -121,12 +121,12 @@ Deno.serve(async (req) => {
     };
 
     console.log('Creating newsletter record...');
-    await base44.asServiceRole.entities.Newsletter.create(newsletterData);
+    await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
 
     console.log('Newsletter created successfully');
 
     // Fetch created newsletter to get its ID
-    const createdNewsletter = await base44.asServiceRole.entities.Newsletter.filter({ source_url: file_url });
+    const createdNewsletter = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: file_url });
     if (createdNewsletter[0]) {
       const newsletterId = createdNewsletter[0].id;
 
@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
             }
 
             // Create NewsletterRelation
-            await base44.asServiceRole.entities.NewsletterRelation.create({
+            await base44.asServiceRole.entities.NewsletterItemRelation.create({
               newsletter_id: newsletterId,
               entity_type: 'company',
               entity_id: companyId,

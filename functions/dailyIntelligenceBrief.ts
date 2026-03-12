@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
         ].join(' ');
 
         // Fetch matching newsletters from the last 24 hours
-        const newsletters = await base44.asServiceRole.entities.Newsletter.filter({
+        const newsletters = await base44.asServiceRole.entities.NewsletterItem.filter({
           publication_date: { $gte: yesterday }
         }, '-publication_date', 50);
 

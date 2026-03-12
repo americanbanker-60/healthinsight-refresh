@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     console.log('Starting newsletter deduplication...');
 
     // Fetch all newsletters
-    const allNewsletters = await base44.asServiceRole.entities.Newsletter.list('-created_date');
+    const allNewsletters = await base44.asServiceRole.entities.NewsletterItem.list('-created_date');
     console.log(`Found ${allNewsletters.length} newsletters to check`);
 
     // Track duplicates by URL and title
@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
           .sort((a, b) => b.length - a.length)[0] || primary.tldr;
 
         // Update primary with merged data
-        await base44.asServiceRole.entities.Newsletter.update(primary.id, {
+        await base44.asServiceRole.entities.NewsletterItem.update(primary.id, {
           themes: allThemes,
           key_takeaways: allTakeaways,
           key_players: allPlayers,
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
 
         // Delete duplicates
         for (const dup of duplicates) {
-          await base44.asServiceRole.entities.Newsletter.delete(dup.id);
+          await base44.asServiceRole.entities.NewsletterItem.delete(dup.id);
           deleted++;
         }
 

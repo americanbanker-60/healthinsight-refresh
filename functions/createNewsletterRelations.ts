@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     console.log('Processing relations for newsletter:', newsletter_id);
 
     // Fetch the newsletter
-    const newsletters = await base44.asServiceRole.entities.Newsletter.filter({ id: newsletter_id });
+    const newsletters = await base44.asServiceRole.entities.NewsletterItem.filter({ id: newsletter_id });
     const newsletter = newsletters[0];
 
     if (!newsletter) {
@@ -127,14 +127,14 @@ Deno.serve(async (req) => {
     console.log(`Found ${relations.length} relations (${relations.filter(r => r.entity_type === 'company').length} companies, ${relations.filter(r => r.entity_type === 'topic').length} topics)`);
 
     // Delete existing relations for this newsletter
-    const existingRelations = await base44.asServiceRole.entities.NewsletterRelation.filter({ newsletter_id });
+    const existingRelations = await base44.asServiceRole.entities.NewsletterItemRelation.filter({ newsletter_id });
     for (const rel of existingRelations) {
-      await base44.asServiceRole.entities.NewsletterRelation.delete(rel.id);
+      await base44.asServiceRole.entities.NewsletterItemRelation.delete(rel.id);
     }
 
     // Bulk create new relations
     if (relations.length > 0) {
-      await base44.asServiceRole.entities.NewsletterRelation.bulkCreate(relations);
+      await base44.asServiceRole.entities.NewsletterItemRelation.bulkCreate(relations);
     }
 
     return Response.json({

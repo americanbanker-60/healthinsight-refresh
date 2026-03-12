@@ -39,7 +39,7 @@ export default function NewsletterDetail() {
   const { data: newsletter, isLoading, refetch } = useQuery({
     queryKey: ['newsletter', newsletterId],
     queryFn: async () => {
-      const newsletters = await base44.entities.Newsletter.filter({ id: newsletterId });
+      const newsletters = await base44.entities.NewsletterItem.filter({ id: newsletterId });
       return newsletters[0];
     },
     enabled: !!newsletterId,

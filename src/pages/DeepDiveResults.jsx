@@ -41,7 +41,7 @@ export default function DeepDiveResults() {
         
         if (topic) {
           contextTitle = topic.topic_name;
-          const newsletters = await base44.entities.Newsletter.list("-publication_date", 500);
+          const newsletters = await base44.entities.NewsletterItem.list("-publication_date", 500);
           const keywords = Array.isArray(topic.keywords) ? topic.keywords : [topic.keywords];
           
           items = newsletters.filter(n => {
@@ -62,7 +62,7 @@ export default function DeepDiveResults() {
         
         if (pack) {
           contextTitle = pack.pack_title;
-          const newsletters = await base44.entities.Newsletter.list("-publication_date", 500);
+          const newsletters = await base44.entities.NewsletterItem.list("-publication_date", 500);
           
           const keywords = pack.keywords ? pack.keywords.split(/\s+/) : [];
           items = newsletters.filter(n => {

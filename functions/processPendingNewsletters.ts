@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
     }
 
     // Get unanalyzed newsletters in smaller batches to prevent timeouts
-    const unanalyzedNewsletters = await base44.asServiceRole.entities.Newsletter.filter(
+    const unanalyzedNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter(
       { is_analyzed: { $ne: true } },
       '-created_date',
       50
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
           }
 
           // Update newsletter with analysis results
-          await base44.asServiceRole.entities.Newsletter.update(newsletter.id, {
+          await base44.asServiceRole.entities.NewsletterItem.update(newsletter.id, {
             summary: analyzedData.summary || newsletter.summary,
             tldr: analyzedData.tldr || newsletter.tldr,
             key_takeaways: analyzedData.key_takeaways || newsletter.key_takeaways,

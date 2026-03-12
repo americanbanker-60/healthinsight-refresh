@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
 
     // If newsletterId provided, update the newsletter
     if (newsletterId && result.success) {
-      await base44.asServiceRole.entities.Newsletter.update(newsletterId, {
+      await base44.asServiceRole.entities.NewsletterItem.update(newsletterId, {
         publication_date: result.date,
         publication_date_confidence: result.confidence,
         publication_date_source: result.source,
