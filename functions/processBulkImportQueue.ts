@@ -161,6 +161,7 @@ Extract:
             summary: result.summary || null,
             key_takeaways: result.key_takeaways || [],
             key_statistics: result.key_statistics || [],
+            ma_activities: result.ma_activities || [],
             themes: result.themes || [],
             key_players: result.key_players || [],
             sentiment: result.sentiment || null,
