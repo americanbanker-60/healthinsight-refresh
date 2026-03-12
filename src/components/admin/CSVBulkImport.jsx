@@ -141,20 +141,14 @@ export default function CSVBulkImport() {
   const { data: systemStats } = useQuery({
     queryKey: ['systemStats'],
     queryFn: async () => {
-      const [analyzed, all] = await Promise.all([
-        base44.entities.NewsletterItem.filter({ is_analyzed: true }, '-created_date', 1),
-        base44.entities.NewsletterItem.list('-created_date', 1)
-      ]);
-      // Use list with a large limit to get real counts
-      const [analyzedAll, allAll] = await Promise.all([
-        base44.entities.NewsletterItem.filter({ is_analyzed: true }, '-created_date', 5000),
-        base44.entities.NewsletterItem.list('-created_date', 5000)
-      ]);
-      const pendingJobs = allJobs.filter(j => j.status === 'pending' || j.status === 'processing').length;
-      return { analyzed: analyzedAll.length, total: allAll.length, pendingJobs };
+      const allAll = await base44.entities.NewsletterItem.list('-created_date', 10000);
+      // Count anything with actual content (mirrors StatsOverview logic)
+      const analyzed = allAll.filter(n =>
+        n.is_analyzed || n.summary || n.tldr || (n.key_takeaways && n.key_takeaways.length > 0)
+      ).length;
+      return { analyzed, total: allAll.length };
     },
     refetchInterval: isActivelyProcessing ? 5000 : 30000,
-    enabled: true
   });
 
   // Group jobs by batch_id
