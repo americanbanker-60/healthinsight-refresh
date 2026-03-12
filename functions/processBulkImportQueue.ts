@@ -1,8 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-const BATCH_SIZE = 1;
-const CONCURRENCY = 1;
-const DELAY_BETWEEN_JOBS_MS = 2000; // 2 seconds between LLM calls to avoid rate limits
+const BATCH_SIZE = 5;
+const CONCURRENCY = 3;
+const DELAY_BETWEEN_JOBS_MS = 1000; // 1 second between LLM calls to avoid rate limits
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
