@@ -2,7 +2,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 const BATCH_SIZE = 20;
 const CONCURRENCY = 5;
-const DELAY_BETWEEN_JOBS_MS = 500; // 0.5 seconds between LLM calls to avoid rate limits
+const DELAY_BETWEEN_JOBS_MS = 500;
+const MAX_RETRIES = 3;
+const STUCK_CUTOFF_MS = 10 * 60 * 1000; // 10 minutes
+const HTML_TRUNCATE_CHARS = 15000;
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -10,16 +13,37 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Reset jobs stuck in "processing" for > 20 minutes
-    const stuckCutoff = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+    // Reset jobs stuck in "processing" using processing_started_at for accuracy
+    const stuckCutoff = new Date(Date.now() - STUCK_CUTOFF_MS).toISOString();
     const processingJobs = await base44.asServiceRole.entities.BulkImportJob.filter({ status: 'processing' }, 'created_date', 500);
-    const stuckJobs = processingJobs.filter(j => j.updated_date && j.updated_date < stuckCutoff);
+    const stuckJobs = processingJobs.filter(j => {
+      // Use processing_started_at if available, fall back to updated_date
+      const startedAt = j.processing_started_at || j.updated_date;
+      return startedAt && startedAt < stuckCutoff;
+    });
+
     if (stuckJobs.length > 0) {
       console.log(`Resetting ${stuckJobs.length} stuck jobs back to pending`);
-      await Promise.all(stuckJobs.map(j => base44.asServiceRole.entities.BulkImportJob.update(j.id, { status: 'pending' })));
+      await Promise.all(stuckJobs.map(j => {
+        const retryCount = (j.retry_count || 0) + 1;
+        // If already retried too many times, mark perma-failed
+        if (retryCount >= MAX_RETRIES) {
+          console.log(`Job ${j.id} exceeded max retries (${retryCount}), marking perma-failed`);
+          return base44.asServiceRole.entities.BulkImportJob.update(j.id, {
+            status: 'perma-failed',
+            retry_count: retryCount,
+            error_message: `Timed out ${retryCount} times, exceeded max retries`
+          });
+        }
+        return base44.asServiceRole.entities.BulkImportJob.update(j.id, {
+          status: 'pending',
+          retry_count: retryCount,
+          processing_started_at: null
+        });
+      }));
     }
 
-    // Get pending jobs
+    // Get pending jobs (exclude perma-failed)
     const pendingJobs = await base44.asServiceRole.entities.BulkImportJob.filter({ status: 'pending' }, 'created_date', BATCH_SIZE);
 
     if (pendingJobs.length === 0) {
@@ -28,9 +52,13 @@ Deno.serve(async (req) => {
 
     console.log(`Processing ${pendingJobs.length} pending jobs`);
 
-    // Mark as processing
+    // Mark as processing with timestamp
+    const now = new Date().toISOString();
     await Promise.all(pendingJobs.map(job =>
-      base44.asServiceRole.entities.BulkImportJob.update(job.id, { status: 'processing' })
+      base44.asServiceRole.entities.BulkImportJob.update(job.id, {
+        status: 'processing',
+        processing_started_at: now
+      })
     ));
 
     let succeeded = 0, failed = 0, skipped = 0;
@@ -73,8 +101,8 @@ Deno.serve(async (req) => {
 URL: ${job.url}
 Domain: ${domain}
 
-HTML Content (truncated to first 8000 chars):
-${htmlContent.substring(0, 8000)}
+HTML Content (truncated to first ${HTML_TRUNCATE_CHARS} chars):
+${htmlContent.substring(0, HTML_TRUNCATE_CHARS)}
 
 Extract:
 - title: Clear article title
@@ -137,7 +165,7 @@ Extract:
 
           console.log(`Creating newsletter: ${newsletterData.title}`);
           const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
-          
+
           // CRITICAL: verify the record was actually created
           if (!created || !created.id) {
             throw new Error(`Newsletter.create() returned no ID - record was not saved`);
@@ -158,10 +186,20 @@ Extract:
 
         } catch (err) {
           console.error(`✗ ${job.url}: ${err.message}`);
+          const retryCount = (job.retry_count || 0) + 1;
+          const isPermaFailed = retryCount >= MAX_RETRIES;
+
           await base44.asServiceRole.entities.BulkImportJob.update(job.id, {
-            status: 'failed',
-            error_message: err.message
+            status: isPermaFailed ? 'perma-failed' : 'failed',
+            retry_count: retryCount,
+            error_message: isPermaFailed
+              ? `[PERMA-FAILED after ${retryCount} attempts] ${err.message}`
+              : err.message
           });
+
+          if (isPermaFailed) {
+            console.log(`Job ${job.id} perma-failed after ${retryCount} attempts`);
+          }
           failed++;
         }
       }));
