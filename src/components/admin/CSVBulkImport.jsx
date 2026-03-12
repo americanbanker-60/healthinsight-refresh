@@ -403,11 +403,20 @@ export default function CSVBulkImport() {
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-blue-600 animate-pulse" />
               <span className="text-sm font-semibold text-blue-800">
-                Actively processing... {processedCount > 0 ? `${processedCount} done` : 'starting up'}
+                {isPauseRequested
+                  ? 'Finishing current batch, then pausing...'
+                  : `Actively processing... ${processedCount > 0 ? `${processedCount} done this session` : 'starting up'}`}
               </span>
             </div>
-            <Button size="sm" variant="outline" onClick={stopProcessing} className="border-blue-300 text-blue-700 text-xs shrink-0">
-              Stop
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={requestPause}
+              disabled={isPauseRequested}
+              className="border-blue-300 text-blue-700 text-xs shrink-0"
+            >
+              <Pause className="w-3 h-3 mr-1" />
+              {isPauseRequested ? 'Pausing...' : 'Pause'}
             </Button>
           </div>
         )}
