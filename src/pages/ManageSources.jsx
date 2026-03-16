@@ -19,7 +19,6 @@ export default function ManageSources() {
       </div>
 
       <DirectNewsletterUpload />
-      <CSVBulkImport />
     </div>
     </RoleGuard>
   );
