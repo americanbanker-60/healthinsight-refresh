@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen, Globe, Briefcase, ChevronDown } from "lucide-react";
+import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen, Globe, Briefcase, ChevronDown, FileUp } from "lucide-react";
 import { WalkthroughProvider, useWalkthrough } from "@/components/walkthrough/WalkthroughManager";
 import { useUserRole } from "@/components/auth/RoleGuard";
 import { AdminGuard } from "@/components/auth/AdminGuard";
@@ -88,6 +88,12 @@ const navigationGroups = [
         title: "PE Meeting Prep",
         url: createPageUrl("PEMeetingPrep"),
         icon: Briefcase,
+        roles: ["admin", "power", "user"],
+      },
+      {
+        title: "Upload PDF",
+        url: createPageUrl("UploadPDF"),
+        icon: FileUp,
         roles: ["admin", "power", "user"],
       },
     ]
