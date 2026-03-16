@@ -73,6 +73,7 @@ import TopicPage from './pages/TopicPage';
 import TopicsDirectory from './pages/TopicsDirectory';
 import Unauthorized from './pages/Unauthorized';
 import UserSettings from './pages/UserSettings';
+import UploadPDF from './pages/UploadPDF';
 import VariousSources from './pages/VariousSources';
 import __Layout from './Layout.jsx';
 
@@ -104,6 +105,7 @@ export const PAGES = {
     "TopicsDirectory": TopicsDirectory,
     "Unauthorized": Unauthorized,
     "UserSettings": UserSettings,
+    "UploadPDF": UploadPDF,
     "VariousSources": VariousSources,
 }
 
