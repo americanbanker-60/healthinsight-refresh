@@ -4,28 +4,35 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Try creating a minimal newsletter
     const testData = {
       title: "DIAGNOSTIC TEST " + Date.now(),
-      source_url: "https://test-diagnostic-" + Date.now() + ".com",
-      is_analyzed: true
+      source_url: "https://test-diag-" + Date.now() + ".com",
+      is_analyzed: true,
+      source_type: "URL"
     };
 
-    console.log("Attempting to create newsletter with asServiceRole...");
+    // Try asServiceRole create
+    console.log("Creating with asServiceRole...");
     const created = await base44.asServiceRole.entities.NewsletterItem.create(testData);
-    console.log("Create response:", JSON.stringify(created));
+    console.log("asServiceRole create result:", JSON.stringify(created));
+    console.log("is_sample:", created?.is_sample);
+    console.log("environment:", created?.environment);
+    
+    // Try to fetch it back by ID
+    const fetched = await base44.asServiceRole.entities.NewsletterItem.get(created?.id);
+    console.log("Fetched back:", JSON.stringify(fetched));
 
-    // Now try to read it back
-    console.log("Reading back by ID...");
-    const allNewsletters = await base44.asServiceRole.entities.NewsletterItem.list('-created_date', 5);
-    console.log("Total newsletters found (asServiceRole):", allNewsletters.length);
-    console.log("First few IDs:", allNewsletters.map(n => n.id).join(', '));
+    // List all
+    const all = await base44.asServiceRole.entities.NewsletterItem.list('-created_date', 10);
+    console.log("Total in list:", all.length);
+    console.log("IDs in list:", all.map(n => n.id).join(', '));
 
     return Response.json({ 
       created_id: created?.id,
-      created_title: created?.title,
-      total_found: allNewsletters.length,
-      recent_ids: allNewsletters.map(n => n.id)
+      is_sample: created?.is_sample,
+      environment: created?.environment,
+      fetched_id: fetched?.id,
+      total_in_list: all.length,
     });
   } catch (error) {
     console.error("Error:", error.message, error.stack);
