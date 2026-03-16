@@ -191,11 +191,23 @@ Extract:
           };
 
           console.log(`Creating newsletter: ${newsletterData.title}`);
-          const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+          let created;
+          try {
+            created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+            console.log(`Create raw response: id=${created?.id} is_sample=${created?.is_sample} environment=${created?.environment}`);
+          } catch (createErr) {
+            throw new Error(`NewsletterItem.create() threw: ${createErr.message}`);
+          }
 
           // CRITICAL: verify the record was actually created
           if (!created || !created.id) {
             throw new Error(`Newsletter.create() returned no ID - record was not saved`);
+          }
+
+          // Verify it can be read back
+          const verify = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: job.url });
+          if (!verify || verify.length === 0) {
+            throw new Error(`Newsletter created (id=${created.id}) but cannot be read back - possible environment mismatch`);
           }
 
           console.log(`✓ Created newsletter ID: ${created.id} - ${created.title}`);
