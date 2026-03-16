@@ -3,7 +3,6 @@ import { RoleGuard } from "../components/auth/RoleGuard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import DirectNewsletterUpload from "../components/admin/DirectNewsletterUpload";
-import CSVBulkImport from "../components/admin/CSVBulkImport";
 
 export default function ManageSources() {
 
