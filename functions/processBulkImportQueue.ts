@@ -149,6 +149,21 @@ Extract:
             }
           });
 
+          // Normalize themes - AI sometimes returns strings instead of {theme, description} objects
+          const normalizedThemes = (result.themes || []).map(t =>
+            typeof t === 'string' ? { theme: t, description: '' } : t
+          );
+
+          // Normalize key_statistics - AI sometimes returns strings
+          const normalizedStats = (result.key_statistics || []).map(s =>
+            typeof s === 'string' ? { figure: s, context: '' } : s
+          );
+
+          // Normalize ma_activities - AI sometimes returns strings
+          const normalizedMA = (result.ma_activities || []).map(m =>
+            typeof m === 'string' ? { acquirer: '', target: '', deal_value: '', description: m } : m
+          );
+
           // IMPORTANT: Do NOT store raw_input (large HTML blob causes create to fail silently)
           const newsletterData = {
             title: result.title || 'Untitled',
