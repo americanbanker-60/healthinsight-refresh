@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       await Promise.all(chunk.map(async (job) => {
         try {
           // Check for existing newsletter with this URL
-          const existing = await base44.entities.NewsletterItem.filter({ source_url: job.url });
+          const existing = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: job.url });
           if (existing.length > 0) {
             await base44.asServiceRole.entities.BulkImportJob.update(job.id, {
               status: 'skipped',
