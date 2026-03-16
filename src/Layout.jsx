@@ -91,7 +91,7 @@ const navigationGroups = [
         roles: ["admin", "power", "user"],
       },
       {
-        title: "Upload PDF",
+        title: "Add to Library",
         url: createPageUrl("UploadPDF"),
         icon: FileUp,
         roles: ["admin", "power", "user"],
