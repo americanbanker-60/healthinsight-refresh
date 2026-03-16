@@ -191,7 +191,7 @@ Extract:
           };
 
           console.log(`Creating newsletter: ${newsletterData.title}`);
-          const created = await base44.entities.NewsletterItem.create(newsletterData);
+          const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
 
           if (!created || !created.id) {
             throw new Error(`Newsletter.create() returned no ID - record was not saved`);
