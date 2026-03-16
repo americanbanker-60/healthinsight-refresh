@@ -204,12 +204,6 @@ Extract:
             throw new Error(`Newsletter.create() returned no ID - record was not saved`);
           }
 
-          // Verify it can be read back
-          const verify = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: job.url });
-          if (!verify || verify.length === 0) {
-            throw new Error(`Newsletter created (id=${created.id}) but cannot be read back - possible environment mismatch`);
-          }
-
           console.log(`✓ Created newsletter ID: ${created.id} - ${created.title}`);
 
           // Create company/topic relations in background
