@@ -191,15 +191,8 @@ Extract:
           };
 
           console.log(`Creating newsletter: ${newsletterData.title}`);
-          let created;
-          try {
-            created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
-            console.log(`Create raw response: id=${created?.id} is_sample=${created?.is_sample} environment=${created?.environment}`);
-          } catch (createErr) {
-            throw new Error(`NewsletterItem.create() threw: ${createErr.message}`);
-          }
+          const created = await base44.entities.NewsletterItem.create(newsletterData);
 
-          // CRITICAL: verify the record was actually created
           if (!created || !created.id) {
             throw new Error(`Newsletter.create() returned no ID - record was not saved`);
           }
