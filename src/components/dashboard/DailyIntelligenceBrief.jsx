@@ -16,7 +16,7 @@ export default function DailyIntelligenceBrief() {
     setIsLoading(true);
     setError(null);
     try {
-      const recent = await base44.entities.Newsletter.list("-created_date", 5);
+      const recent = await base44.entities.NewsletterItem.list("-created_date", 5);
       if (!recent || recent.length === 0) {
         setBullets([]);
         setIsLoading(false);
