@@ -191,7 +191,7 @@ Extract:
           };
 
           console.log(`Creating newsletter: ${newsletterData.title}`);
-          const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+          const created = await base44.entities.NewsletterItem.create(newsletterData);
 
           // CRITICAL: verify the record was actually created
           if (!created || !created.id) {
