@@ -382,7 +382,7 @@ export default function CSVBulkImport() {
         </label>
         <input id="csv-upload-queue" type="file" accept=".csv,.tsv,.txt" onChange={handleFileChange} className="hidden" />
 
-        {hasPendingJobs && !isActivelyProcessing && (
+        {!isActivelyProcessing && (
           <Button
             variant="outline"
             className="w-full border-violet-300"
