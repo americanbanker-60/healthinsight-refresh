@@ -75,6 +75,7 @@ import Unauthorized from './pages/Unauthorized';
 import UserSettings from './pages/UserSettings';
 import UploadPDF from './pages/UploadPDF';
 import VariousSources from './pages/VariousSources';
+import ResearchAssistant from './pages/ResearchAssistant';
 import __Layout from './Layout.jsx';
 
 
