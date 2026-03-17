@@ -26,7 +26,7 @@ export default function AnalyzeNewsletterForm({ sourceName, onSuccess, onCancel 
     setError("");
 
     const response = await base44.functions.invoke('analyzeNewsletterUrl', {
-      url: url.trim(),
+      url: normalizeUrl(url),
       sourceName: sourceName || undefined
     });
 
