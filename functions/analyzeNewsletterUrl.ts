@@ -256,7 +256,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      id: createdNewsletter[0]?.id,
+      id: createdRecord?.id || createdNewsletter[0]?.id,
       title: result.title,
       source_name: result.source_name
     });
