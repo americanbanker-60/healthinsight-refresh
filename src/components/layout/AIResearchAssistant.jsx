@@ -60,12 +60,23 @@ export default function AIResearchAssistant({ currentPageName, initialMessage })
   const bottomRef = useRef(null);
   const hasAutoOpened = useRef(false);
 
+  // Listen for contextual "Ask AI" events from anywhere in the app
+  useEffect(() => {
+    const handler = (e) => {
+      const prompt = e.detail?.prompt;
+      if (!prompt) return;
+      setOpen(true);
+      setTimeout(() => sendMessage(prompt), 300);
+    };
+    window.addEventListener("askAI", handler);
+    return () => window.removeEventListener("askAI", handler);
+  }, []);
+
   // Auto-open when an initialMessage is passed (contextual trigger)
   useEffect(() => {
     if (initialMessage && !hasAutoOpened.current) {
       hasAutoOpened.current = true;
       setOpen(true);
-      // Small delay to let sheet open first
       setTimeout(() => sendMessage(initialMessage), 300);
     }
   }, [initialMessage]);

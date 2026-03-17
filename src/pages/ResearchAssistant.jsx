@@ -151,8 +151,8 @@ export default function ResearchAssistant() {
             <Bot className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-semibold text-slate-900">Research Analyst</h1>
-            <p className="text-xs text-slate-500">Searches your full newsletter library to answer questions</p>
+            <h1 className="font-semibold text-slate-900">HealthInsight Assistant</h1>
+            <p className="text-xs text-slate-500">Research · BD Strategy · Professional Formatting</p>
           </div>
           <Badge variant="outline" className="ml-auto text-green-600 border-green-300 bg-green-50">Online</Badge>
         </div>
@@ -165,8 +165,8 @@ export default function ResearchAssistant() {
                 <Bot className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-slate-900 mb-2">Healthcare Research Analyst</h2>
-                <p className="text-slate-500 max-w-md">Ask me anything about M&A activity, funding rounds, sector trends, or key players from your newsletter library.</p>
+                <h2 className="text-xl font-semibold text-slate-900 mb-2">HealthInsight Assistant</h2>
+                <p className="text-slate-500 max-w-md">Ask me anything — M&A activity, funding rounds, sector trends, BD outreach angles, or formatted briefs — all from your newsletter library.</p>
               </div>
               <div className="grid grid-cols-1 gap-2 w-full max-w-lg">
                 {SUGGESTED_QUESTIONS.map((q, i) => (
