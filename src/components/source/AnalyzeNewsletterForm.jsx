@@ -139,19 +139,6 @@ Be thorough and extract all relevant details.`;
     }
   };
 
-  if (analysisResult) {
-    return (
-      <Card className="bg-white/80 backdrop-blur-sm shadow-xl border-slate-200/60">
-        <CardContent className="pt-6">
-          <AnalysisPreview analysis={analysisResult} onSave={saveNewsletter} />
-          <Button variant="outline" onClick={() => setAnalysisResult(null)} className="mt-4">
-            Analyze Another
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className="bg-white/80 backdrop-blur-sm shadow-xl border-slate-200/60">
       <CardContent className="pt-6">
@@ -182,7 +169,6 @@ Be thorough and extract all relevant details.`;
               <div className="flex gap-3">
                 <Button
                   onClick={analyzeNewsletter}
-                  disabled={isAnalyzing}
                   className="bg-blue-600 hover:bg-blue-700 flex-1"
                   disabled={isAnalyzing || isSaving}
                 >
