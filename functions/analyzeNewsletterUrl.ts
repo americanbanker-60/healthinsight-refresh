@@ -150,12 +150,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create newsletter using service role
-    await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+    // Create newsletter using service role — capture returned record directly
+    const createdRecord = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
     console.log('Newsletter record created successfully');
 
-    // Fetch created newsletter to get its ID
-    const createdNewsletter = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedUrl });
+    // Use the id from the create response directly; fall back to a filter query
+    let createdNewsletter = createdRecord?.id ? [createdRecord] : await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedUrl });
     if (createdNewsletter[0]) {
       const newsletterId = createdNewsletter[0].id;
       console.log(`Newsletter ID: ${newsletterId}`);
