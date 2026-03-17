@@ -102,6 +102,12 @@ const navigationGroups = [
     label: "AI Agents",
     items: [
       {
+        title: "Research Analyst",
+        url: createPageUrl("ResearchAssistant"),
+        icon: Brain,
+        roles: ["admin", "power", "user"],
+      },
+      {
         title: "Agent Workspace",
         url: createPageUrl("AgentWorkspace"),
         icon: Brain,
