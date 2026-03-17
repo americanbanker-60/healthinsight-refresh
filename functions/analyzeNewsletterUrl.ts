@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     let useFallback = false;
 
     try {
-      const htmlResponse = await fetch(url, { signal: controller.signal });
+      const htmlResponse = await fetch(normalizedUrl, { signal: controller.signal });
       clearTimeout(timeoutId);
 
       if (!htmlResponse.ok) {
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     }
 
     // Extract domain for source name
-    const urlObj = new URL(url);
+    const urlObj = new URL(normalizedUrl);
     const domain = urlObj.hostname.replace('www.', '');
 
     console.log(`Analyzing with AI... (mode: ${useFallback ? 'internet-fallback' : 'html-content'})`);
@@ -58,8 +58,8 @@ Deno.serve(async (req) => {
 
     const promptBody = [
       useFallback
-        ? `Analyze this healthcare newsletter/article by browsing the URL directly and extract key information.\n\nURL: ${url}\nDomain: ${domain}`
-        : `Analyze this healthcare newsletter/article and extract key information.\n\nURL: ${url}\nDomain: ${domain}\n\nHTML Content (truncated to first 15000 chars):\n${htmlContent.substring(0, 15000)}`,
+        ? `Analyze this healthcare newsletter/article by browsing the URL directly and extract key information.\n\nURL: ${normalizedUrl}\nDomain: ${domain}`
+        : `Analyze this healthcare newsletter/article and extract key information.\n\nURL: ${normalizedUrl}\nDomain: ${domain}\n\nHTML Content (truncated to first 15000 chars):\n${htmlContent.substring(0, 15000)}`,
       `\nExtract:`,
       `- title: Clear article title`,
       `- source_name: Publication name (use domain "${domain}" as fallback)`,
@@ -122,21 +122,22 @@ Deno.serve(async (req) => {
     // Add metadata
     const newsletterData = {
       ...result,
-      source_url: url,
+      source_url: normalizedUrl,
       source_name: sourceName || result.source_name || 'Unknown Source',
       content_type: 'URL',
-      raw_input: useFallback ? `[Fallback: internet browsing used] URL: ${url}` : htmlContent.substring(0, 50000),
+      raw_input: useFallback ? `[Fallback: internet browsing used] URL: ${normalizedUrl}` : htmlContent.substring(0, 50000),
       date_added_to_app: new Date().toISOString(),
       publication_date_confidence: "medium",
       publication_date_source: "AI extraction",
-      publication_date_notes: useFallback ? "Fallback internet browsing used (HTML fetch failed or too large)" : "Direct URL upload via admin panel"
+      publication_date_notes: useFallback ? "Fallback internet browsing used (HTML fetch failed or too large)" : "Direct URL upload via admin panel",
+      status: 'processing'
     };
 
     console.log('AI analysis complete:', result.title);
     console.log('Creating newsletter record...');
 
-    // Check if newsletter with this URL already exists
-    const existingNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: url });
+    // Check if newsletter with this URL already exists (using normalized URL)
+    const existingNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedUrl });
     if (existingNewsletters.length > 0) {
       console.log('Newsletter with this URL already exists, skipping...');
       return Response.json({
@@ -152,7 +153,7 @@ Deno.serve(async (req) => {
     console.log('Newsletter record created successfully');
 
     // Fetch created newsletter to get its ID
-    const createdNewsletter = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: url });
+    const createdNewsletter = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedUrl });
     if (createdNewsletter[0]) {
       const newsletterId = createdNewsletter[0].id;
       console.log(`Newsletter ID: ${newsletterId}`);
@@ -242,6 +243,10 @@ Deno.serve(async (req) => {
       base44.asServiceRole.functions.invoke('createNewsletterRelations', {
         newsletter_id: newsletterId
       }).catch(err => console.error(`[Relations] Background createNewsletterRelations failed: ${err.message}`));
+
+      // Mark as completed now that all relations are linked
+      await base44.asServiceRole.entities.NewsletterItem.update(newsletterId, { status: 'completed' });
+      console.log(`[Status] Newsletter ${newsletterId} marked as completed`);
 
     } else {
       console.error('Could not retrieve created newsletter by source_url — relation linking skipped');
