@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
 
     // Fetch the webpage with 45-second timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     let htmlContent = null;
     let useFallback = false;
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     const promptBody = [
       useFallback
         ? `Analyze this healthcare newsletter/article by browsing the URL directly and extract key information.\n\nURL: ${normalizedUrl}\nDomain: ${domain}`
-        : `Analyze this healthcare newsletter/article and extract key information.\n\nURL: ${normalizedUrl}\nDomain: ${domain}\n\nHTML Content (truncated to first 15000 chars):\n${htmlContent.substring(0, 15000)}`,
+        : `Analyze this healthcare newsletter/article and extract key information.\n\nURL: ${normalizedUrl}\nDomain: ${domain}\n\nHTML Content (truncated to first 30000 chars):\n${htmlContent.substring(0, 30000)}`,
       `\nExtract:`,
       `- title: Clear article title`,
       `- source_name: Publication name (use domain "${domain}" as fallback)`,
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
       source_url: normalizedUrl,
       source_name: sourceName || result.source_name || 'Unknown Source',
       content_type: 'URL',
-      raw_input: useFallback ? `[Fallback: internet browsing used] URL: ${normalizedUrl}` : htmlContent.substring(0, 50000),
+      raw_input: useFallback ? `[Fallback: internet browsing used] URL: ${normalizedUrl}` : htmlContent.substring(0, 60000),
       date_added_to_app: new Date().toISOString(),
       publication_date_confidence: "medium",
       publication_date_source: "AI extraction",
