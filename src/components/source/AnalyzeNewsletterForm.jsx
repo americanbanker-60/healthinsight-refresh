@@ -13,6 +13,7 @@ export default function AnalyzeNewsletterForm({ sourceName, onSuccess, onCancel 
   const navigate = useNavigate();
   const [url, setUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState("");
   const [analysisMode, setAnalysisMode] = useState("single");
 
@@ -34,6 +35,7 @@ export default function AnalyzeNewsletterForm({ sourceName, onSuccess, onCancel 
 
     const data = response.data;
     if (data?.id) {
+      setIsRedirecting(true);
       onSuccess?.();
       navigate(createPageUrl("NewsletterDetail") + "?id=" + data.id);
     } else {
@@ -72,9 +74,14 @@ export default function AnalyzeNewsletterForm({ sourceName, onSuccess, onCancel 
                 <Button
                   onClick={analyzeNewsletter}
                   className="bg-blue-600 hover:bg-blue-700 flex-1"
-                  disabled={isAnalyzing}
+                  disabled={isAnalyzing || isRedirecting}
                 >
-                  {isAnalyzing ? (
+                  {isRedirecting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Redirecting...
+                    </>
+                  ) : isAnalyzing ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Analyzing...
