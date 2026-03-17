@@ -3,70 +3,114 @@ import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Bot, Send, Loader2, Sparkles } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import { Bot, Send, Loader2, Sparkles, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import MessageBubble from "@/components/agents/MessageBubble";
 
-const PAGE_CONTEXT_MAP = {
-  Dashboard: "The user is on the main Healthcare Intelligence Dashboard, showing recent newsletters, stats, trends, and M&A activity.",
-  KnowledgeHub: "The user is on the Knowledge Hub, exploring emerging healthcare themes and key market players.",
-  PEMeetingPrep: "The user is on the PE Meeting Prep page, generating AI-powered briefs for private equity meetings.",
-  MyLibrary: "The user is on My Library, viewing saved searches, summaries, and watched topics.",
-  ExploreAllSources: "The user is on the Explore All Sources page, browsing and filtering all healthcare newsletter content.",
-  CompaniesDirectory: "The user is on the Companies Directory, viewing tracked healthcare companies.",
-  UserSettings: "The user is on User Settings, configuring their preferences.",
-  MyCustomPacks: "The user is on Research Folders, managing curated intelligence packs.",
-  AgentWorkspace: "The user is in the AI Agent Workspace.",
-  DeepDiveResults: "The user is viewing a Deep Dive AI analysis of healthcare market trends.",
+const PAGE_SUGGESTIONS = {
+  Dashboard: [
+    "What are the top M&A themes from recent newsletters?",
+    "Which sectors have the most activity this month?",
+    "Give me a quick market pulse summary",
+  ],
+  KnowledgeHub: [
+    "What emerging themes should I be tracking?",
+    "Who are the most active acquirers right now?",
+    "Summarize the biggest deals in my library",
+  ],
+  PEMeetingPrep: [
+    "What should I know before a behavioral health PE meeting?",
+    "What are current healthcare services deal multiples?",
+    "What questions should I ask a telehealth company?",
+  ],
+  ExploreAllSources: [
+    "What are analysts saying about value-based care?",
+    "Which companies have raised funding recently?",
+    "Summarize the ASC sector outlook",
+  ],
+  CompaniesDirectory: [
+    "Who are the most mentioned acquirers in healthcare?",
+    "Which companies are involved in the most deals?",
+  ],
+  MyLibrary: [
+    "What topics should I be watching based on recent trends?",
+    "Give me a BD angle from recent market activity",
+  ],
+  MyCustomPacks: [
+    "What's the current state of tech-enabled healthcare services?",
+    "Draft outreach talking points from recent M&A activity",
+  ],
 };
 
-const SUGGESTIONS = [
-  "What are the key risks mentioned on this page?",
-  "Find similar companies in the directory",
-  "What M&A trends should I be watching?",
+const DEFAULT_SUGGESTIONS = [
+  "What are the top M&A themes from recent newsletters?",
+  "Which companies have raised funding recently?",
+  "Draft BD outreach angles from recent market activity",
   "Summarize the most important recent deals",
 ];
 
-export default function AIResearchAssistant({ currentPageName }) {
+export default function AIResearchAssistant({ currentPageName, initialMessage }) {
   const [open, setOpen] = useState(false);
-  const [input, setInput] = useState("");
+  const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
   const bottomRef = useRef(null);
+  const hasAutoOpened = useRef(false);
+
+  // Auto-open when an initialMessage is passed (contextual trigger)
+  useEffect(() => {
+    if (initialMessage && !hasAutoOpened.current) {
+      hasAutoOpened.current = true;
+      setOpen(true);
+      // Small delay to let sheet open first
+      setTimeout(() => sendMessage(initialMessage), 300);
+    }
+  }, [initialMessage]);
 
   useEffect(() => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isLoading]);
+  }, [messages, isSending]);
 
-  const pageContext = PAGE_CONTEXT_MAP[currentPageName] || `The user is on the ${currentPageName || "app"} page.`;
+  useEffect(() => {
+    if (!conversation?.id) return;
+    const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
+      setMessages(data.messages || []);
+    });
+    return unsubscribe;
+  }, [conversation?.id]);
+
+  const getOrCreateConversation = async () => {
+    if (conversation) return conversation;
+    setIsInitializing(true);
+    const convo = await base44.agents.createConversation({
+      agent_name: "healthinsight_assistant",
+      metadata: { name: `Chat — ${new Date().toLocaleDateString()}` }
+    });
+    setConversation(convo);
+    setMessages([]);
+    setIsInitializing(false);
+    return convo;
+  };
 
   const sendMessage = async (text) => {
-    const question = text || input.trim();
-    if (!question || isLoading) return;
-
-    const userMsg = { role: "user", content: question };
-    setMessages(prev => [...prev, userMsg]);
+    const msg = text || input.trim();
+    if (!msg || isSending) return;
     setInput("");
-    setIsLoading(true);
+    setIsSending(true);
 
-    const history = [...messages, userMsg]
-      .map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
-      .join("\n");
+    const convo = await getOrCreateConversation();
+    setMessages(prev => [...prev, { role: "user", content: msg }]);
 
-    const answer = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are an AI Research Assistant embedded in HealthInsight, a healthcare intelligence platform for investment bankers and analysts.
-
-Page Context: ${pageContext}
-
-Conversation so far:
-${history}
-
-Answer the user's latest question concisely and helpfully. Focus on healthcare M&A, market trends, deal intelligence, and actionable insights. Use markdown formatting where helpful. Keep responses under 300 words unless detail is truly needed.`,
-    });
-
-    setMessages(prev => [...prev, { role: "assistant", content: answer }]);
-    setIsLoading(false);
+    try {
+      await base44.agents.addMessage(convo, { role: "user", content: msg });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -76,36 +120,46 @@ Answer the user's latest question concisely and helpfully. Focus on healthcare M
     }
   };
 
+  const suggestions = PAGE_SUGGESTIONS[currentPageName] || DEFAULT_SUGGESTIONS;
+
   return (
     <>
       {/* Floating button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
-        title="AI Research Assistant"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center"
+        title="HealthInsight Assistant"
       >
         <Bot className="w-6 h-6 text-white" />
         <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white" />
       </button>
 
-      {/* Slide-over panel */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-full sm:w-[420px] flex flex-col p-0">
+        <SheetContent side="right" className="w-full sm:w-[440px] flex flex-col p-0">
           <SheetHeader className="px-5 py-4 border-b border-slate-200 bg-gradient-to-r from-blue-600 to-indigo-600">
             <SheetTitle className="text-white flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
-              AI Research Assistant
+              HealthInsight Assistant
             </SheetTitle>
-            <p className="text-blue-100 text-xs mt-0.5">{currentPageName || "App"} context active</p>
+            <div className="flex items-center justify-between">
+              <p className="text-blue-100 text-xs mt-0.5">Research · BD Strategy · Formatting</p>
+              <Link
+                to={createPageUrl("ResearchAssistant")}
+                onClick={() => setOpen(false)}
+                className="text-blue-200 hover:text-white text-xs flex items-center gap-1 transition-colors"
+              >
+                Full view <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
           </SheetHeader>
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-            {messages.length === 0 && (
+            {messages.length === 0 && !isInitializing && (
               <div className="space-y-3">
                 <p className="text-sm text-slate-500 text-center pt-2">Ask anything about your healthcare intelligence</p>
                 <div className="grid grid-cols-1 gap-2">
-                  {SUGGESTIONS.map((s) => (
+                  {suggestions.map((s) => (
                     <button
                       key={s}
                       onClick={() => sendMessage(s)}
@@ -119,29 +173,21 @@ Answer the user's latest question concisely and helpfully. Focus on healthcare M
             )}
 
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm ${
-                  msg.role === "user"
-                    ? "bg-blue-600 text-white rounded-br-sm"
-                    : "bg-slate-100 text-slate-800 rounded-bl-sm"
-                }`}>
-                  {msg.role === "assistant" ? (
-                    <ReactMarkdown className="prose prose-sm max-w-none prose-slate [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                      {msg.content}
-                    </ReactMarkdown>
-                  ) : msg.content}
-                </div>
-              </div>
+              <MessageBubble key={i} message={msg} />
             ))}
 
-            {isLoading && (
-              <div className="flex justify-start">
+            {isSending && messages[messages.length - 1]?.role === "user" && (
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shrink-0">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
                 <div className="bg-slate-100 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
                   <span className="text-xs text-slate-400">Thinking...</span>
                 </div>
               </div>
             )}
+
             <div ref={bottomRef} />
           </div>
 
@@ -152,17 +198,18 @@ Answer the user's latest question concisely and helpfully. Focus on healthcare M
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about healthcare trends, deals, companies..."
+                placeholder="Ask about deals, trends, BD angles..."
                 className="resize-none text-sm min-h-[44px] max-h-[120px]"
                 rows={1}
+                disabled={isSending}
               />
               <Button
                 onClick={() => sendMessage()}
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || isSending}
                 size="icon"
                 className="shrink-0 bg-blue-600 hover:bg-blue-700 h-[44px] w-[44px]"
               >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
             <p className="text-xs text-slate-400 mt-1.5 text-center">Enter to send · Shift+Enter for new line</p>
