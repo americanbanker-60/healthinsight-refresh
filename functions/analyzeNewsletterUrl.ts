@@ -19,37 +19,66 @@ Deno.serve(async (req) => {
 
     // Fetch the webpage with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
-    const htmlResponse = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    
-    if (!htmlResponse.ok) {
-      throw new Error(`Failed to fetch URL: ${htmlResponse.status} ${htmlResponse.statusText}`);
+    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout
+
+    let htmlContent = null;
+    let useFallback = false;
+
+    try {
+      const htmlResponse = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!htmlResponse.ok) {
+        console.warn(`Fetch returned ${htmlResponse.status} ${htmlResponse.statusText} — falling back to internet browsing`);
+        useFallback = true;
+      } else {
+        htmlContent = await htmlResponse.text();
+        console.log('Fetched content length:', htmlContent.length);
+        // If content is too large or suspiciously small, prefer fallback
+        if (htmlContent.length > 200000 || htmlContent.length < 200) {
+          console.warn(`Content length ${htmlContent.length} is out of expected range — using fallback extraction`);
+          useFallback = true;
+        }
+      }
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      console.warn(`Fetch failed (${fetchErr.message}) — falling back to internet browsing`);
+      useFallback = true;
     }
-    const htmlContent = await htmlResponse.text();
-    console.log('Fetched content length:', htmlContent.length);
 
     // Extract domain for source name
     const urlObj = new URL(url);
     const domain = urlObj.hostname.replace('www.', '');
 
-    console.log('Analyzing with AI...');
+    console.log(`Analyzing with AI... (mode: ${useFallback ? 'internet-fallback' : 'html-content'})`);
+
+    // Build prompt — differs between content-based and fallback internet-browse modes
+    const sharedPromptSuffix = `Extract:`;
+    const promptPrefix = useFallback
+      ? `Analyze this healthcare newsletter/article by browsing the URL directly and extract key information.\n\nURL: ${url}\nDomain: ${domain}\n\n${sharedPromptSuffix}`
+      : `Analyze this healthcare newsletter/article and extract key information.\n\nURL: ${url}\nDomain: ${domain}\n\nHTML Content (truncated to first 15000 chars):\n${htmlContent.substring(0, 15000)}\n\n${sharedPromptSuffix}`;
 
     // Analyze with AI
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Analyze this healthcare newsletter/article and extract key information.
-
-URL: ${url}
-Domain: ${domain}
-
-HTML Content (truncated to first 15000 chars):
-${htmlContent.substring(0, 15000)}
-
-Extract:
+      prompt: `${promptPrefix}
 - title: Clear article title
 - source_name: Publication name (use domain "${domain}" as fallback)
-- publication_date: Date in YYYY-MM-DD format (today is 2025-12-22, estimate based on content)
+- publication_date: Date in YYYY-MM-DD format (today is ${new Date().toISOString().split('T')[0]}, estimate based on content)
+- tldr: 2-3 sentence executive summary
+- summary: 3-4 paragraph detailed summary
+- key_takeaways: 3-5 main points as array
+- key_statistics: Array of notable figures with context (can be empty array if none)
+- themes: Major topics covered (can be empty array if none)
+- key_players: Companies/organizations mentioned (can be empty array if none)
+- sentiment: Overall tone (positive/neutral/negative/mixed)
+- market_sentiment: Investment market sentiment (bullish/bearish/neutral/mixed) - focus on financial/business implications
+- deal_value: If M&A transaction mentioned, extract total value (e.g., "$500M", "undisclosed"), otherwise null
+- primary_sector: Primary healthcare sector (Urgent Care, Behavioral Health, Imaging, ASC, Physical Therapy, Dental, Home Health, Anesthesia, MSO, Telehealth, Healthcare IT, Pharmacy, Other)`,
+      add_context_from_internet: useFallback,
+      model: useFallback ? 'gemini_3_flash' : undefined,
+- title: Clear article title
+- source_name: Publication name (use domain "${domain}" as fallback)
+- publication_date: Date in YYYY-MM-DD format (today is ${new Date().toISOString().split('T')[0]}, estimate based on content)
 - tldr: 2-3 sentence executive summary
 - summary: 3-4 paragraph detailed summary
 - key_takeaways: 3-5 main points as array
