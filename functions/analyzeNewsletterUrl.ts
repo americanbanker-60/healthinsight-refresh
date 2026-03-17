@@ -15,7 +15,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'URL required' }, { status: 400 });
     }
 
-    console.log('Fetching URL:', url);
+    // Normalize URL: lowercase + strip trailing slash
+    const normalizedUrl = url.trim().toLowerCase().replace(/\/+$/, '');
+    console.log('Fetching URL:', normalizedUrl, '(normalized from:', url, ')');
 
     // Fetch the webpage with 45-second timeout
     const controller = new AbortController();
