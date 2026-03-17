@@ -143,6 +143,7 @@ Deno.serve(async (req) => {
       return Response.json({
         success: true,
         message: 'Newsletter with this URL already exists. Skipped to prevent duplicates.',
+        id: existingNewsletters[0].id,
         title: existingNewsletters[0].title,
         source_name: existingNewsletters[0].source_name
       });
@@ -254,6 +255,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
+      id: createdNewsletter[0]?.id,
       title: result.title,
       source_name: result.source_name
     });
