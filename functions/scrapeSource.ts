@@ -35,8 +35,10 @@ Deno.serve(async (req) => {
     }
 
     // Get ALL existing newsletter URLs to prevent duplicates across all sources
+    // Normalize stored URLs the same way we normalize incoming ones
+    const normalizeUrl = (u) => u.trim().toLowerCase().replace(/\/+$/, '');
     const allNewsletters = await base44.asServiceRole.entities.NewsletterItem.list('-created_date', 10000);
-    const existingUrls = new Set(allNewsletters.map(n => n.source_url).filter(Boolean));
+    const existingUrls = new Set(allNewsletters.map(n => n.source_url).filter(Boolean).map(normalizeUrl));
 
     // Use AI to scrape and extract newsletter data from the source with 40-second timeout
     let aiResponse;
@@ -154,9 +156,9 @@ Be thorough and accurate. If you can't find clear newsletters, return an empty a
 
     const newsletters = aiResponse.newsletters || [];
     
-    // Filter out any that already exist
-    const newNewsletters = newsletters.filter(n => 
-      n.source_url && !existingUrls.has(n.source_url)
+    // Filter out any that already exist (normalize before comparing)
+    const newNewsletters = newsletters.filter(n =>
+      n.source_url && !existingUrls.has(normalizeUrl(n.source_url))
     );
 
     if (newNewsletters.length === 0) {
@@ -190,6 +192,7 @@ Be thorough and accurate. If you can't find clear newsletters, return an empty a
       try {
         const created_newsletter = await base44.asServiceRole.entities.NewsletterItem.create({
           ...newsletter,
+          source_url: normalizeUrl(newsletter.source_url),
           source_name: source.name,
           key_takeaways: newsletter.key_takeaways || [],
           key_statistics: newsletter.key_statistics || [],
@@ -197,7 +200,8 @@ Be thorough and accurate. If you can't find clear newsletters, return an empty a
           ma_activities: newsletter.ma_activities || [],
           funding_rounds: newsletter.funding_rounds || [],
           key_players: newsletter.key_players || [],
-          is_analyzed: true, // Mark as analyzed since we extracted all data
+          is_analyzed: true,
+          status: 'processing',
           date_added_to_app: new Date().toISOString()
         });
         created.push(created_newsletter);
@@ -337,6 +341,14 @@ Return:
           }
         } catch (companyError) {
           console.error('Company extraction error:', companyError);
+        }
+
+        // Mark as completed now that all relations are linked
+        try {
+          await base44.asServiceRole.entities.NewsletterItem.update(created_newsletter.id, { status: 'completed' });
+          console.log(`[Status] Newsletter ${created_newsletter.id} marked as completed`);
+        } catch (statusErr) {
+          console.error(`[Status] Failed to mark newsletter ${created_newsletter.id} as completed:`, statusErr.message);
         }
       } catch (error) {
         console.error('Error creating newsletter:', error);
