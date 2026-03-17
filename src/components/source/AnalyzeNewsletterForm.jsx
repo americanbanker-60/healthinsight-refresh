@@ -7,10 +7,14 @@ import { Loader2, AlertCircle, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AnalysisPreview from "../analyze/AnalysisPreview";
 import BulkAnalysis from "../analyze/BulkAnalysis";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function AnalyzeNewsletterForm({ sourceName, onSuccess, onCancel }) {
+  const navigate = useNavigate();
   const [url, setUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [analysisResult, setAnalysisResult] = useState(null);
   const [analysisMode, setAnalysisMode] = useState("single");
@@ -119,15 +123,20 @@ Be thorough and extract all relevant details.`;
     });
 
     setIsAnalyzing(false);
-    setAnalysisResult({ ...result, source_url: url });
-  };
 
-  const saveNewsletter = async () => {
-    await base44.entities.NewsletterItem.create({
-      ...analysisResult,
-      source_name: sourceName
-    });
-    onSuccess();
+    // Auto-save immediately after analysis
+    const analysisData = { ...result, source_url: url };
+    setIsSaving(true);
+    try {
+      const created = await base44.entities.NewsletterItem.create({
+        ...analysisData,
+        source_name: sourceName
+      });
+      navigate(createPageUrl("NewsletterDetail") + "?id=" + created.id);
+      onSuccess?.();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (analysisResult) {
@@ -175,8 +184,14 @@ Be thorough and extract all relevant details.`;
                   onClick={analyzeNewsletter}
                   disabled={isAnalyzing}
                   className="bg-blue-600 hover:bg-blue-700 flex-1"
+                  disabled={isAnalyzing || isSaving}
                 >
-                  {isAnalyzing ? (
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : isAnalyzing ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Analyzing...
