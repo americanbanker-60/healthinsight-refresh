@@ -108,6 +108,7 @@ export const PAGES = {
     "UserSettings": UserSettings,
     "UploadPDF": UploadPDF,
     "VariousSources": VariousSources,
+    "ResearchAssistant": ResearchAssistant,
 }
 
 export const pagesConfig = {
