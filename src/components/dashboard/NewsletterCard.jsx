@@ -10,6 +10,7 @@ import { createPageUrl } from "@/utils";
 import { BDInsightBadge } from "../bd/BDActionPrompt";
 import NewsletterMetadata from "../newsletter/NewsletterMetadata";
 import AskAIButton from "@/components/common/AskAIButton";
+import SmartDigest from "@/components/newsletter/SmartDigest";
 
 export default function NewsletterCard({ newsletter, index, variant = "full" }) {
   if (variant === "minimal") {
@@ -147,6 +148,8 @@ export default function NewsletterCard({ newsletter, index, variant = "full" }) 
               )}
             </div>
           )}
+
+          <SmartDigest newsletter={newsletter} compact={true} />
 
           <div className="flex gap-2">
             <Link to={createPageUrl("NewsletterDetail") + "?id=" + newsletter.id} className="flex-1">
