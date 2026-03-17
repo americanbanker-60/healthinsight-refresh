@@ -102,14 +102,8 @@ const navigationGroups = [
     label: "AI Agents",
     items: [
       {
-        title: "Research Analyst",
+        title: "HealthInsight Assistant",
         url: createPageUrl("ResearchAssistant"),
-        icon: Brain,
-        roles: ["admin", "power", "user"],
-      },
-      {
-        title: "Agent Workspace",
-        url: createPageUrl("AgentWorkspace"),
         icon: Brain,
         roles: ["admin", "power", "user"],
       },
