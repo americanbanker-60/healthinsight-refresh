@@ -15,6 +15,7 @@ import CompanyTimeline from "../components/company/CompanyTimeline";
 import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import BackButton from "../components/navigation/BackButton";
 import BDActionPrompt from "../components/bd/BDActionPrompt";
+import AskAIButton from "@/components/common/AskAIButton";
 
 export default function CompanyPage() {
   const navigate = useNavigate();
@@ -206,10 +207,17 @@ export default function CompanyPage() {
               )}
             </div>
           </div>
-          <Button onClick={exploreInAllSources} className="gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Explore in All Sources
-          </Button>
+          <div className="flex gap-2">
+            <AskAIButton
+              prompt={`Give me a comprehensive research brief on ${company.company_name} in healthcare — recent deal activity, funding, market position, and BD outreach angles.`}
+              label="Ask AI about this company"
+              size="sm"
+            />
+            <Button onClick={exploreInAllSources} className="gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Explore in All Sources
+            </Button>
+          </div>
         </div>
         
         <div className="flex items-center gap-2 text-sm text-slate-600">

@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BDInsightBadge } from "../bd/BDActionPrompt";
 import NewsletterMetadata from "../newsletter/NewsletterMetadata";
+import AskAIButton from "@/components/common/AskAIButton";
 
 export default function NewsletterCard({ newsletter, index, variant = "full" }) {
   if (variant === "minimal") {
@@ -147,12 +148,18 @@ export default function NewsletterCard({ newsletter, index, variant = "full" }) 
             </div>
           )}
 
-          <Link to={createPageUrl("NewsletterDetail") + "?id=" + newsletter.id} className="w-full">
-            <Button variant="ghost" className="w-full justify-between group-hover:bg-blue-50 group-hover:text-blue-700 transition-colors">
-              View Full Analysis
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link to={createPageUrl("NewsletterDetail") + "?id=" + newsletter.id} className="flex-1">
+              <Button variant="ghost" className="w-full justify-between group-hover:bg-blue-50 group-hover:text-blue-700 transition-colors">
+                View Full Analysis
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </Link>
+            <AskAIButton
+              prompt={`Analyze this newsletter and give me BD angles: "${newsletter.title}" from ${newsletter.source_name}. ${newsletter.tldr || ""}`}
+              label="Ask AI"
+            />
+          </div>
         </CardContent>
       </Card>
     </motion.div>
