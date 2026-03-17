@@ -44,7 +44,7 @@ export default function ResearchAssistant() {
   const loadConversations = async () => {
     setIsLoadingConversations(true);
     try {
-      const convos = await base44.agents.listConversations({ agent_name: "research_analyst" });
+      const convos = await base44.agents.listConversations({ agent_name: "healthinsight_assistant" });
       setConversations(convos || []);
       if (convos?.length > 0) {
         selectConversation(convos[0]);
@@ -62,7 +62,7 @@ export default function ResearchAssistant() {
 
   const startNewConversation = async () => {
     const convo = await base44.agents.createConversation({
-      agent_name: "research_analyst",
+      agent_name: "healthinsight_assistant",
       metadata: { name: `Research — ${new Date().toLocaleDateString()}` }
     });
     setActiveConversation(convo);
@@ -79,7 +79,7 @@ export default function ResearchAssistant() {
     let convo = activeConversation;
     if (!convo) {
       convo = await base44.agents.createConversation({
-        agent_name: "research_analyst",
+        agent_name: "healthinsight_assistant",
         metadata: { name: msg.slice(0, 50) }
       });
       setActiveConversation(convo);
