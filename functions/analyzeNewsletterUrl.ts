@@ -16,7 +16,8 @@ Deno.serve(async (req) => {
     }
 
     // Normalize URL: lowercase + strip trailing slash
-    const normalizedUrl = url.trim().toLowerCase().replace(/\/+$/, '');
+    const normalizeUrl = (u) => u.trim().toLowerCase().replace(/\/+$/, '');
+    const normalizedUrl = normalizeUrl(url);
     console.log('Fetching URL:', normalizedUrl, '(normalized from:', url, ')');
 
     // Fetch the webpage with 45-second timeout

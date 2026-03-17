@@ -7,7 +7,7 @@ import { Loader2, AlertCircle, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BulkAnalysis from "../analyze/BulkAnalysis";
 import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { createPageUrl, normalizeUrl } from "@/utils";
 
 export default function AnalyzeNewsletterForm({ sourceName, onSuccess, onCancel }) {
   const navigate = useNavigate();
