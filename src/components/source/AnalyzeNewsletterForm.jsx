@@ -33,11 +33,13 @@ export default function AnalyzeNewsletterForm({ sourceName, onSuccess, onCancel 
 
     setIsAnalyzing(false);
 
-    const data = response.data;
-    if (data?.id) {
+    const data = response?.data ?? response;
+    const newsletterId = data?.id;
+
+    if (newsletterId) {
       setIsRedirecting(true);
       onSuccess?.();
-      navigate(createPageUrl("NewsletterDetail") + "?id=" + data.id);
+      navigate(createPageUrl("NewsletterDetail") + "?id=" + newsletterId);
     } else {
       setError(data?.error || "Analysis failed — no newsletter ID returned.");
     }
