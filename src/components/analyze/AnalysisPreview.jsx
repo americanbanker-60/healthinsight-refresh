@@ -53,51 +53,43 @@ export default function AnalysisPreview({ analysis, onSave }) {
 
     setIsSendingEmail(true);
     try {
-      const subject = `Healthcare Intelligence: ${analysis.title}`;
+      const subject = `Healthcare Intelligence: ${analysis.title || 'Analysis'}`;
       
-      let body = `<h2>${analysis.title}</h2>\n\n`;
+      const lines = [];
+      lines.push(`<h2>${analysis.title || 'Healthcare Intelligence Analysis'}</h2>`);
       
       if (analysis.sentiment) {
-        body += `<p><strong>Sentiment:</strong> ${analysis.sentiment}</p>\n`;
+        lines.push(`<p><strong>Sentiment:</strong> ${analysis.sentiment}</p>`);
       }
       
       if (analysis.tldr) {
-        body += `<h3>TL;DR</h3>\n<p>${analysis.tldr}</p>\n\n`;
+        lines.push(`<h3>TL;DR</h3><p>${analysis.tldr}</p>`);
       }
       
       if (analysis.summary) {
-        body += `<h3>Executive Summary</h3>\n<p>${analysis.summary}</p>\n\n`;
+        lines.push(`<h3>Executive Summary</h3><p>${analysis.summary}</p>`);
       }
       
-      if (analysis.key_takeaways && analysis.key_takeaways.length > 0) {
-        body += `<h3>Key Takeaways</h3>\n<ul>\n`;
-        analysis.key_takeaways.forEach(takeaway => {
-          body += `<li>${takeaway}</li>\n`;
-        });
-        body += `</ul>\n\n`;
+      if (analysis.key_takeaways?.length > 0) {
+        lines.push(`<h3>Key Takeaways</h3><ul>${analysis.key_takeaways.map(t => `<li>${t}</li>`).join('')}</ul>`);
       }
       
-      if (analysis.recommended_actions && analysis.recommended_actions.length > 0) {
-        body += `<h3>Recommended Actions</h3>\n<ol>\n`;
-        analysis.recommended_actions.forEach(action => {
-          body += `<li>${action}</li>\n`;
-        });
-        body += `</ol>\n\n`;
+      if (analysis.recommended_actions?.length > 0) {
+        lines.push(`<h3>Recommended Actions</h3><ol>${analysis.recommended_actions.map(a => `<li>${a}</li>`).join('')}</ol>`);
       }
       
-      if (analysis.ma_activities && analysis.ma_activities.length > 0) {
-        body += `<h3>M&A Activity</h3>\n`;
-        analysis.ma_activities.forEach(deal => {
-          body += `<p><strong>${deal.acquirer} → ${deal.target}</strong>`;
-          if (deal.deal_value) body += ` - ${deal.deal_value}`;
-          body += `<br>${deal.description}</p>\n`;
-        });
-        body += `\n`;
+      if (analysis.ma_activities?.length > 0) {
+        const deals = analysis.ma_activities.map(deal => 
+          `<p><strong>${deal.acquirer || ''} → ${deal.target || ''}</strong>${deal.deal_value ? ` - ${deal.deal_value}` : ''}<br/>${deal.description || ''}</p>`
+        ).join('');
+        lines.push(`<h3>M&A Activity</h3>${deals}`);
       }
       
       if (analysis.source_url) {
-        body += `<p><a href="${analysis.source_url}">View Original Source</a></p>`;
+        lines.push(`<p><a href="${analysis.source_url}">View Original Source</a></p>`);
       }
+
+      const body = lines.join('\n');
 
       await base44.integrations.Core.SendEmail({
         to: recipientEmail,
