@@ -137,6 +137,12 @@ const navigationGroups = [
         icon: BookOpen,
         roles: ["admin"],
       },
+      {
+        title: "Dev Super Agent",
+        url: createPageUrl("DevSuperAgent"),
+        icon: Terminal,
+        roles: ["admin"],
+      },
     ]
   },
 ];
