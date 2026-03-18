@@ -79,6 +79,16 @@ function ToolCallBubble({ toolCall }) {
 
 function Message({ message }) {
   const isUser = message.role === "user";
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyForAI = () => {
+    const text = `The Dev Super Agent diagnosed the following issue in my HealthInsight app. Please implement the suggested fix:\n\n---\n${message.content}\n---`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast.success("Copied! Paste it into the Base44 AI chat to implement the fix.");
+    setTimeout(() => setCopied(false), 3000);
+  };
+
   return (
     <div className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}>
       {!isUser && (
@@ -88,37 +98,48 @@ function Message({ message }) {
       )}
       <div className={`max-w-[85%] ${isUser ? "items-end flex flex-col" : ""}`}>
         {message.content && (
-          <div className={`rounded-xl px-4 py-3 ${
-            isUser
-              ? "bg-indigo-600 text-white text-sm"
-              : "bg-slate-800 border border-slate-700 text-slate-100"
-          }`}>
-            {isUser ? (
-              <p className="text-sm leading-relaxed">{message.content}</p>
-            ) : (
-              <ReactMarkdown
-                className="text-sm prose prose-sm prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-                components={{
-                  code: ({ inline, children }) =>
-                    inline
-                      ? <code className="bg-slate-700 text-green-300 px-1 py-0.5 rounded text-xs">{children}</code>
-                      : <pre className="bg-slate-900 border border-slate-700 rounded-lg p-3 overflow-x-auto my-2"><code className="text-green-300 text-xs">{children}</code></pre>,
-                  strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
-                  a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">{children}</a>,
-                  ul: ({ children }) => <ul className="my-1 ml-4 list-disc">{children}</ul>,
-                  ol: ({ children }) => <ol className="my-1 ml-4 list-decimal">{children}</ol>,
-                  li: ({ children }) => <li className="my-0.5 text-slate-200">{children}</li>,
-                  h1: ({ children }) => <h1 className="text-base font-bold text-white my-2">{children}</h1>,
-                  h2: ({ children }) => <h2 className="text-sm font-bold text-white my-2">{children}</h2>,
-                  h3: ({ children }) => <h3 className="text-sm font-semibold text-slate-200 my-1">{children}</h3>,
-                  p: ({ children }) => <p className="my-1 leading-relaxed text-slate-200">{children}</p>,
-                  blockquote: ({ children }) => <blockquote className="border-l-2 border-green-600 pl-3 text-slate-400 italic my-2">{children}</blockquote>,
-                }}
+          <>
+            <div className={`rounded-xl px-4 py-3 ${
+              isUser
+                ? "bg-indigo-600 text-white text-sm"
+                : "bg-slate-800 border border-slate-700 text-slate-100"
+            }`}>
+              {isUser ? (
+                <p className="text-sm leading-relaxed">{message.content}</p>
+              ) : (
+                <ReactMarkdown
+                  className="text-sm prose prose-sm prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                  components={{
+                    code: ({ inline, children }) =>
+                      inline
+                        ? <code className="bg-slate-700 text-green-300 px-1 py-0.5 rounded text-xs">{children}</code>
+                        : <pre className="bg-slate-900 border border-slate-700 rounded-lg p-3 overflow-x-auto my-2"><code className="text-green-300 text-xs">{children}</code></pre>,
+                    strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+                    a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">{children}</a>,
+                    ul: ({ children }) => <ul className="my-1 ml-4 list-disc">{children}</ul>,
+                    ol: ({ children }) => <ol className="my-1 ml-4 list-decimal">{children}</ol>,
+                    li: ({ children }) => <li className="my-0.5 text-slate-200">{children}</li>,
+                    h1: ({ children }) => <h1 className="text-base font-bold text-white my-2">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-sm font-bold text-white my-2">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-sm font-semibold text-slate-200 my-1">{children}</h3>,
+                    p: ({ children }) => <p className="my-1 leading-relaxed text-slate-200">{children}</p>,
+                    blockquote: ({ children }) => <blockquote className="border-l-2 border-green-600 pl-3 text-slate-400 italic my-2">{children}</blockquote>,
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
+              )}
+            </div>
+            {!isUser && (
+              <button
+                onClick={handleCopyForAI}
+                className="mt-1.5 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-indigo-900/40 border border-indigo-700/50 text-indigo-300 hover:bg-indigo-800/50 hover:text-indigo-200 transition-all"
               >
-                {message.content}
-              </ReactMarkdown>
+                {copied ? <CheckCircle2 className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                {copied ? "Copied! Now paste in the AI chat →" : "Copy fix → paste into Base44 AI chat to implement"}
+              </button>
             )}
-          </div>
+          </>
         )}
         {message.tool_calls?.map((tc, i) => <ToolCallBubble key={i} toolCall={tc} />)}
       </div>
