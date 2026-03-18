@@ -62,6 +62,12 @@ const navigationGroups = [
         roles: ["admin", "power", "user"],
       },
       {
+        title: "Add to Library",
+        url: createPageUrl("UploadPDF"),
+        icon: FileUp,
+        roles: ["admin", "power", "user"],
+      },
+      {
         title: "Explore All Sources",
         url: createPageUrl("ExploreAllSources"),
         icon: TrendingUp,
