@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
       source_url: normalizedUrl,
       source_name: sourceName || result.source_name || 'Unknown Source',
       content_type: 'URL',
-      raw_input: useFallback ? `[Fallback: internet browsing used] URL: ${normalizedUrl}` : htmlContent.substring(0, 20000),
+      raw_input: useFallback ? `[Fallback: internet browsing used] URL: ${normalizedUrl}` : textContent.substring(0, 20000),
       date_added_to_app: new Date().toISOString(),
       publication_date_confidence: "medium",
       publication_date_source: "AI extraction",
