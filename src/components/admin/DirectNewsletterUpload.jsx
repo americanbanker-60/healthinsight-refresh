@@ -276,8 +276,23 @@ export default function DirectNewsletterUpload() {
                     <>
                       <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-slate-900 truncate">{result.title}</p>
-                        <p className="text-slate-500 truncate">{result.url || result.file}</p>
+                        {result.id ? (
+                          <Link
+                            to={`${createPageUrl("NewsletterDetail")}?id=${result.id}`}
+                            className="font-medium text-blue-700 hover:underline truncate flex items-center gap-1"
+                          >
+                            {result.title}
+                            <ExternalLink className="w-3 h-3 shrink-0" />
+                          </Link>
+                        ) : (
+                          <p className="font-medium text-slate-900 truncate">{result.title}</p>
+                        )}
+                        {result.url && (
+                          <a href={result.url} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 truncate block">
+                            {result.url}
+                          </a>
+                        )}
+                        {result.file && <p className="text-slate-500 truncate">{result.file}</p>}
                       </div>
                     </>
                   ) : (
