@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
         htmlContent = await htmlResponse.text();
         console.log('Fetched content length:', htmlContent.length);
         // If content is too large or suspiciously small, prefer fallback
-        if (htmlContent.length > 200000 || htmlContent.length < 200) {
+        if (htmlContent.length > 100000 || htmlContent.length < 200) {
           console.warn(`Content length ${htmlContent.length} is out of expected range — using fallback extraction`);
           useFallback = true;
         }
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     const promptBody = [
       useFallback
         ? `Analyze this healthcare newsletter/article by browsing the URL directly and extract key information.\n\nURL: ${normalizedUrl}\nDomain: ${domain}`
-        : `Analyze this healthcare newsletter/article and extract key information.\n\nURL: ${normalizedUrl}\nDomain: ${domain}\n\nHTML Content (truncated to first 30000 chars):\n${htmlContent.substring(0, 30000)}`,
+        : `Analyze this healthcare newsletter/article and extract key information.\n\nURL: ${normalizedUrl}\nDomain: ${domain}\n\nHTML Content (truncated to first 12000 chars):\n${htmlContent.substring(0, 12000)}`,
       `\nExtract:`,
       `- title: Clear article title`,
       `- source_name: Publication name (use domain "${domain}" as fallback)`,
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
       source_url: normalizedUrl,
       source_name: sourceName || result.source_name || 'Unknown Source',
       content_type: 'URL',
-      raw_input: useFallback ? `[Fallback: internet browsing used] URL: ${normalizedUrl}` : htmlContent.substring(0, 60000),
+      raw_input: useFallback ? `[Fallback: internet browsing used] URL: ${normalizedUrl}` : htmlContent.substring(0, 20000),
       date_added_to_app: new Date().toISOString(),
       publication_date_confidence: "medium",
       publication_date_source: "AI extraction",
