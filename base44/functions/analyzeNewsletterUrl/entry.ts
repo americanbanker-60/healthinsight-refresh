@@ -20,11 +20,11 @@ Deno.serve(async (req) => {
     const normalizedUrl = normalizeUrl(url);
     console.log('Fetching URL:', normalizedUrl, '(normalized from:', url, ')');
 
-    // Fetch the webpage with 45-second timeout
+    // Fetch the webpage with 20-second timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-    let htmlContent = null;
+    let textContent = null;
     let useFallback = false;
 
     try {
@@ -35,11 +35,18 @@ Deno.serve(async (req) => {
         console.warn(`Fetch returned ${htmlResponse.status} ${htmlResponse.statusText} — falling back to internet browsing`);
         useFallback = true;
       } else {
-        htmlContent = await htmlResponse.text();
-        console.log('Fetched content length:', htmlContent.length);
-        // If content is too large or suspiciously small, prefer fallback
-        if (htmlContent.length > 100000 || htmlContent.length < 200) {
-          console.warn(`Content length ${htmlContent.length} is out of expected range — using fallback extraction`);
+        const rawHtml = await htmlResponse.text();
+        console.log('Fetched HTML length:', rawHtml.length);
+        // Strip HTML tags to get plain text — dramatically reduces size
+        textContent = rawHtml
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[\s\S]*?<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+        console.log('Stripped text length:', textContent.length);
+        if (textContent.length < 200) {
+          console.warn(`Text content too short (${textContent.length}) — using fallback extraction`);
           useFallback = true;
         }
       }
