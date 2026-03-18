@@ -90,12 +90,6 @@ const navigationGroups = [
         icon: Briefcase,
         roles: ["admin", "power", "user"],
       },
-      {
-        title: "Add to Library",
-        url: createPageUrl("UploadPDF"),
-        icon: FileUp,
-        roles: ["admin", "power", "user"],
-      },
     ]
   },
   {
