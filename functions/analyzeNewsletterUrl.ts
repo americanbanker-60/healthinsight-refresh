@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
               console.log(`[Relations] Company created: "${playerName}" (id: ${companyId})`);
             }
 
-            await base44.asServiceRole.entities.NewsletterItemRelation.create({
+            await base44.asServiceRole.entities.NewsletterRelation.create({
               newsletter_id: newsletterId,
               entity_type: 'company',
               entity_id: companyId,
@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
               console.log(`[Relations] Topic created: "${themeName}" (id: ${topicId})`);
             }
 
-            await base44.asServiceRole.entities.NewsletterItemRelation.create({
+            await base44.asServiceRole.entities.NewsletterRelation.create({
               newsletter_id: newsletterId,
               entity_type: 'topic',
               entity_id: topicId,
