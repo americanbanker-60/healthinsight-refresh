@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     const promptBody = [
       useFallback
         ? `Analyze this healthcare newsletter/article by browsing the URL directly and extract key information.\n\nURL: ${normalizedUrl}\nDomain: ${domain}`
-        : `Analyze this healthcare newsletter/article and extract key information.\n\nURL: ${normalizedUrl}\nDomain: ${domain}\n\nHTML Content (truncated to first 12000 chars):\n${htmlContent.substring(0, 12000)}`,
+        : `Analyze this healthcare newsletter/article and extract key information.\n\nURL: ${normalizedUrl}\nDomain: ${domain}\n\nArticle Text (truncated to first 12000 chars):\n${textContent.substring(0, 12000)}`,
       `\nExtract:`,
       `- title: Clear article title`,
       `- source_name: Publication name (use domain "${domain}" as fallback)`,
