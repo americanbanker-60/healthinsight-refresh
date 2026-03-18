@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+// SDK version: 0.8.20
 
 Deno.serve(async (req) => {
   try {
