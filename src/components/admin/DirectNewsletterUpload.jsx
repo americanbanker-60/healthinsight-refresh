@@ -98,7 +98,8 @@ export default function DirectNewsletterUpload() {
         setResults(prev => [...prev, {
           file: file.name,
           status: "success",
-          title: response.data.title
+          title: response.data.title,
+          id: response.data.id
         }]);
         queryClient.invalidateQueries({ queryKey: ['newsletters'] });
       } else {
