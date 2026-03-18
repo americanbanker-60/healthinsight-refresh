@@ -1053,6 +1053,24 @@ Format as markdown with clear sections.`,
                     Successfully processed {processedNewsletters.length} newsletters
                   </h3>
                 </div>
+
+                <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
+                  {processedNewsletters.map((n, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                      {n.id ? (
+                        <a
+                          href={`/NewsletterDetail?id=${n.id}`}
+                          className="text-blue-700 hover:underline truncate"
+                        >
+                          {n.title || n.url || `Newsletter ${i + 1}`}
+                        </a>
+                      ) : (
+                        <span className="text-slate-700 truncate">{n.title || `Newsletter ${i + 1}`}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
                 
                 <div className="grid md:grid-cols-3 gap-3">
                   <Button
