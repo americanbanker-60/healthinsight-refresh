@@ -66,16 +66,16 @@ import MyLibrary from './pages/MyLibrary';
 import NewsletterDetail from './pages/NewsletterDetail';
 import PEMeetingPrep from './pages/PEMeetingPrep';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import ResearchAssistant from './pages/ResearchAssistant';
 import SourcePage from './pages/SourcePage';
 import SystemDocumentation from './pages/SystemDocumentation';
 import TermsOfService from './pages/TermsOfService';
 import TopicPage from './pages/TopicPage';
 import TopicsDirectory from './pages/TopicsDirectory';
 import Unauthorized from './pages/Unauthorized';
-import UserSettings from './pages/UserSettings';
 import UploadPDF from './pages/UploadPDF';
+import UserSettings from './pages/UserSettings';
 import VariousSources from './pages/VariousSources';
-import ResearchAssistant from './pages/ResearchAssistant';
 import __Layout from './Layout.jsx';
 
 
@@ -99,16 +99,16 @@ export const PAGES = {
     "NewsletterDetail": NewsletterDetail,
     "PEMeetingPrep": PEMeetingPrep,
     "PrivacyPolicy": PrivacyPolicy,
+    "ResearchAssistant": ResearchAssistant,
     "SourcePage": SourcePage,
     "SystemDocumentation": SystemDocumentation,
     "TermsOfService": TermsOfService,
     "TopicPage": TopicPage,
     "TopicsDirectory": TopicsDirectory,
     "Unauthorized": Unauthorized,
-    "UserSettings": UserSettings,
     "UploadPDF": UploadPDF,
+    "UserSettings": UserSettings,
     "VariousSources": VariousSources,
-    "ResearchAssistant": ResearchAssistant,
 }
 
 export const pagesConfig = {
