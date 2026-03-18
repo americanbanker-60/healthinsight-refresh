@@ -57,6 +57,7 @@ import CustomPackDetail from './pages/CustomPackDetail';
 import Dashboard from './pages/Dashboard';
 import DashboardSettings from './pages/DashboardSettings';
 import DeepDiveResults from './pages/DeepDiveResults';
+import DevSuperAgent from './pages/DevSuperAgent';
 import ExploreAllSources from './pages/ExploreAllSources';
 import KnowledgeHub from './pages/KnowledgeHub';
 import LandingPage from './pages/LandingPage';
@@ -76,7 +77,6 @@ import Unauthorized from './pages/Unauthorized';
 import UploadPDF from './pages/UploadPDF';
 import UserSettings from './pages/UserSettings';
 import VariousSources from './pages/VariousSources';
-import DevSuperAgent from './pages/DevSuperAgent';
 import __Layout from './Layout.jsx';
 
 
@@ -91,6 +91,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "DashboardSettings": DashboardSettings,
     "DeepDiveResults": DeepDiveResults,
+    "DevSuperAgent": DevSuperAgent,
     "ExploreAllSources": ExploreAllSources,
     "KnowledgeHub": KnowledgeHub,
     "LandingPage": LandingPage,
@@ -110,7 +111,6 @@ export const PAGES = {
     "UploadPDF": UploadPDF,
     "UserSettings": UserSettings,
     "VariousSources": VariousSources,
-    "DevSuperAgent": DevSuperAgent,
 }
 
 export const pagesConfig = {

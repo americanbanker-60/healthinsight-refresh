@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Send, Terminal, Trash2, Zap, AlertCircle, CheckCircle2, ChevronRight } from "lucide-react";
+import { Loader2, Send, Terminal, Trash2, Zap, AlertCircle, CheckCircle2, ChevronRight, Copy, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
