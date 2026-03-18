@@ -50,7 +50,8 @@ export default function DirectNewsletterUpload() {
           processResults.push({
             url,
             status: "success",
-            title: response.data.title || "Untitled"
+            title: response.data.title || "Untitled",
+            id: response.data.id
           });
           toast.success(`✓ Added: ${response.data.title || url}`);
         } else {
