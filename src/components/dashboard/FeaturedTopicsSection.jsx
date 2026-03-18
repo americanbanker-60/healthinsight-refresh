@@ -11,7 +11,7 @@ export default function FeaturedTopicsSection() {
     queryKey: ['featuredTopics'],
     queryFn: async () => {
       // Fetch all analyzed newsletters
-      const newsletters = await base44.entities.Newsletter.filter(
+      const newsletters = await base44.entities.NewsletterItem.filter(
         { is_analyzed: true },
         '-created_date',
         10000
