@@ -63,7 +63,7 @@ const navigationGroups = [
       },
       {
         title: "Add to Library",
-        url: createPageUrl("UploadPDF"),
+        url: createPageUrl("VariousSources"),
         icon: FileUp,
         roles: ["admin", "power", "user"],
       },
@@ -74,17 +74,11 @@ const navigationGroups = [
         roles: ["admin", "power", "user"],
       },
       {
-          title: "Companies",
-          url: createPageUrl("CompaniesDirectory"),
-          icon: Building2,
-          roles: ["admin", "power", "user"],
-        },
-        {
-          title: "Additional Publishers",
-          url: createPageUrl("VariousSources"),
-          icon: Globe,
-          roles: ["admin", "power", "user"],
-        },
+        title: "Companies",
+        url: createPageUrl("CompaniesDirectory"),
+        icon: Building2,
+        roles: ["admin", "power", "user"],
+      },
     ]
   },
   {
