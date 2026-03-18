@@ -109,8 +109,8 @@ export default function AnalysisPreview({ analysis, onSave }) {
       setShowEmailDialog(false);
       setRecipientEmail("");
     } catch (error) {
-      toast.error("Failed to send email");
-      console.error(error);
+      console.error("Email error:", error);
+      toast.error(`Failed to send email: ${error?.message || "Unknown error"}`);
     }
     setIsSendingEmail(false);
   };
