@@ -486,198 +486,58 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
     const selected = newsletters.filter((_, idx) => selectedNewsletters.has(idx));
     if (selected.length === 0) return;
 
-    // Save queue to local storage for persistence
     saveQueue(selected);
     setPendingQueue(selected);
-
     setIsProcessing(true);
     setProcessedCount(0);
     setProcessingProgress(0);
     setProcessedNewsletters([]);
 
-    let skippedCount = 0;
-    let remaining = [...selected];
+    const total = selected.length;
+    const newProcessed = [];
 
-    for (let i = 0; i < remaining.length; i++) {
-      const newsletter = remaining[i];
-      
-      // Check database for each URL before processing
-      if (newsletter.url) {
-        const existingRecords = await base44.entities.NewsletterItem.filter({ source_url: newsletter.url });
-        if (existingRecords.length > 0) {
-          console.log(`Skipping duplicate: ${newsletter.url}`);
-          skippedCount++;
-          remaining.splice(i, 1);
-          i--;
-          saveQueue(remaining);
-          setProcessedCount(selected.length - remaining.length);
-          setProcessingProgress(((selected.length - remaining.length) / selected.length) * 100);
-          continue;
-        }
-      }
-      
+    for (let i = 0; i < selected.length; i++) {
+      const newsletter = selected[i];
+
       try {
-        let contentSource;
-        if (newsletter.rawContent) {
-          const cleaned = cleanPastedContent(newsletter.rawContent);
-          contentSource = `Newsletter content:\n\n${cleaned}`;
-        } else {
-          // Fetch and extract clean content from URL
-          try {
-            const response = await fetch(newsletter.url);
-            const html = await response.text();
-            const cleanContent = extractMainContent(html);
-            
-            if (cleanContent && cleanContent.length > 200) {
-              contentSource = `Newsletter content:\n\n${cleanContent}`;
-            } else {
-              contentSource = `Newsletter URL: ${newsletter.url}`;
-            }
-          } catch (fetchErr) {
-            contentSource = `Newsletter URL: ${newsletter.url}`;
+        if (newsletter.url) {
+          // Always route through the backend function — handles auth, dedup, and relations
+          const response = await base44.functions.invoke('analyzeNewsletterUrl', {
+            url: newsletter.url,
+            sourceName: sourceName || undefined
+          });
+          if (response.data?.success && response.data?.id) {
+            newProcessed.push({ id: response.data.id, title: response.data.title, url: newsletter.url });
+            toast.success(`✓ ${response.data.title}`);
+          } else if (response.data?.error) {
+            toast.error(`Failed: ${newsletter.url.substring(0, 50)}`);
+          }
+        } else if (newsletter.rawContent) {
+          // Raw content: use LLM via integration then save via backend
+          // Wrap in a URL-less invocation using the content directly
+          const response = await base44.functions.invoke('analyzeNewsletterUrl', {
+            url: `data:text/plain,${encodeURIComponent(newsletter.rawContent.substring(0, 500))}`,
+            sourceName: sourceName || undefined,
+            rawContent: newsletter.rawContent
+          });
+          if (response.data?.success && response.data?.id) {
+            newProcessed.push({ id: response.data.id, title: response.data.title });
+            toast.success(`✓ ${response.data.title}`);
           }
         }
-
-        const analysis = await base44.integrations.Core.InvokeLLM({
-          prompt: `You are a seasoned healthcare investment banking and private equity analyst.
-
-Analyze this healthcare newsletter and extract ACTIONABLE investment intelligence:
-
-${contentSource}
-
-${!contentSource.includes('Newsletter URL:') ? 'The content above has been extracted and cleaned from the newsletter.' : ''}
-
-Extract structured insights:
-
-**TLDR** - Sharp 2-3 sentence summary for executives
-
-**KEY STATISTICS** - Extract all numbers, metrics, data points (deal values, growth rates, market sizes, patient volumes, cost savings, etc.). For each stat, provide the figure and context.
-
-**KEY TAKEAWAYS** - 5-7 insights for investors:
-- Strategic implications for healthcare investors
-- Market shifts or inflection points
-- Competitive dynamics emerging
-- Regulatory or reimbursement trends to monitor
-
-**RECOMMENDED ACTIONS** - 3-5 concrete next steps healthcare executives should consider
-
-**THEMES** - 3-5 major themes with context:
-- Why this matters NOW
-- Investment opportunities or risks
-- Which sectors/subsectors affected
-- 12-24 month outlook
-
-**M&A ACTIVITIES** - Analyze deals with strategic context:
-- Strategic rationale (scale, tech acquisition, vertical integration)
-- Valuation multiples if available
-- Comparison to recent comparable transactions
-- What this signals about sector consolidation
-
-**FUNDING ROUNDS** - Venture insights:
-- What funding signals about investor confidence
-- Lead investors and their thesis
-- Valuation vs sector benchmarks
-- Milestones or catalysts
-
-**KEY PLAYERS** - Companies making strategic moves
-
-**SENTIMENT** - Overall market tone
-
-**SUMMARY** - 2-3 paragraph executive summary for investment committee`,
-          add_context_from_internet: contentSource.includes('Newsletter URL:') ? true : false,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              title: { type: "string" },
-              publication_date: { type: "string" },
-              tldr: { type: "string" },
-              key_statistics: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    figure: { type: "string" },
-                    context: { type: "string" }
-                  }
-                }
-              },
-              recommended_actions: { type: "array", items: { type: "string" } },
-              key_takeaways: { type: "array", items: { type: "string" } },
-              themes: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    theme: { type: "string" },
-                    description: { type: "string" }
-                  }
-                }
-              },
-              ma_activities: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    acquirer: { type: "string" },
-                    target: { type: "string" },
-                    deal_value: { type: "string" },
-                    description: { type: "string" }
-                  }
-                }
-              },
-              funding_rounds: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    company: { type: "string" },
-                    amount: { type: "string" },
-                    round_type: { type: "string" },
-                    description: { type: "string" }
-                  }
-                }
-              },
-              key_players: { type: "array", items: { type: "string" } },
-              summary: { type: "string" },
-              sentiment: { type: "string", enum: ["positive", "neutral", "negative", "mixed"] }
-            }
-          }
-        });
-
-        const createdNewsletter = await base44.entities.NewsletterItem.create({
-          ...analysis,
-          source_url: newsletter.url || "Manual Entry",
-          title: analysis.title || newsletter.title,
-          publication_date: analysis.publication_date || newsletter.date,
-          source_name: sourceName || undefined
-        });
-
-        setProcessedNewsletters(prev => [...prev, createdNewsletter]);
-        
-        // Remove from queue
-        remaining.splice(i, 1);
-        i--;
-        saveQueue(remaining);
       } catch (err) {
         console.error(`Error processing ${newsletter.title}:`, err);
-        remaining.splice(i, 1);
-        i--;
-        saveQueue(remaining);
+        toast.error(`Error on item ${i + 1}`);
       }
 
-      setProcessedCount(selected.length - remaining.length);
-      setProcessingProgress(((selected.length - remaining.length) / selected.length) * 100);
+      setProcessedCount(i + 1);
+      setProcessingProgress(((i + 1) / total) * 100);
     }
 
+    setProcessedNewsletters(newProcessed);
     clearQueue();
     setIsProcessing(false);
-    
-    // Show summary if duplicates were skipped
-    if (skippedCount > 0) {
-      setError(`Processed ${selected.length - skippedCount} new newsletters. Skipped ${skippedCount} duplicates.`);
-    }
-    
-    toast.success(`Successfully processed ${selected.length - skippedCount} newsletters`);
+    toast.success(`Processed ${newProcessed.length} of ${total} newsletters`);
   };
 
   const generateConsolidatedReport = async () => {
