@@ -76,6 +76,7 @@ import Unauthorized from './pages/Unauthorized';
 import UploadPDF from './pages/UploadPDF';
 import UserSettings from './pages/UserSettings';
 import VariousSources from './pages/VariousSources';
+import DevSuperAgent from './pages/DevSuperAgent';
 import __Layout from './Layout.jsx';
 
 
@@ -109,6 +110,7 @@ export const PAGES = {
     "UploadPDF": UploadPDF,
     "UserSettings": UserSettings,
     "VariousSources": VariousSources,
+    "DevSuperAgent": DevSuperAgent,
 }
 
 export const pagesConfig = {
