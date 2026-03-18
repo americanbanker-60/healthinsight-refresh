@@ -155,109 +155,20 @@ Deno.serve(async (req) => {
     const createdRecord = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
     console.log('Newsletter record created successfully');
 
-    // Use the id from the create response directly; fall back to a filter query
-    let createdNewsletter = createdRecord?.id ? [createdRecord] : await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedUrl });
-    if (createdNewsletter[0]) {
-      const newsletterId = createdNewsletter[0].id;
+    const newsletterId = createdRecord?.id;
+    if (!newsletterId) {
+      console.error('Could not retrieve newsletter ID after create — relation linking skipped');
+    } else {
       console.log(`Newsletter ID: ${newsletterId}`);
-
-      // --- Company linking ---
-      if (result.key_players && result.key_players.length > 0) {
-        console.log(`[Relations] Processing ${result.key_players.length} key_players for newsletter ${newsletterId}`);
-
-        for (const playerName of result.key_players) {
-          if (!playerName || playerName.trim().length === 0) continue;
-
-          try {
-            const existingCompanies = await base44.asServiceRole.entities.Company.filter({ company_name: playerName });
-
-            let companyId;
-            if (existingCompanies.length > 0) {
-              companyId = existingCompanies[0].id;
-              console.log(`[Relations] Company found: "${playerName}" (id: ${companyId})`);
-            } else {
-              const newCompany = await base44.asServiceRole.entities.Company.create({
-                company_name: playerName,
-                primary_keywords: [playerName.toLowerCase()]
-              });
-              companyId = newCompany.id;
-              console.log(`[Relations] Company created: "${playerName}" (id: ${companyId})`);
-            }
-
-            await base44.asServiceRole.entities.NewsletterRelation.create({
-              newsletter_id: newsletterId,
-              entity_type: 'company',
-              entity_id: companyId,
-              entity_name: playerName,
-              match_type: 'exact'
-            });
-            console.log(`[Relations] Company relation saved: "${playerName}" -> newsletter ${newsletterId}`);
-          } catch (err) {
-            console.error(`[Relations] ERROR linking company "${playerName}" to newsletter ${newsletterId}: ${err.message}`);
-          }
-        }
-      } else {
-        console.log(`[Relations] No key_players to link for newsletter ${newsletterId}`);
-      }
-
-      // --- Topic linking ---
-      if (result.themes && result.themes.length > 0) {
-        console.log(`[Relations] Processing ${result.themes.length} themes for newsletter ${newsletterId}`);
-
-        for (const themeObj of result.themes) {
-          if (!themeObj || !themeObj.theme || themeObj.theme.trim().length === 0) continue;
-
-          try {
-            const themeName = themeObj.theme.trim();
-            const existingTopics = await base44.asServiceRole.entities.Topic.filter({ topic_name: themeName });
-
-            let topicId;
-            if (existingTopics.length > 0) {
-              topicId = existingTopics[0].id;
-              console.log(`[Relations] Topic found: "${themeName}" (id: ${topicId})`);
-            } else {
-              const keywords = themeName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-              const newTopic = await base44.asServiceRole.entities.Topic.create({
-                topic_name: themeName,
-                description: themeObj.description || `Related to ${themeName}`,
-                keywords: keywords.length > 0 ? keywords : [themeName.toLowerCase()]
-              });
-              topicId = newTopic.id;
-              console.log(`[Relations] Topic created: "${themeName}" (id: ${topicId})`);
-            }
-
-            await base44.asServiceRole.entities.NewsletterRelation.create({
-              newsletter_id: newsletterId,
-              entity_type: 'topic',
-              entity_id: topicId,
-              entity_name: themeName,
-              match_type: 'exact'
-            });
-            console.log(`[Relations] Topic relation saved: "${themeName}" -> newsletter ${newsletterId}`);
-          } catch (err) {
-            console.error(`[Relations] ERROR linking topic "${themeObj.theme}" to newsletter ${newsletterId}: ${err.message}`);
-          }
-        }
-      } else {
-        console.log(`[Relations] No themes to link for newsletter ${newsletterId}`);
-      }
-
-      // Background: additional relation processing
+      // Fire-and-forget: link relations and mark completed in background
       base44.asServiceRole.functions.invoke('createNewsletterRelations', {
         newsletter_id: newsletterId
       }).catch(err => console.error(`[Relations] Background createNewsletterRelations failed: ${err.message}`));
-
-      // Mark as completed now that all relations are linked
-      await base44.asServiceRole.entities.NewsletterItem.update(newsletterId, { status: 'completed' });
-      console.log(`[Status] Newsletter ${newsletterId} marked as completed`);
-
-    } else {
-      console.error('Could not retrieve created newsletter by source_url — relation linking skipped');
     }
 
     return Response.json({
       success: true,
-      id: createdRecord?.id || createdNewsletter[0]?.id,
+      id: newsletterId,
       title: result.title,
       source_name: result.source_name
     });
