@@ -185,8 +185,22 @@ export default function UploadPDF() {
   const isDone = urlItems.length > 0 && !isRunning;
   const addedCount = urlItems.filter(i => i.status === "success").length;
 
+  const isPreview = window.location.hostname.includes('preview-sandbox');
+
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
+      {isPreview && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-300 rounded-xl p-4">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-900">You're in Preview Mode</p>
+            <p className="text-xs text-amber-800 mt-0.5">
+              Content added here goes to the <strong>test database</strong> and won't appear in the live app. 
+              To add real content, open the <strong>published app</strong> and add newsletters there.
+            </p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Add to Shared Library</h1>
