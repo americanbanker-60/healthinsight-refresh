@@ -152,6 +152,8 @@ export default function DevSuperAgent() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [initError, setInitError] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -165,20 +167,29 @@ export default function DevSuperAgent() {
   }, [messages]);
 
   const initConversation = async () => {
-    const convo = await base44.agents.createConversation({
-      agent_name: "dev_super_agent",
-      metadata: { name: "Dev Debug Session — " + new Date().toLocaleString() },
-    });
-    setConversation(convo);
-    setMessages(convo.messages || []);
+    setIsInitializing(true);
+    setInitError(null);
+    try {
+      const convo = await base44.agents.createConversation({
+        agent_name: "dev_super_agent",
+        metadata: { name: "Dev Debug Session — " + new Date().toLocaleString() },
+      });
+      setConversation(convo);
+      setMessages(convo.messages || []);
 
-    base44.agents.subscribeToConversation(convo.id, (data) => {
-      setMessages(data.messages || []);
-      const last = data.messages?.[data.messages.length - 1];
-      if (last?.role === "assistant" && !last.tool_calls?.some(tc => tc.status === "running")) {
-        setIsSending(false);
-      }
-    });
+      base44.agents.subscribeToConversation(convo.id, (data) => {
+        setMessages(data.messages || []);
+        const last = data.messages?.[data.messages.length - 1];
+        if (last?.role === "assistant" && !last.tool_calls?.some(tc => tc.status === "running")) {
+          setIsSending(false);
+        }
+      });
+    } catch (err) {
+      console.error("Failed to init Dev Super Agent:", err);
+      setInitError(err?.message || "Network error — could not connect to the agent.");
+    } finally {
+      setIsInitializing(false);
+    }
   };
 
   const sendMessage = async (text) => {
