@@ -453,11 +453,7 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
         const response = await base44.functions.invoke('analyzeNewsletterUrl', { url: urls[i] });
         
         if (response.data?.success) {
-          // Fetch the created newsletter
-          const newsletters = await base44.entities.NewsletterItem.filter({ source_url: urls[i] });
-          if (newsletters.length > 0) {
-            setProcessedNewsletters(prev => [...prev, newsletters[0]]);
-          }
+          setProcessedNewsletters(prev => [...prev, { id: response.data.id, title: response.data.title, url: urls[i] }]);
           toast.success(`Analyzed: ${response.data.title}`);
         } else {
           toast.error(`Failed to analyze ${urls[i]}: ${response.data?.error}`);
