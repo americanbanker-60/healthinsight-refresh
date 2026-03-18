@@ -339,7 +339,7 @@ export default function VariousSources() {
           sourceName: file.name.replace(/\.pdf$/i, ""),
         });
 
-        if (!response.data?.success && !response.data?.title) {
+        if (!response.data?.success) {
           throw new Error(response.data?.error || "PDF analysis failed");
         }
 
@@ -349,7 +349,13 @@ export default function VariousSources() {
           toast.success("Saved to library! It will appear on your Dashboard.");
         }
 
-        result = response.data;
+        // Fetch the full record using the returned ID
+        if (response.data.id) {
+          const saved = await base44.entities.NewsletterItem.filter({ id: response.data.id });
+          result = saved.length > 0 ? saved[0] : response.data;
+        } else {
+          result = response.data;
+        }
       }
 
       setAnalysisResult(result);
