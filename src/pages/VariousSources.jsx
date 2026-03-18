@@ -184,20 +184,30 @@ Be thorough and extract all relevant details.`;
   const saveNewsletter = async () => {
     try {
       const sourceName = analysisResult.source_name?.trim() || "Additional Publishers";
-      const response = await base44.functions.invoke('saveAnalyzedNewsletter', {
-        analysisResult: { ...analysisResult, source_name: sourceName }
+      const dataToSave = { ...analysisResult, source_name: sourceName };
+
+      // Check for duplicate
+      if (dataToSave.source_url) {
+        const existing = await base44.entities.NewsletterItem.filter({ source_url: dataToSave.source_url });
+        if (existing.length > 0) {
+          toast.info("This article is already in your library.");
+          setAnalysisResult(null);
+          setUrl("");
+          setFile(null);
+          return;
+        }
+      }
+
+      await base44.entities.NewsletterItem.create({
+        ...dataToSave,
+        is_analyzed: true,
+        status: 'completed',
+        date_added_to_app: new Date().toISOString(),
+        source_type: dataToSave.source_type || (dataToSave.source_url?.startsWith('http') ? 'URL' : 'PDF'),
+        content_type: dataToSave.content_type || (dataToSave.source_url?.startsWith('http') ? 'URL' : 'PDF'),
       });
 
-      if (!response.data?.success) {
-        throw new Error(response.data?.error || 'Save failed');
-      }
-
-      if (response.data.duplicate) {
-        toast.info("This article is already in your library.");
-      } else {
-        toast.success("Saved to library! It will appear on your Dashboard.");
-      }
-
+      toast.success("Saved to library! It will appear on your Dashboard.");
       queryClient.invalidateQueries({ queryKey: ['all-newsletters'] });
       queryClient.invalidateQueries({ queryKey: ['newsletters'] });
       setAnalysisResult(null);
