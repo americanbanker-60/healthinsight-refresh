@@ -1,10 +1,10 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
+
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -17,168 +17,110 @@ Deno.serve(async (req) => {
 
     console.log('Extracting data from PDF:', file_url);
 
-    // Extract structured data from PDF
-    const extractResponse = await base44.integrations.Core.ExtractDataFromUploadedFile({
-      file_url: file_url,
-      json_schema: {
-        type: "object",
-        properties: {
-          title: { type: "string", description: "Newsletter or document title" },
-          summary: { type: "string", description: "Executive summary or main content" },
-          tldr: { type: "string", description: "Brief 2-3 sentence summary" },
-          key_takeaways: {
-            type: "array",
-            items: { type: "string" },
-            description: "Main insights and takeaways"
-          },
-          key_players: {
-            type: "array",
-            items: { type: "string" },
-            description: "Important companies or organizations mentioned"
-          },
-          key_statistics: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                figure: { type: "string" },
-                context: { type: "string" }
-              }
-            },
-            description: "Important numbers and data points"
-          },
-          themes: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                theme: { type: "string" },
-                description: { type: "string" }
-              }
-            },
-            description: "Major themes identified"
-          },
-          sentiment: {
-            type: "string",
-            enum: ["positive", "neutral", "negative", "mixed"],
-            description: "Overall tone"
-          },
-          market_sentiment: {
-            type: "string",
-            enum: ["bullish", "bearish", "neutral", "mixed"],
-            description: "Investment market sentiment"
-          },
-          primary_sector: {
-            type: "string",
-            description: "Primary healthcare sector"
-          }
-        },
-        required: ["title"]
-      }
-    });
-
-    if (extractResponse.status !== "success" || !extractResponse.output) {
-      throw new Error(extractResponse.details || 'Failed to extract PDF data');
-    }
-
-    console.log('PDF extraction complete:', extractResponse.output.title);
-
-    const pdfData = extractResponse.output;
-
-    // Check if newsletter with this file_url already exists
+    // Check for duplicate first
     const existingNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: file_url });
     if (existingNewsletters.length > 0) {
       console.log('Newsletter with this PDF already exists, skipping...');
       return Response.json({
         success: true,
         message: 'Newsletter with this PDF already exists. Skipped to prevent duplicates.',
+        id: existingNewsletters[0].id,
         title: existingNewsletters[0].title
       });
     }
 
-    // Create newsletter record with PDF source
+    // Extract structured data from PDF using LLM with file attachment
+    const today = new Date().toISOString().split('T')[0];
+    const result = await base44.integrations.Core.InvokeLLM({
+      prompt: `Analyze this healthcare newsletter/document PDF and extract key information.
+
+Today's date is ${today}.
+
+Extract:
+- title: Clear document title
+- source_name: Publication or organization name
+- publication_date: Date in YYYY-MM-DD format (use today if unknown: ${today})
+- tldr: 2-3 sentence executive summary
+- summary: 3-4 paragraph detailed summary
+- key_takeaways: 3-5 main insights as array of strings
+- key_statistics: Array of notable figures with figure and context fields
+- themes: Major topics as array of objects with theme and description fields
+- key_players: Companies/organizations mentioned as array of strings
+- ma_activities: M&A deals as array with acquirer, target, deal_value, description fields
+- funding_rounds: Funding events as array with company, amount, round_type, description fields
+- recommended_actions: 3-5 actionable steps as array of strings
+- sentiment: Overall tone (positive/neutral/negative/mixed)
+- market_sentiment: Investment sentiment (bullish/bearish/neutral/mixed)
+- primary_sector: Primary healthcare sector (Urgent Care, Behavioral Health, Imaging, ASC, Physical Therapy, Dental, Home Health, Anesthesia, MSO, Telehealth, Healthcare IT, Pharmacy, Other)`,
+      file_urls: [file_url],
+      response_json_schema: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          source_name: { type: "string" },
+          publication_date: { type: "string" },
+          tldr: { type: "string" },
+          summary: { type: "string" },
+          key_takeaways: { type: "array", items: { type: "string" } },
+          key_statistics: {
+            type: "array",
+            items: { type: "object", properties: { figure: { type: "string" }, context: { type: "string" } } }
+          },
+          themes: {
+            type: "array",
+            items: { type: "object", properties: { theme: { type: "string" }, description: { type: "string" } } }
+          },
+          key_players: { type: "array", items: { type: "string" } },
+          ma_activities: {
+            type: "array",
+            items: { type: "object", properties: { acquirer: { type: "string" }, target: { type: "string" }, deal_value: { type: "string" }, description: { type: "string" } } }
+          },
+          funding_rounds: {
+            type: "array",
+            items: { type: "object", properties: { company: { type: "string" }, amount: { type: "string" }, round_type: { type: "string" }, description: { type: "string" } } }
+          },
+          recommended_actions: { type: "array", items: { type: "string" } },
+          sentiment: { type: "string" },
+          market_sentiment: { type: "string" },
+          primary_sector: { type: "string" }
+        }
+      }
+    });
+
+    console.log('PDF analysis complete:', result.title);
+
     const newsletterData = {
-      title: pdfData.title || 'Untitled PDF',
-      summary: pdfData.summary || '',
-      tldr: pdfData.tldr || (pdfData.summary?.split('\n')[0] || ''),
-      key_takeaways: pdfData.key_takeaways || [],
-      key_players: pdfData.key_players || [],
-      key_statistics: pdfData.key_statistics || [],
-      themes: pdfData.themes || [],
-      sentiment: pdfData.sentiment || 'neutral',
-      market_sentiment: pdfData.market_sentiment || 'neutral',
-      primary_sector: pdfData.primary_sector || 'Other',
+      ...result,
       source_url: file_url,
-      source_type: 'PDF',
+      source_name: sourceName || result.source_name || 'PDF Upload',
       content_type: 'PDF',
-      raw_input: pdfData.summary ? pdfData.summary.substring(0, 50000) : '',
-      source_name: sourceName || 'PDF Upload',
-      publication_date: new Date().toISOString().split('T')[0],
+      source_type: 'PDF',
       date_added_to_app: new Date().toISOString(),
+      publication_date: result.publication_date || today,
       publication_date_confidence: 'medium',
       publication_date_source: 'PDF upload date',
-      publication_date_notes: 'Direct PDF upload via admin panel'
+      publication_date_notes: 'Direct PDF upload via admin panel',
+      status: 'processing'
     };
 
     console.log('Creating newsletter record...');
-    await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+    const createdRecord = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+    const newsletterId = createdRecord?.id;
 
-    console.log('Newsletter created successfully');
-
-    // Fetch created newsletter to get its ID
-    const createdNewsletter = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: file_url });
-    if (createdNewsletter[0]) {
-      const newsletterId = createdNewsletter[0].id;
-
-      // Process key_players: check/create companies and link to newsletter
-      if (pdfData.key_players && pdfData.key_players.length > 0) {
-        console.log('Processing key_players:', pdfData.key_players.length);
-        
-        for (const playerName of pdfData.key_players) {
-          if (!playerName || playerName.trim().length === 0) continue;
-          
-          try {
-            // Check if company exists
-            const existingCompanies = await base44.asServiceRole.entities.Company.filter({ company_name: playerName });
-            
-            let companyId;
-            if (existingCompanies.length > 0) {
-              companyId = existingCompanies[0].id;
-              console.log(`Company found: ${playerName}`);
-            } else {
-              // Create new company
-              const newCompany = await base44.asServiceRole.entities.Company.create({
-                company_name: playerName,
-                primary_keywords: [playerName.toLowerCase()]
-              });
-              companyId = newCompany.id;
-              console.log(`Company created: ${playerName}`);
-            }
-
-            // Create NewsletterRelation
-            await base44.asServiceRole.entities.NewsletterItemRelation.create({
-              newsletter_id: newsletterId,
-              entity_type: 'company',
-              entity_id: companyId,
-              entity_name: playerName,
-              match_type: 'exact'
-            });
-            console.log(`Relation created: ${playerName} -> Newsletter`);
-          } catch (err) {
-            console.error(`Failed to process company ${playerName}:`, err.message);
-          }
-        }
-      }
-
-      // Invoke createNewsletterRelations for topics in background
+    if (!newsletterId) {
+      console.error('Could not retrieve newsletter ID after create');
+    } else {
+      console.log(`Newsletter ID: ${newsletterId} — firing background relation linking`);
       base44.asServiceRole.functions.invoke('createNewsletterRelations', {
         newsletter_id: newsletterId
-      }).catch(err => console.error('Background relation creation failed:', err));
+      }).catch(err => console.error(`[Relations] Background failed: ${err.message}`));
     }
 
     return Response.json({
       success: true,
-      title: pdfData.title,
+      id: newsletterId,
+      title: result.title,
+      source_name: result.source_name,
       message: 'PDF analyzed and newsletter created successfully'
     });
 

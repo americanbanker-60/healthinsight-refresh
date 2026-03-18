@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
 Deno.serve(async (req) => {
   try {
@@ -45,26 +45,23 @@ Deno.serve(async (req) => {
       let relevanceScore = 0;
       let matchType = null;
 
-      // Check exact name match
       if (searchText.includes(company.company_name.toLowerCase())) {
         relevanceScore = 10;
         matchType = 'exact';
       }
 
-      // Check aliases
       if (company.known_aliases && Array.isArray(company.known_aliases)) {
         for (const alias of company.known_aliases) {
-          if (searchText.includes(alias.toLowerCase())) {
+          if (alias && searchText.includes(alias.toLowerCase())) {
             relevanceScore = Math.max(relevanceScore, 9);
             matchType = matchType || 'alias';
           }
         }
       }
 
-      // Check keywords
       if (company.primary_keywords && Array.isArray(company.primary_keywords)) {
         for (const keyword of company.primary_keywords) {
-          if (searchText.includes(keyword.toLowerCase())) {
+          if (keyword && searchText.includes(keyword.toLowerCase())) {
             relevanceScore = Math.max(relevanceScore, 7);
             matchType = matchType || 'keyword';
           }
@@ -88,7 +85,7 @@ Deno.serve(async (req) => {
       let relevanceScore = 0;
       let matchType = null;
 
-      const topicKeywords = Array.isArray(topic.keywords) ? topic.keywords : [topic.keywords];
+      const topicKeywords = Array.isArray(topic.keywords) ? topic.keywords : (topic.keywords ? [topic.keywords] : []);
 
       for (const keyword of topicKeywords) {
         if (keyword && searchText.includes(keyword.toLowerCase())) {
@@ -97,7 +94,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Check theme matches
       if (newsletter.themes && Array.isArray(newsletter.themes)) {
         for (const theme of newsletter.themes) {
           if (theme.theme && theme.theme.toLowerCase() === topic.topic_name.toLowerCase()) {
@@ -119,7 +115,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Found ${relations.length} relations (${relations.filter(r => r.entity_type === 'company').length} companies, ${relations.filter(r => r.entity_type === 'topic').length} topics)`);
+    console.log(`Found ${relations.length} relations`);
 
     // Delete existing relations for this newsletter
     const existingRelations = await base44.asServiceRole.entities.NewsletterRelation.filter({ newsletter_id });
@@ -131,6 +127,14 @@ Deno.serve(async (req) => {
     if (relations.length > 0) {
       await base44.asServiceRole.entities.NewsletterRelation.bulkCreate(relations);
     }
+
+    // Mark newsletter as completed and analyzed
+    await base44.asServiceRole.entities.NewsletterItem.update(newsletter_id, {
+      status: 'completed',
+      is_analyzed: true
+    });
+
+    console.log(`Newsletter ${newsletter_id} marked as completed with ${relations.length} relations`);
 
     return Response.json({
       success: true,
