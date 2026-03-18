@@ -184,18 +184,28 @@ Be thorough and extract all relevant details.`;
   const saveNewsletter = async () => {
     try {
       const sourceName = analysisResult.source_name?.trim() || "Additional Publishers";
-      await base44.entities.NewsletterItem.create({
-        ...analysisResult,
-        source_name: sourceName
+      const response = await base44.functions.invoke('saveAnalyzedNewsletter', {
+        analysisResult: { ...analysisResult, source_name: sourceName }
       });
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || 'Save failed');
+      }
+
+      if (response.data.duplicate) {
+        toast.info("This article is already in your library.");
+      } else {
+        toast.success("Saved to library! It will appear on your Dashboard.");
+      }
+
       queryClient.invalidateQueries({ queryKey: ['all-newsletters'] });
       queryClient.invalidateQueries({ queryKey: ['newsletters'] });
-      toast.success("Newsletter saved successfully!");
       setAnalysisResult(null);
       setUrl("");
       setFile(null);
     } catch (err) {
-      toast.error("Failed to save newsletter");
+      console.error('Save error:', err);
+      toast.error("Failed to save to library. Please try again.");
     }
   };
 
