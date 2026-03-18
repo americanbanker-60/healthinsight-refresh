@@ -376,197 +376,35 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
     setIsProcessing(true);
     setProcessedCount(0);
     setProcessingProgress(0);
+    const total = pendingQueue.length;
     let completed = 0;
-    let newProcessedNewsletters = [];
+    const newProcessedNewsletters = [];
 
-    try {
-      // Load previously processed items
-      const processed = localStorage.getItem(PROCESSED_STORAGE_KEY);
-      if (processed) {
-        newProcessedNewsletters = JSON.parse(processed);
-        setProcessedNewsletters(newProcessedNewsletters);
+    for (let i = 0; i < pendingQueue.length; i++) {
+      const item = pendingQueue[i];
+      if (!item.url) { completed++; continue; }
+
+      try {
+        const response = await base44.functions.invoke('analyzeNewsletterUrl', {
+          url: item.url,
+          sourceName: sourceName || undefined
+        });
+        if (response.data?.success && response.data?.id) {
+          newProcessedNewsletters.push({ id: response.data.id, title: response.data.title, url: item.url });
+          toast.success(`✓ ${response.data.title}`);
+        }
+      } catch (err) {
+        console.error(`Error processing ${item.url}:`, err);
       }
 
-      for (let i = 0; i < pendingQueue.length; i++) {
-        const item = pendingQueue[i];
-        
-        // Check if already processed
-        if (newProcessedNewsletters.some(p => p.url === item.url)) {
-          console.log(`Skipping already processed: ${item.url}`);
-          completed++;
-          continue;
-        }
-
-        // Check database for duplicates before processing
-        if (item.url) {
-          const existingRecords = await base44.entities.NewsletterItem.filter({ source_url: item.url });
-          if (existingRecords.length > 0) {
-            console.log(`Skipping existing in database: ${item.url}`);
-            completed++;
-            // Remove from queue
-            pendingQueue.splice(i, 1);
-            i--;
-            continue;
-          }
-        }
-
-        try {
-          let contentSource;
-          if (item.rawContent) {
-            const cleaned = cleanPastedContent(item.rawContent);
-            contentSource = `Newsletter content:\n\n${cleaned}`;
-          } else {
-            try {
-              const response = await fetch(item.url);
-              const html = await response.text();
-              const cleanContent = extractMainContent(html);
-              contentSource = cleanContent && cleanContent.length > 200 
-                ? `Newsletter content:\n\n${cleanContent}`
-                : `Newsletter URL: ${item.url}`;
-            } catch (fetchErr) {
-              contentSource = `Newsletter URL: ${item.url}`;
-            }
-          }
-
-          const analysis = await base44.integrations.Core.InvokeLLM({
-            prompt: `You are a seasoned healthcare investment banking and private equity analyst.
-
-Analyze this healthcare newsletter and extract ACTIONABLE investment intelligence:
-
-${contentSource}
-
-${!contentSource.includes('Newsletter URL:') ? 'The content above has been extracted and cleaned from the newsletter.' : ''}
-
-Extract structured insights:
-
-**TLDR** - Sharp 2-3 sentence summary for executives
-
-**KEY STATISTICS** - Extract all numbers, metrics, data points (deal values, growth rates, market sizes, patient volumes, cost savings, etc.). For each stat, provide the figure and context.
-
-**KEY TAKEAWAYS** - 5-7 insights for investors:
-- Strategic implications for healthcare investors
-- Market shifts or inflection points
-- Competitive dynamics emerging
-- Regulatory or reimbursement trends to monitor
-
-**RECOMMENDED ACTIONS** - 3-5 concrete next steps healthcare executives should consider
-
-**THEMES** - 3-5 major themes with context:
-- Why this matters NOW
-- Investment opportunities or risks
-- Which sectors/subsectors affected
-- 12-24 month outlook
-
-**M&A ACTIVITIES** - Analyze deals with strategic context:
-- Strategic rationale (scale, tech acquisition, vertical integration)
-- Valuation multiples if available
-- Comparison to recent comparable transactions
-- What this signals about sector consolidation
-
-**FUNDING ROUNDS** - Venture insights:
-- What funding signals about investor confidence
-- Lead investors and their thesis
-- Valuation vs sector benchmarks
-- Milestones or catalysts
-
-**KEY PLAYERS** - Companies making strategic moves
-
-**SENTIMENT** - Overall market tone
-
-**SUMMARY** - 2-3 paragraph executive summary for investment committee`,
-            add_context_from_internet: contentSource.includes('Newsletter URL:'),
-            response_json_schema: {
-              type: "object",
-              properties: {
-                title: { type: "string" },
-                publication_date: { type: "string" },
-                tldr: { type: "string" },
-                key_statistics: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      figure: { type: "string" },
-                      context: { type: "string" }
-                    }
-                  }
-                },
-                recommended_actions: { type: "array", items: { type: "string" } },
-                key_takeaways: { type: "array", items: { type: "string" } },
-                themes: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      theme: { type: "string" },
-                      description: { type: "string" }
-                    }
-                  }
-                },
-                ma_activities: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      acquirer: { type: "string" },
-                      target: { type: "string" },
-                      deal_value: { type: "string" },
-                      description: { type: "string" }
-                    }
-                  }
-                },
-                funding_rounds: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      company: { type: "string" },
-                      amount: { type: "string" },
-                      round_type: { type: "string" },
-                      description: { type: "string" }
-                    }
-                  }
-                },
-                key_players: { type: "array", items: { type: "string" } },
-                summary: { type: "string" },
-                sentiment: { type: "string", enum: ["positive", "neutral", "negative", "mixed"] }
-              }
-            }
-          });
-
-          const createdNewsletter = await base44.entities.NewsletterItem.create({
-            ...analysis,
-            source_url: item.url || "Manual Entry",
-            title: analysis.title || item.title,
-            publication_date: analysis.publication_date || item.date,
-            source_name: sourceName || undefined
-          });
-
-          newProcessedNewsletters.push(createdNewsletter);
-          completed++;
-          
-          // Update queue and storage
-          pendingQueue.splice(i, 1);
-          i--;
-          saveQueue(pendingQueue);
-          localStorage.setItem(PROCESSED_STORAGE_KEY, JSON.stringify(newProcessedNewsletters));
-        } catch (err) {
-          console.error(`Error processing ${item.title}:`, err);
-          completed++;
-        }
-
-        setProcessedCount(completed);
-        setProcessingProgress((completed / pendingQueue.length) * 100);
-      }
-
-      setProcessedNewsletters(newProcessedNewsletters);
-      clearQueue();
-      toast.success(`Resumed analysis: ${completed} items processed`);
-    } catch (err) {
-      console.error("Resume error:", err);
-      toast.error("Failed to resume analysis");
+      completed++;
+      setProcessedCount(completed);
+      setProcessingProgress((completed / total) * 100);
     }
 
+    setProcessedNewsletters(newProcessedNewsletters);
+    clearQueue();
+    toast.success(`Resumed: ${completed} items processed`);
     setIsProcessing(false);
   };
 
