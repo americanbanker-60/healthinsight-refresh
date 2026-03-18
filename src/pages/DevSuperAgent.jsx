@@ -249,7 +249,23 @@ export default function DevSuperAgent() {
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {messages.length === 0 && !isThinking && (
+        {isInitializing && (
+          <div className="text-center py-16">
+            <Loader2 className="w-8 h-8 text-green-500 mx-auto mb-3 animate-spin" />
+            <p className="text-slate-500 text-sm">Connecting to agent...</p>
+          </div>
+        )}
+        {initError && (
+          <div className="text-center py-16">
+            <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
+            <p className="text-slate-300 font-medium mb-1">Failed to connect</p>
+            <p className="text-slate-500 text-sm mb-4">{initError}</p>
+            <Button onClick={initConversation} className="bg-green-700 hover:bg-green-600 text-white">
+              Retry
+            </Button>
+          </div>
+        )}
+        {!isInitializing && !initError && messages.length === 0 && !isThinking && (
           <div className="text-center py-16">
             <Terminal className="w-10 h-10 text-slate-700 mx-auto mb-3" />
             <p className="text-slate-500 font-medium">Dev Super Agent ready</p>
