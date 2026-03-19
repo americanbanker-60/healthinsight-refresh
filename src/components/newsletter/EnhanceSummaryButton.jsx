@@ -57,12 +57,15 @@ Make sure all content is insightful, actionable, and tailored for healthcare exe
         file_urls: newsletter.source_url
       });
 
-      await base44.entities.NewsletterItem.update(newsletter.id, {
-        tldr: result.tldr,
-        summary: result.summary,
-        key_takeaways: result.key_takeaways,
-        key_statistics: result.key_statistics,
-        recommended_actions: result.recommended_actions
+      await base44.functions.invoke('updateNewsletterItem', {
+        newsletter_id: newsletter.id,
+        data: {
+          tldr: result.tldr,
+          summary: result.summary,
+          key_takeaways: result.key_takeaways,
+          key_statistics: result.key_statistics,
+          recommended_actions: result.recommended_actions
+        }
       });
 
       toast.success("Newsletter enhanced with AI summaries!");

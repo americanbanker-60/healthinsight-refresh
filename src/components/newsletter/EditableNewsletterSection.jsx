@@ -19,8 +19,9 @@ export default function EditableNewsletterSection({
 
   const handleSave = async () => {
     try {
-      await base44.entities.NewsletterItem.update(newsletterId, {
-        [fieldName]: editValue
+      await base44.functions.invoke('updateNewsletterItem', {
+        newsletter_id: newsletterId,
+        data: { [fieldName]: editValue }
       });
       toast.success("Updated successfully!");
       setIsEditing(false);
