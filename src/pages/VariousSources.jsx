@@ -176,13 +176,7 @@ function AnalysisResult({ analysis, onReset }) {
         </div>
       )}
 
-      {/* Summary */}
-      {analysis.summary && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <h3 className="font-semibold text-slate-900 mb-2">Executive Summary</h3>
-          <p className="text-slate-700 leading-relaxed">{analysis.summary}</p>
-        </div>
-      )}
+
 
       {/* Stats */}
       {analysis.key_statistics?.length > 0 && (

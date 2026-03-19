@@ -29,8 +29,6 @@ EXTRACTION RULES — follow these strictly:
 
 **tldr**: 2-3 sentences. Format: "[Company/Actor] did [specific thing], which signals [specific implication for healthcare PE]. This matters because [concrete consequence — valuation impact, sector shift, competitive move]." NO generic statements like "consolidation is accelerating."
 
-**summary**: 3-4 paragraphs of investment-grade analysis. Paragraph 1: what happened and who. Paragraph 2: financial/strategic context (deal size, multiples if mentioned, market position). Paragraph 3: sector implications. Paragraph 4: risks or headwinds. Be specific — cite numbers, company names, percentages from the article.
-
 **key_takeaways**: 3-5 items. Each MUST follow format: "[Specific company/actor] is [doing specific thing], which means [concrete implication] for [specific sector/buyers/sellers]." BAD: "Healthcare consolidation is accelerating." GOOD: "Optum's acquisition of [Target] at [X]x EBITDA signals aggressive roll-up appetite in the MSO space, compressing available targets for mid-market PE."
 
 **key_statistics**: Every number, multiple, percentage, dollar figure, or metric mentioned. Include context for each.
@@ -194,7 +192,6 @@ Deno.serve(async (req) => {
           publication_date_confidence: { type: "string" },
           publication_date_source: { type: "string" },
           tldr: { type: "string" },
-          summary: { type: "string" },
           key_takeaways: { type: "array", items: { type: "string" } },
           key_statistics: {
             type: "array",
