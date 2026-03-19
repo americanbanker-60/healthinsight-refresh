@@ -59,6 +59,21 @@ export default function DirectNewsletterUpload() {
         }
 
       } catch (error) {
+        // If the error looks like a timeout, check if the newsletter was actually created
+        const normalizedUrl = url.trim().toLowerCase().replace(/\/+$/, '');
+        try {
+          const existing = await base44.entities.NewsletterItem.filter({ source_url: normalizedUrl });
+          if (existing.length > 0) {
+            processResults.push({
+              url,
+              status: "success",
+              title: existing[0].title || "Untitled",
+              id: existing[0].id
+            });
+            toast.success(`✓ Added: ${existing[0].title || url}`);
+            continue;
+          }
+        } catch {}
         processResults.push({
           url,
           status: "error",
