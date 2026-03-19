@@ -282,7 +282,7 @@ function AnalysisResult({ analysis, onReset }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────
+// ─── Main Page ──────────────────────────────────────────────────────────────
 export default function VariousSources() {
   const queryClient = useQueryClient();
   const [url, setUrl] = useState("");
