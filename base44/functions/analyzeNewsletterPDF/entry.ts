@@ -189,6 +189,9 @@ EXTRACTION RULES — follow these strictly:
       }
     });
 
+    // Unwrap if LLM returned a nested response object
+    const result = rawResult?.response || rawResult;
+
     console.log('PDF analysis complete:', result.title);
 
     const newsletterData = {

@@ -243,6 +243,9 @@ Deno.serve(async (req) => {
       }
     });
 
+    // Unwrap if LLM returned a nested response object
+    const result = rawResult?.response || rawResult;
+
     const newsletterData = {
       ...result,
       source_url: normalizedUrl,
