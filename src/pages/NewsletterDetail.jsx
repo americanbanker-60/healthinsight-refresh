@@ -60,8 +60,11 @@ export default function NewsletterDetail() {
   const { data: newsletter, isLoading, refetch } = useQuery({
     queryKey: ['newsletter', newsletterId],
     queryFn: async () => {
-      const results = await base44.entities.NewsletterItem.filter({ id: newsletterId });
-      return results[0] || null;
+      try {
+        return await base44.entities.NewsletterItem.get(newsletterId);
+      } catch {
+        return null;
+      }
     },
     enabled: !!newsletterId,
     retry: 3,
