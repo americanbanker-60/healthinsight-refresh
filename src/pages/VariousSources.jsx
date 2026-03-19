@@ -314,19 +314,19 @@ export default function VariousSources() {
           throw new Error(response.data?.error || "Analysis failed");
         }
 
-        // Fetch full record by ID
-        if (response.data.id) {
-          const all = await base44.entities.NewsletterItem.list('-created_date', 200);
-          result = all.find(n => n.id === response.data.id) || { title: response.data.title, source_name: response.data.source_name, source_url: url.trim() };
-        } else {
-          result = { title: response.data.title, source_name: response.data.source_name, source_url: url.trim() };
-        }
-
         if (response.data.message?.includes("already exists")) {
           toast.info("This article is already in your library.");
         } else {
           toast.success("Saved to library! It will appear on your Dashboard.");
         }
+
+        // Use the full newsletter data returned directly from the backend
+        result = response.data.newsletter || { 
+          id: response.data.id,
+          title: response.data.title, 
+          source_name: response.data.source_name, 
+          source_url: url.trim() 
+        };
 
       } else {
         // PDF: upload then analyze via backend function
