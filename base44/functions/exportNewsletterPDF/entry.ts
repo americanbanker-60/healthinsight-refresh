@@ -339,16 +339,10 @@ Deno.serve(async (req) => {
       txt(`Page ${p} of ${totalPages}`, PW - MR, PH - 10, { size: 7, color: [147, 197, 253], align: 'right' });
     }
 
-    const pdfBytes = doc.output('arraybuffer');
+    const pdfBase64 = doc.output('datauristring'); // data:application/pdf;base64,...
     const filename = (a.title || 'newsletter_analysis').replace(/[^a-z0-9\s]/gi, '').trim().replace(/\s+/g, '_').slice(0, 60) + '.pdf';
 
-    return new Response(pdfBytes, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-      }
-    });
+    return Response.json({ pdfBase64, filename });
 
   } catch (error) {
     console.error('PDF export error:', error);
