@@ -228,7 +228,7 @@ Deno.serve(async (req) => {
                 company: { type: "string" },
                 amount: { type: "string" },
                 round_type: { type: "string" },
-                lead_investor: { type: ["string", "null"] },
+                lead_investor: { type: "string" },
                 description: { type: "string" }
               }
             }
