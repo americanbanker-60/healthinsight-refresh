@@ -150,6 +150,13 @@ function AnalysisResult({ analysis, onReset }) {
           <Button variant="outline" size="sm" onClick={() => setShowEmailDialog(true)} className="bg-blue-50 border-blue-200 hover:bg-blue-100">
             <Mail className="w-4 h-4 mr-1" />Email
           </Button>
+          {analysis.id && (
+            <Link to={`${createPageUrl("NewsletterDetail")}?id=${analysis.id}`}>
+              <Button variant="outline" size="sm" className="bg-indigo-50 border-indigo-200 hover:bg-indigo-100 text-indigo-700">
+                <ExternalLink className="w-4 h-4 mr-1" />Full Detail
+              </Button>
+            </Link>
+          )}
           <Button variant="outline" size="sm" onClick={onReset}>
             <ArrowLeft className="w-4 h-4 mr-1" />New
           </Button>
