@@ -170,7 +170,8 @@ Extract:
       id: newsletterId,
       title: result.title,
       source_name: result.source_name,
-      message: 'PDF analyzed and newsletter created successfully'
+      message: 'PDF analyzed and newsletter created successfully',
+      newsletter: { ...newsletterData, id: newsletterId, status: 'completed', is_analyzed: true }
     });
 
   } catch (error) {
