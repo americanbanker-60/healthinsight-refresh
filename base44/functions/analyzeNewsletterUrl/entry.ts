@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
           recommended_actions: { type: "array", items: { type: "string" } },
           sentiment: { type: "string" },
           market_sentiment: { type: "string" },
-          deal_value: { type: ["string", "null"] },
+          deal_value: { type: "string" },
           primary_sector: { type: "string" },
           cross_reference_signals: { type: "array", items: { type: "string" } }
         }
