@@ -163,13 +163,62 @@ Deno.serve(async (req) => {
 
     const newsletterId = createdRecord?.id;
     if (!newsletterId) {
-      console.error('Could not retrieve newsletter ID after create — relation linking skipped');
-    } else {
-      console.log(`Newsletter ID: ${newsletterId}`);
-      // Fire-and-forget: link relations and mark completed in background
-      base44.asServiceRole.functions.invoke('createNewsletterRelations', {
-        newsletter_id: newsletterId
-      }).catch(err => console.error(`[Relations] Background createNewsletterRelations failed: ${err.message}`));
+      console.error('Could not retrieve newsletter ID after create');
+      return Response.json({ success: false, error: 'Failed to get newsletter ID' }, { status: 500 });
+    }
+
+    console.log(`Newsletter ID: ${newsletterId} — linking relations inline`);
+
+    // Inline relation linking (no separate function call needed)
+    try {
+      const [companies, topics] = await Promise.all([
+        base44.asServiceRole.entities.Company.list(),
+        base44.asServiceRole.entities.Topic.list()
+      ]);
+
+      const searchText = [
+        result.title || '',
+        result.summary || '',
+        result.tldr || '',
+        ...(result.key_takeaways || []),
+        ...(result.key_players || []),
+        ...(result.themes?.map(t => `${t.theme} ${t.description}`) || [])
+      ].join(' ').toLowerCase();
+
+      const relations = [];
+
+      for (const company of companies) {
+        let score = 0;
+        if (searchText.includes(company.company_name.toLowerCase())) score = 10;
+        for (const alias of (company.known_aliases || [])) {
+          if (alias && searchText.includes(alias.toLowerCase())) score = Math.max(score, 9);
+        }
+        for (const kw of (company.primary_keywords || [])) {
+          if (kw && searchText.includes(kw.toLowerCase())) score = Math.max(score, 7);
+        }
+        if (score > 0) relations.push({ newsletter_id: newsletterId, entity_type: 'company', entity_id: company.id, entity_name: company.company_name, relevance_score: score });
+      }
+
+      for (const topic of topics) {
+        let score = 0;
+        for (const kw of (topic.keywords || [])) {
+          if (kw && searchText.includes(kw.toLowerCase())) score = Math.max(score, 8);
+        }
+        for (const theme of (result.themes || [])) {
+          if (theme.theme && theme.theme.toLowerCase() === topic.topic_name.toLowerCase()) score = 10;
+        }
+        if (score > 0) relations.push({ newsletter_id: newsletterId, entity_type: 'topic', entity_id: topic.id, entity_name: topic.topic_name, relevance_score: score });
+      }
+
+      if (relations.length > 0) {
+        await base44.asServiceRole.entities.NewsletterRelation.bulkCreate(relations);
+      }
+
+      await base44.asServiceRole.entities.NewsletterItem.update(newsletterId, { status: 'completed', is_analyzed: true });
+      console.log(`Relations linked: ${relations.length}, newsletter marked completed`);
+    } catch (relErr) {
+      console.error('Relations linking failed (non-fatal):', relErr.message);
+      await base44.asServiceRole.entities.NewsletterItem.update(newsletterId, { status: 'completed', is_analyzed: true });
     }
 
     return Response.json({
