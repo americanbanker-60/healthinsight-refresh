@@ -26,7 +26,6 @@ export function useHealthcareIntelligence(options = {}) {
     refetchOnWindowFocus: true,
     staleTime: 0,
     queryFn: async () => {
-      // Include all newsletters that have been analyzed OR have content (handles legacy data without flag)
       const query = {};
       
       // Source filter (from tab or persistent filters)
@@ -47,9 +46,11 @@ export function useHealthcareIntelligence(options = {}) {
         }
       }
       
-      const result = await base44.entities.NewsletterItem.filter(query, '-publication_date', maxItems);
-      // Filter client-side to only newsletters with actual content
-      return result.filter(n => n.is_analyzed || n.summary || n.tldr || (n.key_takeaways && n.key_takeaways.length > 0));
+      // Use backend function with asServiceRole to read from production DB
+      const response = await base44.functions.invoke('listNewsletters', { query, sort: '-publication_date', limit: maxItems });
+      const result = response.data?.newsletters || [];
+      // Only show newsletters with actual content
+      return result.filter(n => n.is_analyzed || n.tldr || (n.key_takeaways && n.key_takeaways.length > 0));
     },
     initialData: [],
   });
