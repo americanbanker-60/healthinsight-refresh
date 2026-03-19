@@ -222,17 +222,7 @@ export default function NewsletterDetail() {
               <Lightbulb className="w-5 h-5 text-blue-600" />
               <h3 className="font-semibold text-slate-900">Executive Summary</h3>
             </div>
-            <div className="space-y-3">
-              {newsletter.summary
-                .split(/\n+/)
-                .filter(p => p.trim().length > 0)
-                .map((paragraph, i) => (
-                  <p key={i} className="text-slate-700 leading-relaxed text-sm">
-                    {paragraph.trim()}
-                  </p>
-                ))
-              }
-            </div>
+            <SummaryParagraphs text={newsletter.summary} />
           </div>
         )}
       </div>
