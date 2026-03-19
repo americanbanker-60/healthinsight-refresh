@@ -178,6 +178,18 @@ export default function NewsletterDetail() {
         </Button>
         <div className="flex gap-2">
           <Button
+            onClick={exportPDF}
+            disabled={isExportingPDF}
+            variant="outline"
+            className="bg-indigo-50 border-indigo-200 hover:bg-indigo-100 text-indigo-700"
+          >
+            {isExportingPDF ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating…</>
+            ) : (
+              <><Download className="w-4 h-4 mr-2" />Download PDF</>
+            )}
+          </Button>
+          <Button
             onClick={() => setShowEmailDialog(true)}
             variant="outline"
             className="bg-blue-50 border-blue-200 hover:bg-blue-100"
