@@ -1,179 +1,357 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 import { jsPDF } from 'npm:jspdf@2.5.1';
 
 Deno.serve(async (req) => {
-    try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    const { newsletterId } = await req.json();
+    if (!newsletterId) return Response.json({ error: 'newsletterId required' }, { status: 400 });
 
-        const { analysis } = await req.json();
+    const results = await base44.asServiceRole.entities.NewsletterItem.filter({ id: newsletterId });
+    const a = results[0];
+    if (!a) return Response.json({ error: 'Newsletter not found' }, { status: 404 });
 
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const margin = 20;
-        const maxWidth = pageWidth - 2 * margin;
-        let yPos = 20;
+    const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+    const PW = doc.internal.pageSize.getWidth();   // 612
+    const PH = doc.internal.pageSize.getHeight();  // 792
+    const ML = 48, MR = 48, MT = 48;
+    const CW = PW - ML - MR; // content width
+    let y = MT;
 
-        // Helper to add text with word wrap and page breaks
-        const addText = (text, fontSize = 10, fontStyle = 'normal', color = [0, 0, 0]) => {
-            doc.setFontSize(fontSize);
-            doc.setFont('helvetica', fontStyle);
-            doc.setTextColor(...color);
-            
-            const lines = doc.splitTextToSize(text, maxWidth);
-            
-            lines.forEach(line => {
-                if (yPos > pageHeight - 20) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-                doc.text(line, margin, yPos);
-                yPos += fontSize * 0.5;
-            });
-            yPos += 5;
-        };
+    const BRAND_DARK   = [15, 23, 42];    // slate-900
+    BRAND_DARK.toString = () => '';
+    const BRAND_BLUE   = [30, 64, 175];   // blue-800
+    const BRAND_LIGHT  = [248, 250, 252]; // slate-50
+    const SLATE_600    = [71, 85, 105];
+    const SLATE_400    = [148, 163, 184];
+    const GREEN        = [22, 163, 74];
+    const PURPLE       = [126, 34, 206];
+    const INDIGO       = [79, 70, 229];
+    const EMERALD      = [5, 150, 105];
 
-        const addSection = (title, fontSize = 12) => {
-            yPos += 5;
-            if (yPos > pageHeight - 30) {
-                doc.addPage();
-                yPos = 20;
-            }
-            doc.setFontSize(fontSize);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(30, 64, 175); // Blue
-            doc.text(title, margin, yPos);
-            yPos += 8;
-        };
+    const checkPage = (needed = 40) => {
+      if (y + needed > PH - 40) { doc.addPage(); y = MT; }
+    };
 
-        // Title
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(15, 23, 42); // Slate-900
-        const titleLines = doc.splitTextToSize(analysis.title || 'Newsletter Analysis', maxWidth);
-        titleLines.forEach(line => {
-            doc.text(line, margin, yPos);
-            yPos += 9;
-        });
-        yPos += 5;
+    const txt = (text, x, yy, opts = {}) => {
+      const { size = 10, style = 'normal', color = SLATE_600, maxW, align = 'left' } = opts;
+      doc.setFontSize(size);
+      doc.setFont('helvetica', style);
+      doc.setTextColor(...color);
+      if (maxW) {
+        const lines = doc.splitTextToSize(String(text), maxW);
+        doc.text(lines, x, yy, { align });
+        return lines.length * (size * 1.35);
+      }
+      doc.text(String(text), x, yy, { align });
+      return size * 1.35;
+    };
 
-        // Metadata
-        if (analysis.sentiment) {
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(100, 116, 139);
-            doc.text(`Sentiment: ${analysis.sentiment}`, margin, yPos);
-            yPos += 6;
-        }
+    const block = (text, opts = {}) => {
+      const { size = 10, style = 'normal', color = SLATE_600, indent = 0, extraGap = 6 } = opts;
+      doc.setFontSize(size);
+      doc.setFont('helvetica', style);
+      doc.setTextColor(...color);
+      const lines = doc.splitTextToSize(String(text || ''), CW - indent);
+      const lineH = size * 1.45;
+      lines.forEach(line => {
+        checkPage(lineH + 4);
+        doc.text(line, ML + indent, y);
+        y += lineH;
+      });
+      y += extraGap;
+    };
 
-        if (analysis.publication_date) {
-            doc.text(`Date: ${analysis.publication_date}`, margin, yPos);
-            yPos += 6;
-        }
+    const sectionHeader = (title) => {
+      checkPage(36);
+      y += 8;
+      // Accent bar
+      doc.setFillColor(...BRAND_BLUE);
+      doc.rect(ML, y - 11, 3, 14, 'F');
+      txt(title, ML + 10, y, { size: 13, style: 'bold', color: BRAND_BLUE });
+      y += 6;
+      // Thin rule
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.5);
+      doc.line(ML, y, PW - MR, y);
+      y += 10;
+    };
 
-        if (analysis.source_url) {
-            doc.textWithLink('Source URL', margin, yPos, { url: analysis.source_url });
-            yPos += 10;
-        }
+    const pill = (label, x, yy, bgRgb, textRgb) => {
+      doc.setFillColor(...bgRgb);
+      doc.roundedRect(x, yy - 10, doc.getTextWidth(label) + 12, 14, 3, 3, 'F');
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...textRgb);
+      doc.text(label, x + 6, yy);
+    };
 
-        // Divider
-        doc.setDrawColor(226, 232, 240);
-        doc.line(margin, yPos, pageWidth - margin, yPos);
-        yPos += 10;
+    // ── HEADER BAND ──────────────────────────────────────────────────
+    doc.setFillColor(...BRAND_BLUE);
+    doc.rect(0, 0, PW, 90, 'F');
 
-        // TL;DR
-        if (analysis.tldr) {
-            addSection('TL;DR', 14);
-            addText(analysis.tldr, 10, 'normal', [51, 65, 85]);
-        }
+    // "HealthInsight" wordmark
+    txt('HealthInsight', ML, 34, { size: 18, style: 'bold', color: [255, 255, 255] });
+    txt('Healthcare Intelligence Platform', ML, 50, { size: 9, style: 'normal', color: [147, 197, 253] });
 
-        // Executive Summary
-        if (analysis.summary) {
-            addSection('Executive Summary', 14);
-            addText(analysis.summary, 10, 'normal', [51, 65, 85]);
-        }
+    // Generated date — top right
+    const genDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    txt(`Generated ${genDate}`, PW - MR, 34, { size: 8, color: [147, 197, 253], align: 'right' });
+    txt('Confidential — For Internal Use Only', PW - MR, 46, { size: 7, color: [147, 197, 253], align: 'right' });
 
-        // Key Statistics
-        if (analysis.key_statistics && analysis.key_statistics.length > 0) {
-            addSection('Key Statistics', 14);
-            analysis.key_statistics.forEach(stat => {
-                addText(`${stat.figure}`, 11, 'bold', [79, 70, 229]);
-                addText(stat.context, 9, 'normal', [71, 85, 105]);
-            });
-        }
+    y = 110;
 
-        // Recommended Actions
-        if (analysis.recommended_actions && analysis.recommended_actions.length > 0) {
-            addSection('Recommended Actions', 14);
-            analysis.recommended_actions.forEach((action, i) => {
-                addText(`${i + 1}. ${action}`, 10, 'normal', [51, 65, 85]);
-            });
-        }
+    // ── TITLE ────────────────────────────────────────────────────────
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...BRAND_DARK);
+    const titleLines = doc.splitTextToSize(a.title || 'Newsletter Analysis', CW);
+    titleLines.forEach(line => { doc.text(line, ML, y); y += 26; });
+    y += 4;
 
-        // Key Takeaways
-        if (analysis.key_takeaways && analysis.key_takeaways.length > 0) {
-            addSection('Key Takeaways', 14);
-            analysis.key_takeaways.forEach(takeaway => {
-                addText(`• ${takeaway}`, 10, 'normal', [51, 65, 85]);
-            });
-        }
-
-        // Major Themes
-        if (analysis.themes && analysis.themes.length > 0) {
-            addSection('Major Themes', 14);
-            analysis.themes.forEach(theme => {
-                addText(theme.theme, 11, 'bold', [126, 34, 206]);
-                addText(theme.description, 9, 'normal', [71, 85, 105]);
-            });
-        }
-
-        // M&A Activity
-        if (analysis.ma_activities && analysis.ma_activities.length > 0) {
-            addSection('M&A Activity', 14);
-            analysis.ma_activities.forEach(deal => {
-                addText(`${deal.acquirer} → ${deal.target}`, 11, 'bold', [22, 163, 74]);
-                if (deal.deal_value) {
-                    addText(deal.deal_value, 10, 'bold', [5, 150, 105]);
-                }
-                addText(deal.description, 9, 'normal', [71, 85, 105]);
-                yPos += 3;
-            });
-        }
-
-        // Funding Activity
-        if (analysis.funding_rounds && analysis.funding_rounds.length > 0) {
-            addSection('Funding Activity', 14);
-            analysis.funding_rounds.forEach(funding => {
-                let fundingText = funding.company;
-                if (funding.amount) fundingText += ` - ${funding.amount}`;
-                if (funding.round_type) fundingText += ` (${funding.round_type})`;
-                addText(fundingText, 11, 'bold', [16, 185, 129]);
-                addText(funding.description, 9, 'normal', [71, 85, 105]);
-                yPos += 3;
-            });
-        }
-
-        // Key Players
-        if (analysis.key_players && analysis.key_players.length > 0) {
-            addSection('Key Players', 14);
-            addText(analysis.key_players.join(', '), 10, 'normal', [51, 65, 85]);
-        }
-
-        const pdfBytes = doc.output('arraybuffer');
-
-        return new Response(pdfBytes, {
-            status: 200,
-            headers: {
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="${analysis.title?.replace(/[^a-z0-9]/gi, '_') || 'newsletter_analysis'}.pdf"`
-            }
-        });
-    } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
+    // Source + date row
+    if (a.source_name || a.publication_date) {
+      const meta = [a.source_name, a.publication_date].filter(Boolean).join('  ·  ');
+      txt(meta, ML, y, { size: 9, color: SLATE_400 });
+      y += 14;
     }
+    if (a.source_url) {
+      doc.setFontSize(8);
+      doc.setTextColor(37, 99, 235);
+      doc.textWithLink(a.source_url.length > 90 ? a.source_url.slice(0, 87) + '…' : a.source_url, ML, y, { url: a.source_url });
+      y += 14;
+    }
+
+    // Sentiment / market sentiment pills
+    const sentMap = { positive: [[220, 252, 231], [22, 101, 52]], negative: [[254, 226, 226], [153, 27, 27]], neutral: [[241, 245, 249], [51, 65, 85]], mixed: [[254, 249, 195], [133, 77, 14]], bullish: [[220, 252, 231], [22, 101, 52]], bearish: [[254, 226, 226], [153, 27, 27]] };
+    let pillX = ML;
+    y += 4;
+    if (a.sentiment) {
+      const [bg, fg] = sentMap[a.sentiment] || sentMap.neutral;
+      const label = `Sentiment: ${a.sentiment.charAt(0).toUpperCase() + a.sentiment.slice(1)}`;
+      pill(label, pillX, y, bg, fg);
+      pillX += doc.getTextWidth(label) + 22;
+    }
+    if (a.market_sentiment) {
+      const [bg, fg] = sentMap[a.market_sentiment] || sentMap.neutral;
+      const label = `Market: ${a.market_sentiment.charAt(0).toUpperCase() + a.market_sentiment.slice(1)}`;
+      pill(label, pillX, y, bg, fg);
+      pillX += doc.getTextWidth(label) + 22;
+    }
+    if (a.primary_sector) {
+      pill(a.primary_sector, pillX, y, [239, 246, 255], [29, 78, 216]);
+    }
+    y += 20;
+
+    // Rule below title block
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(1);
+    doc.line(ML, y, PW - MR, y);
+    y += 16;
+
+    // ── TL;DR BOX ────────────────────────────────────────────────────
+    if (a.tldr) {
+      checkPage(60);
+      const tldrLines = doc.splitTextToSize(a.tldr, CW - 24);
+      const boxH = tldrLines.length * 14 + 28;
+      doc.setFillColor(239, 246, 255);
+      doc.setDrawColor(147, 197, 253);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(ML, y, CW, boxH, 6, 6, 'FD');
+      doc.setFillColor(...BRAND_BLUE);
+      doc.roundedRect(ML, y, CW, boxH, 6, 6, 'S');
+      // Label
+      txt('TL;DR', ML + 14, y + 16, { size: 8, style: 'bold', color: BRAND_BLUE });
+      // Text
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(30, 58, 138);
+      tldrLines.forEach((line, i) => doc.text(line, ML + 14, y + 30 + i * 14));
+      y += boxH + 16;
+    }
+
+    // ── KEY STATISTICS ───────────────────────────────────────────────
+    if (a.key_statistics?.length > 0) {
+      sectionHeader('Key Statistics');
+      const cols = 2;
+      const colW = (CW - 10) / cols;
+      a.key_statistics.forEach((stat, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        if (col === 0) checkPage(52);
+        const cx = ML + col * (colW + 10);
+        const cy = y + row * 56;
+        doc.setFillColor(238, 242, 255);
+        doc.roundedRect(cx, cy - 14, colW, 48, 4, 4, 'F');
+        txt(stat.figure, cx + 8, cy + 2, { size: 14, style: 'bold', color: INDIGO });
+        block; // just spacing
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...SLATE_600);
+        const ctxLines = doc.splitTextToSize(stat.context || '', colW - 16);
+        ctxLines.slice(0, 2).forEach((l, li) => doc.text(l, cx + 8, cy + 18 + li * 11));
+        if (col === cols - 1 || i === a.key_statistics.length - 1) y = cy + 56;
+      });
+      y += 8;
+    }
+
+    // ── KEY TAKEAWAYS ────────────────────────────────────────────────
+    if (a.key_takeaways?.length > 0) {
+      sectionHeader('Key Takeaways');
+      a.key_takeaways.forEach((t, i) => {
+        checkPage(30);
+        // Numbered circle
+        doc.setFillColor(...BRAND_BLUE);
+        doc.circle(ML + 8, y - 3, 7, 'F');
+        txt(String(i + 1), ML + 8, y, { size: 7, style: 'bold', color: [255, 255, 255], align: 'center' });
+        // Text
+        const lines = doc.splitTextToSize(t, CW - 24);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...SLATE_600);
+        lines.forEach((l, li) => { checkPage(16); doc.text(l, ML + 20, y + li * 14); });
+        y += lines.length * 14 + 8;
+      });
+      y += 4;
+    }
+
+    // ── RECOMMENDED ACTIONS ──────────────────────────────────────────
+    if (a.recommended_actions?.length > 0) {
+      sectionHeader('Recommended Actions');
+      a.recommended_actions.forEach((action, i) => {
+        checkPage(30);
+        doc.setFillColor(220, 252, 231);
+        doc.circle(ML + 8, y - 3, 7, 'F');
+        txt(String(i + 1), ML + 8, y, { size: 7, style: 'bold', color: [22, 101, 52], align: 'center' });
+        const lines = doc.splitTextToSize(action, CW - 24);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...SLATE_600);
+        lines.forEach((l, li) => { checkPage(16); doc.text(l, ML + 20, y + li * 14); });
+        y += lines.length * 14 + 8;
+      });
+      y += 4;
+    }
+
+    // ── MAJOR THEMES ─────────────────────────────────────────────────
+    if (a.themes?.length > 0) {
+      sectionHeader('Major Themes');
+      a.themes.forEach(theme => {
+        checkPage(40);
+        doc.setFillColor(245, 243, 255);
+        doc.setDrawColor(196, 181, 253);
+        doc.setLineWidth(0.5);
+        const themeLines = doc.splitTextToSize(theme.description || '', CW - 28);
+        const boxH = themeLines.length * 12 + 32;
+        doc.roundedRect(ML, y, CW, boxH, 4, 4, 'FD');
+        doc.setFillColor(...PURPLE);
+        doc.rect(ML, y, 3, boxH, 'F');
+        txt(theme.theme, ML + 12, y + 14, { size: 10, style: 'bold', color: PURPLE });
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...SLATE_600);
+        themeLines.forEach((l, li) => doc.text(l, ML + 12, y + 28 + li * 12));
+        y += boxH + 8;
+      });
+      y += 4;
+    }
+
+    // ── M&A ACTIVITY ─────────────────────────────────────────────────
+    if (a.ma_activities?.length > 0) {
+      sectionHeader('M&A Activity');
+      a.ma_activities.forEach(deal => {
+        checkPage(60);
+        const descLines = doc.splitTextToSize(deal.description || '', CW - 20);
+        const boxH = descLines.length * 12 + 50;
+        doc.setFillColor(240, 253, 244);
+        doc.setDrawColor(134, 239, 172);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(ML, y, CW, boxH, 4, 4, 'FD');
+        txt(`${deal.acquirer || '?'} → ${deal.target || '?'}`, ML + 12, y + 16, { size: 11, style: 'bold', color: GREEN });
+        let metaX = ML + 12;
+        if (deal.deal_value) {
+          txt(deal.deal_value, metaX, y + 30, { size: 9, style: 'bold', color: EMERALD });
+          metaX += doc.getTextWidth(deal.deal_value) + 16;
+        }
+        if (deal.implied_multiple) txt(`Multiple: ${deal.implied_multiple}`, metaX, y + 30, { size: 9, color: SLATE_600 });
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...SLATE_600);
+        descLines.forEach((l, li) => doc.text(l, ML + 12, y + 42 + li * 12));
+        y += boxH + 8;
+      });
+      y += 4;
+    }
+
+    // ── FUNDING ACTIVITY ─────────────────────────────────────────────
+    if (a.funding_rounds?.length > 0) {
+      sectionHeader('Funding Activity');
+      a.funding_rounds.forEach(f => {
+        checkPage(50);
+        const descLines = doc.splitTextToSize(f.description || '', CW - 20);
+        const boxH = descLines.length * 12 + 42;
+        doc.setFillColor(236, 253, 245);
+        doc.setDrawColor(110, 231, 183);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(ML, y, CW, boxH, 4, 4, 'FD');
+        txt(f.company, ML + 12, y + 16, { size: 11, style: 'bold', color: EMERALD });
+        let metaStr = [f.amount, f.round_type].filter(Boolean).join(' · ');
+        if (metaStr) txt(metaStr, ML + 12, y + 30, { size: 9, color: SLATE_600 });
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...SLATE_600);
+        descLines.forEach((l, li) => doc.text(l, ML + 12, y + 38 + li * 12));
+        y += boxH + 8;
+      });
+      y += 4;
+    }
+
+    // ── KEY PLAYERS ──────────────────────────────────────────────────
+    if (a.key_players?.length > 0) {
+      sectionHeader('Key Players');
+      let px = ML, py = y;
+      a.key_players.forEach(player => {
+        const w = doc.getTextWidth(player) + 16;
+        if (px + w > PW - MR) { px = ML; py += 22; checkPage(22); }
+        doc.setFillColor(241, 245, 249);
+        doc.setDrawColor(203, 213, 225);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(px, py - 12, w, 18, 4, 4, 'FD');
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...SLATE_600);
+        doc.text(player, px + 8, py);
+        px += w + 6;
+      });
+      y = py + 24;
+    }
+
+    // ── FOOTER on every page ─────────────────────────────────────────
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFillColor(...BRAND_BLUE);
+      doc.rect(0, PH - 28, PW, 28, 'F');
+      txt('HealthInsight · Healthcare Intelligence Platform', ML, PH - 10, { size: 7, style: 'normal', color: [147, 197, 253] });
+      txt(`Page ${p} of ${totalPages}`, PW - MR, PH - 10, { size: 7, color: [147, 197, 253], align: 'right' });
+    }
+
+    const pdfBytes = doc.output('arraybuffer');
+    const filename = (a.title || 'newsletter_analysis').replace(/[^a-z0-9\s]/gi, '').trim().replace(/\s+/g, '_').slice(0, 60) + '.pdf';
+
+    return new Response(pdfBytes, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      }
+    });
+
+  } catch (error) {
+    console.error('PDF export error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });
