@@ -103,28 +103,34 @@ function AnalysisResult({ analysis, onReset }) {
     mixed: "bg-yellow-100 text-yellow-800 border-yellow-200",
   };
 
-  const exportMarkdown = () => {
-    let md = `# ${analysis.title}\n\n`;
-    if (analysis.sentiment) md += `**Sentiment:** ${analysis.sentiment}\n\n`;
-    if (analysis.publication_date) md += `**Date:** ${analysis.publication_date}\n\n`;
-    if (analysis.source_url) md += `**Source:** ${analysis.source_url}\n\n---\n\n`;
-    if (analysis.tldr) md += `## TL;DR\n\n${analysis.tldr}\n\n`;
-    if (analysis.summary) md += `## Executive Summary\n\n${analysis.summary}\n\n`;
-    if (analysis.key_takeaways?.length) {
-      md += `## Key Takeaways\n\n${analysis.key_takeaways.map(t => `- ${t}`).join("\n")}\n\n`;
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
+  const exportPDF = async () => {
+    if (!analysis.id) { toast.error("No newsletter ID found — try viewing Full Detail first"); return; }
+    setIsExportingPDF(true);
+    try {
+      const response = await base44.functions.invoke('exportNewsletterPDF', { newsletterId: analysis.id });
+      const { pdfBase64, filename } = response.data;
+      const base64Data = pdfBase64.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Uint8Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const blob = new Blob([byteNumbers], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error('PDF export failed: ' + err.message);
+    } finally {
+      setIsExportingPDF(false);
     }
-    if (analysis.key_statistics?.length) {
-      md += `## Key Statistics\n\n${analysis.key_statistics.map(s => `- **${s.figure}** — ${s.context}`).join("\n")}\n\n`;
-    }
-    if (analysis.ma_activities?.length) {
-      md += `## M&A Activity\n\n${analysis.ma_activities.map(d => `### ${d.acquirer} → ${d.target}\n${d.deal_value ? `**Value:** ${d.deal_value}\n\n` : ""}${d.description}`).join("\n\n")}\n\n`;
-    }
-    const blob = new Blob([md], { type: "text/markdown" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${(analysis.title || "analysis").replace(/[^a-z0-9]/gi, "_")}.md`;
-    a.click();
-    URL.revokeObjectURL(a.href);
   };
 
   return (
