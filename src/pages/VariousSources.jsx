@@ -314,12 +314,11 @@ export default function VariousSources() {
           throw new Error(response.data?.error || "Analysis failed");
         }
 
-        // The backend function saves and returns minimal info. Fetch the full record.
-        const saved = await base44.entities.NewsletterItem.filter({ source_url: url.trim().toLowerCase().replace(/\/+$/, "") });
-        if (saved.length > 0) {
-          result = saved[0];
+        // Fetch full record by ID
+        if (response.data.id) {
+          const all = await base44.entities.NewsletterItem.list('-created_date', 200);
+          result = all.find(n => n.id === response.data.id) || { title: response.data.title, source_name: response.data.source_name, source_url: url.trim() };
         } else {
-          // Fallback: construct a minimal result from the response
           result = { title: response.data.title, source_name: response.data.source_name, source_url: url.trim() };
         }
 
