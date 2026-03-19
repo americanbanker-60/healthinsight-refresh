@@ -180,6 +180,17 @@ export default function NewsletterDetail() {
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-slate-900 mb-3">{newsletter.title}</h1>
+            {newsletter.source_url && (
+              <a
+                href={newsletter.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 mb-3"
+              >
+                <ExternalLink className="w-3 h-3" />
+                {newsletter.source_url}
+              </a>
+            )}
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
@@ -217,15 +228,7 @@ export default function NewsletterDetail() {
           </div>
         )}
 
-        {newsletter.summary && (
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mt-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Lightbulb className="w-5 h-5 text-blue-600" />
-              <h3 className="font-semibold text-slate-900">Executive Summary</h3>
-            </div>
-            <SummaryParagraphs text={newsletter.summary} />
-          </div>
-        )}
+
       </div>
 
       {newsletter.key_statistics && newsletter.key_statistics.length > 0 && (
