@@ -37,6 +37,34 @@ export default function NewsletterDetail() {
   const [showEmailDialog, setShowEmailDialog] = React.useState(false);
   const [recipientEmail, setRecipientEmail] = React.useState("");
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
+  const [isExportingPDF, setIsExportingPDF] = React.useState(false);
+
+  const exportPDF = async () => {
+    setIsExportingPDF(true);
+    try {
+      const response = await base44.functions.invoke('exportNewsletterPDF', { newsletterId: newsletter.id });
+      // response.data is the PDF blob — need raw axios response
+      // Use fetch directly for binary response
+      const token = await base44.auth.getToken?.();
+      const res = await fetch(`/api/functions/exportNewsletterPDF`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ newsletterId: newsletter.id }),
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(newsletter.title || 'analysis').replace(/[^a-z0-9\s]/gi, '').trim().replace(/\s+/g, '_')}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error('PDF export failed: ' + err.message);
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
 
   const { data: newsletter, isLoading, refetch } = useQuery({
     queryKey: ['newsletter', newsletterId],
