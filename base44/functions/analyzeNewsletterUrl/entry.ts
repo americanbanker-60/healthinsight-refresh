@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
 
     const prompt = buildAnalysisPrompt({ contentBlock, domain, today, crossRefContext });
 
-    const result = await base44.integrations.Core.InvokeLLM({
+    const rawResult = await base44.integrations.Core.InvokeLLM({
       prompt,
       add_context_from_internet: useFallback,
       model: useFallback ? 'gemini_3_flash' : 'claude_sonnet_4_6',

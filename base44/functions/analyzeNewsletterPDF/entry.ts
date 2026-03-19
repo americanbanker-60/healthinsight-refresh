@@ -128,7 +128,7 @@ EXTRACTION RULES — follow these strictly:
 
 **cross_reference_signals**: Based on the EXISTING DATABASE CONTEXT, list signals like "3rd mention of [Company] in 60 days" or "[Sector] appears in 4 recent articles". Empty array if no context.`;
 
-    const result = await base44.integrations.Core.InvokeLLM({
+    const rawResult = await base44.integrations.Core.InvokeLLM({
       prompt,
       file_urls: [file_url],
       model: 'claude_sonnet_4_6',
