@@ -48,12 +48,14 @@ export default function AdminDashboard() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['adminStats'],
     queryFn: async () => {
-      const [newsletters, companies, sources, users] = await Promise.all([
-        base44.entities.NewsletterItem.list('-updated_date', 10000),
+      // Use backend functions with asServiceRole to read from production DB
+      const [newslettersResp, companies, sources, users] = await Promise.all([
+        base44.functions.invoke('listNewsletters', { query: {}, sort: '-updated_date', limit: 10000 }),
         base44.entities.Company.list(),
         base44.entities.Source.list(),
         base44.entities.User.list()
       ]);
+      const newsletters = newslettersResp.data?.newsletters || [];
       return {
         newsletters: newsletters.length,
         companies: companies.length,
