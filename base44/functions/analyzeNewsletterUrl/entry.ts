@@ -225,7 +225,8 @@ Deno.serve(async (req) => {
       success: true,
       id: newsletterId,
       title: result.title,
-      source_name: result.source_name
+      source_name: result.source_name,
+      newsletter: { ...newsletterData, id: newsletterId, status: 'completed', is_analyzed: true }
     });
 
   } catch (error) {
