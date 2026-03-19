@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
                 target: { type: "string" },
                 deal_value: { type: "string" },
                 deal_structure: { type: "string" },
-                implied_multiple: { type: ["string", "null"] },
+                implied_multiple: { type: "string" },
                 strategic_rationale: { type: "string" },
                 description: { type: "string" }
               }
