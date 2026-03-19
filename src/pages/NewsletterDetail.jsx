@@ -26,6 +26,7 @@ import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import EnhanceSummaryButton from "../components/newsletter/EnhanceSummaryButton";
 import SmartDigest from "../components/newsletter/SmartDigest";
+import SummaryParagraphs from "../components/newsletter/SummaryParagraphs";
 import EditableNewsletterSection from "../components/newsletter/EditableNewsletterSection";
 import BDActionPrompt, { BDInsightBadge } from "../components/bd/BDActionPrompt";
 
