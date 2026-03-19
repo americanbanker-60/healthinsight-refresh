@@ -9,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import {
   Loader2, AlertCircle, Sparkles, Globe, CheckCircle2,
   Link as LinkIcon, FileUp, File, Mail, Download, Save,
-  TrendingUp, Lightbulb, Briefcase, DollarSign, BarChart3, CheckSquare, ArrowLeft
+  TrendingUp, Lightbulb, Briefcase, DollarSign, BarChart3, CheckSquare, ArrowLeft, ExternalLink
 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 // ─── Email Dialog ────────────────────────────────────────────────
 function EmailDialog({ open, onOpenChange, analysis }) {
