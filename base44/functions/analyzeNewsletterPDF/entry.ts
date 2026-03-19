@@ -228,7 +228,6 @@ EXTRACTION RULES — follow these strictly:
 
       const searchText = [
         result.title || '',
-        result.summary || '',
         result.tldr || '',
         ...(result.key_takeaways || []),
         ...(result.key_players || []),
