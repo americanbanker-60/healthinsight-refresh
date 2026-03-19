@@ -150,8 +150,8 @@ function AnalysisResult({ analysis, onReset }) {
           )}
         </div>
         <div className="flex gap-2 flex-shrink-0">
-          <Button variant="outline" size="sm" onClick={exportMarkdown}>
-            <Download className="w-4 h-4 mr-1" />Export
+          <Button variant="outline" size="sm" onClick={exportPDF} disabled={isExportingPDF}>
+            {isExportingPDF ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Exporting...</> : <><Download className="w-4 h-4 mr-1" />Export PDF</>}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setShowEmailDialog(true)} className="bg-blue-50 border-blue-200 hover:bg-blue-100">
             <Mail className="w-4 h-4 mr-1" />Email
