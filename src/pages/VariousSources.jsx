@@ -348,10 +348,10 @@ export default function VariousSources() {
           toast.success("Saved to library! It will appear on your Dashboard.");
         }
 
-        // Fetch the full record using the returned ID
+        // Fetch full record by ID
         if (response.data.id) {
-          const saved = await base44.entities.NewsletterItem.filter({ id: response.data.id });
-          result = saved.length > 0 ? saved[0] : response.data;
+          const all = await base44.entities.NewsletterItem.list('-created_date', 200);
+          result = all.find(n => n.id === response.data.id) || response.data;
         } else {
           result = response.data;
         }
