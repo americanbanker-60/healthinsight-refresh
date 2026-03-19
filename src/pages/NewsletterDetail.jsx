@@ -46,10 +46,22 @@ export default function NewsletterDetail() {
     try {
       const response = await base44.functions.invoke('exportNewsletterPDF', { newsletterId: newsletter.id });
       const { pdfBase64, filename } = response.data;
+      // Strip the data URI prefix to get raw base64
+      const base64Data = pdfBase64.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Uint8Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const blob = new Blob([byteNumbers], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = pdfBase64;
+      link.href = url;
       link.download = filename;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (err) {
       toast.error('PDF export failed: ' + err.message);
     } finally {
