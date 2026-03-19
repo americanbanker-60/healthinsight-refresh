@@ -218,17 +218,21 @@ export default function NewsletterDetail() {
 
         {newsletter.summary && (
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mt-4">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-4">
               <Lightbulb className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold text-slate-900">Executive Summary</h3>
             </div>
-            <EditableNewsletterSection
-              newsletterId={newsletter.id}
-              fieldName="summary"
-              value={newsletter.summary}
-              title="Executive Summary"
-              type="textarea"
-              onUpdate={refetch}
-            />
+            <div className="space-y-3">
+              {newsletter.summary
+                .split(/\n+/)
+                .filter(p => p.trim().length > 0)
+                .map((paragraph, i) => (
+                  <p key={i} className="text-slate-700 leading-relaxed text-sm">
+                    {paragraph.trim()}
+                  </p>
+                ))
+              }
+            </div>
           </div>
         )}
       </div>
