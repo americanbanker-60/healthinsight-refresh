@@ -252,6 +252,12 @@ export default function NewsletterDetail() {
           </div>
         )}
 
+        {newsletter.summary && (
+          <div className="mt-5">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Executive Summary</h3>
+            <SummaryParagraphs text={newsletter.summary} />
+          </div>
+        )}
 
       </div>
 
