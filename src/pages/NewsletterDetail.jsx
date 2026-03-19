@@ -205,14 +205,7 @@ export default function NewsletterDetail() {
               )}
             </div>
           </div>
-          <a
-            href={newsletter.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            <ExternalLink className="w-5 h-5" />
-          </a>
+
         </div>
 
         {newsletter.tldr && (
