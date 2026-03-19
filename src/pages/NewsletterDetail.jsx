@@ -40,7 +40,7 @@ export default function NewsletterDetail() {
   const { data: newsletter, isLoading, refetch } = useQuery({
     queryKey: ['newsletter', newsletterId],
     queryFn: async () => {
-      const recent = await base44.entities.NewsletterItem.list('-created_date', 50);
+      const recent = await base44.entities.NewsletterItem.list('-created_date', 200);
       return recent.find(n => n.id === newsletterId) || null;
     },
     enabled: !!newsletterId,
