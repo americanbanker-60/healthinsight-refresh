@@ -192,6 +192,11 @@ EXTRACTION RULES — follow these strictly:
     // Unwrap if LLM returned a nested response object
     const result = rawResult?.response || rawResult;
 
+    // Ensure title exists — required field
+    if (!result.title) {
+      result.title = result.source_name || sourceName || 'Untitled Document';
+    }
+
     console.log('PDF analysis complete:', result.title);
 
     const newsletterData = {

@@ -245,6 +245,11 @@ Deno.serve(async (req) => {
 
     // Unwrap if LLM returned a nested response object
     const result = rawResult?.response || rawResult;
+    
+    // Ensure title exists — required field
+    if (!result.title) {
+      result.title = result.source_name || domain || 'Untitled Article';
+    }
 
     const newsletterData = {
       ...result,
