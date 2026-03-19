@@ -11,7 +11,7 @@ export default function SummaryParagraphs({ text }) {
   const [expanded, setExpanded] = useState(false);
   if (!text) return null;
 
-  const preview = getFirstNSentences(text, 4);
+  const preview = getFirstNSentences(text, 3);
   const isTruncated = preview.length < text.trim().length - 20;
 
   return (
