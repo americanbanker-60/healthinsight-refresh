@@ -157,29 +157,14 @@ export default function AdminDashboard() {
           <BulkImportStatus />
         </div>
 
-        {/* Direct Newsletter Upload - Primary Action */}
-        <div className="mb-6">
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                  <Newspaper className="w-6 h-6 text-white" />
-                </div>
-                Add Newsletters
-              </CardTitle>
-              <CardDescription className="text-base">
-                Paste newsletter URLs or upload PDFs to analyze and add to your database
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to={createPageUrl("ManageSources")}>
-                <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 text-lg py-6">
-                  <Newspaper className="w-5 h-5 mr-2" />
-                  Add Newsletters
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+        {/* Single ingest entry point */}
+        <div className="mb-6 flex gap-3">
+          <Link to={createPageUrl("VariousSources")} className="flex-1">
+            <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 text-lg py-5">
+              <Newspaper className="w-5 h-5 mr-2" />
+              Add Newsletter (URL or PDF)
+            </Button>
+          </Link>
         </div>
 
         {/* Intelligence Overhaul - Process Newsletters */}
