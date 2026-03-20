@@ -148,10 +148,12 @@ export async function orchestrateAgent(config) {
       
       // Final attempt failed — return best effort
       console.error(`All ${maxRetries + 1} attempts failed validation for ${agentType}`);
+      _aiStatusCallbacks?.stopAgent();
       return result;
       
     } catch (error) {
       if (attempt === maxRetries) {
+        _aiStatusCallbacks?.stopAgent();
         throw error;
       }
       console.warn(`Attempt ${attempt + 1} failed with error:`, error.message);
