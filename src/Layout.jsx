@@ -352,14 +352,16 @@ export default function Layout({ children, currentPageName }) {
     <ErrorBoundary>
       <AdminGuard>
         <WalkthroughProvider>
-          <SidebarProvider>
-            <LayoutContent
-              children={children}
-              currentPageName={currentPageName}
-              location={location}
-            />
-            <Toaster />
-          </SidebarProvider>
+          <AIStatusProvider>
+            <SidebarProvider>
+              <LayoutContent
+                children={children}
+                currentPageName={currentPageName}
+                location={location}
+              />
+              <Toaster />
+            </SidebarProvider>
+          </AIStatusProvider>
         </WalkthroughProvider>
       </AdminGuard>
     </ErrorBoundary>
