@@ -488,7 +488,7 @@ Respond with a JSON object. Each key is a distinct section. Values must be non-e
     customPack: {
       agentType: 'packSummary',
       systemPrompt: `You are the Actionability Engine for healthcare investment banking. Transform this custom intelligence pack into BD actions.
-Consider user notes as strategic context. Do NOT guess or add content not present.`,
+Consider user notes as strategic context. Do NOT guess or add content not present.${personalizationLine ? `\n${personalizationLine}` : ''}`,
       userPrompt: `Turn this Custom Pack into an actionable BD strategy.`,
       structureGuide: `
 ### ACTIONABILITY PACK
