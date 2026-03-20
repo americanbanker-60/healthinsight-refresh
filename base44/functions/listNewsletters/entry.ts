@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
 
     const { query = {}, sort = '-publication_date', limit = 1000 } = await req.json();
 
-    const newsletters = await base44.entities.NewsletterItem.filter(query, sort, limit);
+    const newsletters = await base44.asServiceRole.entities.NewsletterItem.filter(query, sort, limit);
     return Response.json({ success: true, newsletters });
   } catch (error) {
     return Response.json({ success: false, error: error.message }, { status: 500 });
