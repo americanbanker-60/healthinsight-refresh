@@ -29,7 +29,18 @@ class ErrorBoundary extends React.Component {
             <p className="text-slate-600 mb-6">
               This page encountered an error. You can try refreshing or go back to the dashboard.
             </p>
-            <div className="flex gap-3 justify-center">
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Button
+                onClick={() => {
+                  clearOrchestratorCache();
+                  this.setState({ hasError: false, error: null });
+                }}
+                variant="outline"
+                className="border-amber-300 text-amber-700 hover:bg-amber-50"
+              >
+                <RefreshCcw className="w-4 h-4 mr-2" />
+                Recovery Mode
+              </Button>
               <Button
                 onClick={() => window.location.reload()}
                 variant="outline"
@@ -42,6 +53,9 @@ class ErrorBoundary extends React.Component {
                 Go to Dashboard
               </Button>
             </div>
+            <p className="text-xs text-slate-400 mt-3">
+              Recovery Mode clears AI configuration caches and retries without a full reload.
+            </p>
             {process.env.NODE_ENV === 'development' && (
               <details className="mt-6 text-left">
                 <summary className="text-sm font-medium text-slate-700 cursor-pointer">
