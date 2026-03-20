@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
     try {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const recentNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter(
+      const recentNewsletters = await base44.entities.NewsletterItem.filter(
         { publication_date: { $gte: sixtyDaysAgo }, is_analyzed: true },
         '-publication_date',
         50
