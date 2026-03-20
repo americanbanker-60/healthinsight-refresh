@@ -13,7 +13,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'newsletterId required' }, { status: 400 });
     }
 
-    const newsletter = await base44.asServiceRole.entities.NewsletterItem.get(newsletterId);
+    // Use user-scoped entity read (RLS allows admin/power/user to read)
+    const newsletter = await base44.entities.NewsletterItem.get(newsletterId);
     return Response.json({ success: true, newsletter });
   } catch (error) {
     return Response.json({ success: false, error: error.message }, { status: 404 });
