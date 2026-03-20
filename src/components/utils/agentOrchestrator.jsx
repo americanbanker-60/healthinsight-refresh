@@ -234,10 +234,27 @@ function validateOutput(output, structureGuide, agentType, responseJsonSchema = 
   return { valid: issues.length === 0, issues };
 }
 
-function addStricterInstructions(prompt, issues) {
+function addStricterInstructions(prompt, issues, jsonMode = false) {
+  const errorList = issues.map((issue, i) => `${i + 1}. ${issue}`).join('\n');
+
+  if (jsonMode) {
+    const stricterPrefix = `
+CRITICAL JSON ERRORS FROM PREVIOUS ATTEMPT — YOU MUST FIX THESE:
+${errorList}
+
+MANDATORY REQUIREMENTS:
+- Return ONLY valid JSON. No markdown, no prose, no code fences.
+- Every key listed above as missing or empty MUST be present and non-empty.
+- If a value is an array, it must have at least one item.
+- Do NOT wrap the JSON in \`\`\`json ... \`\`\` blocks.
+
+`;
+    return stricterPrefix + prompt;
+  }
+
   const stricterPrefix = `
 CRITICAL VALIDATION ERRORS IN PREVIOUS ATTEMPT:
-${issues.map((issue, i) => `${i + 1}. ${issue}`).join('\n')}
+${errorList}
 
 YOU MUST:
 - Include ALL required sections with exact header formatting
@@ -247,7 +264,6 @@ YOU MUST:
 - Ensure each section has substantial content (not just 1-2 sentences)
 
 `;
-  
   return stricterPrefix + prompt;
 }
 
