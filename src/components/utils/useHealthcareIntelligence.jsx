@@ -26,7 +26,7 @@ export function useHealthcareIntelligence(options = {}) {
     refetchOnWindowFocus: true,
     staleTime: 0,
     queryFn: async () => {
-      const query = {};
+      const query = { is_analyzed: true };
       
       // Source filter (from tab or persistent filters)
       if (activeTab !== "all") {
