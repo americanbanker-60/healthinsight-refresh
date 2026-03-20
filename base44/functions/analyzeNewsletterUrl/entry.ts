@@ -251,19 +251,21 @@ Deno.serve(async (req) => {
     const newsletterData = {
       ...result,
       source_url: normalizedUrl,
-      source_name: sourceName || result.source_name || 'Unknown Source',
+      source_type: 'URL',
       content_type: 'URL',
+      source_name: sourceName || result.source_name || 'Unknown Source',
       raw_input: useFallback ? `[Fallback: internet browsing used] URL: ${normalizedUrl}` : textContent?.substring(0, 20000),
       date_added_to_app: new Date().toISOString(),
       publication_date_confidence: result.publication_date_confidence || 'medium',
       publication_date_source: result.publication_date_source || 'AI extraction',
       publication_date_notes: useFallback ? 'Fallback internet browsing used' : 'Direct URL upload',
-      status: 'processing'
+      status: 'completed',
+      is_analyzed: true
     };
 
     console.log('AI analysis complete:', result.title);
 
-    const createdRecord = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+    const createdRecord = await base44.entities.NewsletterItem.create(newsletterData);
     const newsletterId = createdRecord?.id;
     if (!newsletterId) {
       return Response.json({ success: false, error: 'Failed to get newsletter ID' }, { status: 500 });
