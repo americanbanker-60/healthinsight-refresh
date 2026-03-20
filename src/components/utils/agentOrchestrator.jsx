@@ -412,63 +412,43 @@ REMEMBER: Put blank lines between EVERY paragraph, header, and bullet point.`
       systemPrompt: `You are the Actionability Engine creating comprehensive BD strategy briefings for healthcare investment bankers.
 Transform deep-dive research into concrete business development actions: outreach lists, deal origination strategies, thought leadership angles, and pipeline opportunities.
 Focus on U.S. healthcare services sectors. Use ONLY the provided content - no speculation.
-
-CRITICAL HEADER FORMATTING:
-- Use ## for main section headers (H2)
-- Use ### for subsections (H3)
-- Put a blank line before and after EVERY header
-- Never use bold (**text**) for headers`,
-      userPrompt: `Create a detailed actionability-focused deep-dive briefing with BD strategies using proper markdown header hierarchy.`,
-      structureGuide: `
-CRITICAL: Use this EXACT header structure and hierarchy:
-
-## Executive Summary
-
-6-8 sentences covering: What's happening, BD implications, target opportunities, outreach angles, valuation dynamics, consolidation potential.
-
-## Market Overview
-
-3-4 paragraphs: Current state, key players, strategic moves, deal activity, valuation multiples, payer dynamics. Focus on actionable intelligence.
-
-## Outreach Recommendations
-
-8-12 specific outreach opportunities organized by target type (PE firms, operators, founders, platforms, management teams).
-For each: Who to contact, why this matters to them, what angle to use, how to reference the insights.
-
-## BD Pipeline Applications
-
-6-10 deal origination and pipeline ideas: Target lists, subsector theses, geo expansion opportunities, follow-up strategies, PE outreach angles.
-Connect each directly to market insights.
-
-## Mini Email Templates
-
-2–3 options formatted as outreach emails FROM the user (banker/advisor) TO potential targets (executives, PE firms, operators):
-
-### Template 1
-Subject: [specific subject line]
-Body: [4–5 professional sentences positioning the sender as a banker/advisor with relevant market insights]
-
-### Template 2
-Subject: [specific subject line]
-Body: [4–5 professional sentences]
-
-## Thought Leadership & Marketing
-
-8-12 content ideas: LinkedIn posts, pitch meeting themes, conference talking points, client memos, one-pager topics.
-Tie each to valuation drivers, regulatory shifts, reimbursement dynamics, or consolidation themes.
-
-## Collateral Creation Priorities
-
-5-8 deliverable suggestions: Sector snapshots, valuation analyses, legislative timelines, competitive matrices, roll-up maps.
-Specify exact focus and why it's timely.
-
-## Valuation Tie-Ins
-
-4-6 bullets on: Multiple expansion/compression factors, revenue durability signals, payer mix implications, scalability indicators, roll-up potential markers.
-
-## Consolidated Action Plan
-
-5-7 sentences synthesizing: Top 3 immediate actions, priority outreach targets, key messaging themes, timeline considerations.`
+Respond with a JSON object. Each key is a distinct section. Values must be non-empty strings or arrays.`,
+      userPrompt: `Create a detailed actionability-focused deep-dive briefing with BD strategies. Return as structured JSON.`,
+      structureGuide: `Return a JSON object with these exact keys:
+- executive_summary: 6-8 sentence paragraph covering what's happening, BD implications, target opportunities, outreach angles, valuation dynamics.
+- market_overview: 3-4 paragraph string on current state, key players, strategic moves, deal activity, valuation multiples, payer dynamics.
+- outreach_recommendations: array of 8-12 strings, each specifying who to contact, why it matters, and what angle to use.
+- bd_pipeline_applications: array of 6-10 strings, each a deal origination or pipeline idea connected to market insights.
+- email_templates: array of 2-3 objects, each with "subject" (string) and "body" (string) keys.
+- thought_leadership: array of 8-12 strings, each a LinkedIn post, pitch theme, or conference talking point tied to valuation drivers.
+- collateral_priorities: array of 5-8 strings, each a deliverable suggestion with focus and timeliness rationale.
+- valuation_tie_ins: array of 4-6 strings on multiple expansion/compression, revenue durability, payer mix, scalability, roll-up potential.
+- consolidated_action_plan: 5-7 sentence paragraph synthesizing top 3 immediate actions, priority targets, key messaging themes.`,
+      responseJsonSchema: {
+        type: "object",
+        required: [
+          "executive_summary", "market_overview", "outreach_recommendations",
+          "bd_pipeline_applications", "email_templates", "thought_leadership",
+          "collateral_priorities", "valuation_tie_ins", "consolidated_action_plan"
+        ],
+        properties: {
+          executive_summary: { type: "string" },
+          market_overview: { type: "string" },
+          outreach_recommendations: { type: "array", items: { type: "string" } },
+          bd_pipeline_applications: { type: "array", items: { type: "string" } },
+          email_templates: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { subject: { type: "string" }, body: { type: "string" } }
+            }
+          },
+          thought_leadership: { type: "array", items: { type: "string" } },
+          collateral_priorities: { type: "array", items: { type: "string" } },
+          valuation_tie_ins: { type: "array", items: { type: "string" } },
+          consolidated_action_plan: { type: "string" }
+        }
+      }
     },
     
     customPack: {
