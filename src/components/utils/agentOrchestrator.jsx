@@ -446,7 +446,7 @@ REMEMBER: Put blank lines between EVERY paragraph, header, and bullet point.`
       systemPrompt: `You are the Actionability Engine creating comprehensive BD strategy briefings for healthcare investment bankers.
 Transform deep-dive research into concrete business development actions: outreach lists, deal origination strategies, thought leadership angles, and pipeline opportunities.
 Focus on U.S. healthcare services sectors. Use ONLY the provided content - no speculation.
-Respond with a JSON object. Each key is a distinct section. Values must be non-empty strings or arrays.`,
+Respond with a JSON object. Each key is a distinct section. Values must be non-empty strings or arrays.${personalizationLine ? `\n${personalizationLine}` : ''}`,
       userPrompt: `Create a detailed actionability-focused deep-dive briefing with BD strategies. Return as structured JSON.`,
       structureGuide: `Return a JSON object with these exact keys:
 - executive_summary: 6-8 sentence paragraph covering what's happening, BD implications, target opportunities, outreach angles, valuation dynamics.
