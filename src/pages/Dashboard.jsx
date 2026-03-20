@@ -154,7 +154,7 @@ export default function Dashboard() {
               description="Start analyzing healthcare newsletters to build your intelligence library"
               actionLabel="Analyze First Newsletter"
               actionIcon={Plus}
-              onAction={() => window.location.href = createPageUrl("AnalyzeNewsletter")}
+              onAction={() => window.location.href = createPageUrl("VariousSources")}
             />
           ) : (
             <>
