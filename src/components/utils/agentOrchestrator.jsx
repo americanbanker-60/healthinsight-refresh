@@ -110,7 +110,7 @@ export async function orchestrateAgent(config) {
   }
 }
 
-async function buildPrompt({ systemPrompt, userPrompt, structureGuide, data, includeFormatting = true, agentType }) {
+async function buildPrompt({ systemPrompt, userPrompt, structureGuide, data, includeFormatting = true, agentType, jsonMode = false }) {
   let prompt = "";
   
   // Use short-form prompt for repetitive tasks
