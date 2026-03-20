@@ -1,6 +1,3 @@
-/**
- * pages.config.js - Page routing configuration
- */
 import AIContentGenerator from './pages/AIContentGenerator';
 import AdminDashboard from './pages/AdminDashboard';
 import CompaniesDirectory from './pages/CompaniesDirectory';
