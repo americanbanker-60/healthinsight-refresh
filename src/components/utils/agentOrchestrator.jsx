@@ -102,6 +102,9 @@ export async function orchestrateAgent(config) {
     maxRetries = MAX_RETRIES,
     includeFormatting = true
   } = config;
+
+  _aiStatusCallbacks?.startAgent();
+  _aiStatusCallbacks?.tickProgress(30);
   
   // Build clean, structured input
   const structuredInput = buildStructuredInput(newsletters, context);
