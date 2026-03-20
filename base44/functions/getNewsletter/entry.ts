@@ -13,7 +13,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'newsletterId required' }, { status: 400 });
     }
 
-    const newsletter = await base44.asServiceRole.entities.NewsletterItem.get(newsletterId);
+    const results = await base44.asServiceRole.entities.NewsletterItem.filter({ id: newsletterId }, null, 1);
+    const newsletter = results?.[0] || null;
+    if (!newsletter) {
+      return Response.json({ success: false, error: 'Newsletter not found' }, { status: 404 });
+    }
     return Response.json({ success: true, newsletter });
   } catch (error) {
     return Response.json({ success: false, error: error.message }, { status: 404 });
