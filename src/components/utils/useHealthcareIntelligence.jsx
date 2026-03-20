@@ -15,7 +15,7 @@ export function useHealthcareIntelligence(options = {}) {
     enableInvestmentFocus = false,
   } = options;
 
-  const [persistentFilters, setPersistentFilters] = React.useState(null);
+  const [persistentFilters, setPersistentFilters] = React.useState({});
   const [skip, setSkip] = React.useState(0);
 
   // Fetch newsletters with server-side filtering
