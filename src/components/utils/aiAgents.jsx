@@ -32,7 +32,7 @@ export async function generatePackSummary(packItems, packTitle, userVerbosity = 
  * GetSmartFastAgent - Generates quick topic briefings
  */
 export async function generateGetSmartFast(topicName, relevantNewsletters) {
-  const config = createAgentConfig('getSmartFast', relevantNewsletters.slice(0, 20), {
+  const config = await createAgentConfig('getSmartFast', relevantNewsletters.slice(0, 20), {
     dateRange: "recent items",
     focus: topicName
   });
