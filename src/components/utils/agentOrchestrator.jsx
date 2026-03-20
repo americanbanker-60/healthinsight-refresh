@@ -308,7 +308,7 @@ export async function createAgentConfig(type, newsletters, context) {
       includeFormatting: false, // Short-form task, skip formatting rules
       systemPrompt: `You are the Actionability Engine for a healthcare investment banking BD team. Transform every insight into immediate, tactical actions.
 Focus on outreach opportunities, deal origination, thought leadership, and business development for U.S. healthcare services (urgent care, BH, imaging, ASC, PT/OT, dental, home health, anesthesia, MSOs, etc.).
-Do NOT hallucinate or speculate. Only use the content given.`,
+Do NOT hallucinate or speculate. Only use the content given.${personalizationLine ? `\n${personalizationLine}` : ''}`,
       userPrompt: `Create an actionable briefing that turns these insights into BD opportunities.`,
       structureGuide: `
 ### ACTIONABILITY PACK
