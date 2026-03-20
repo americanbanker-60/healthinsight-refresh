@@ -275,8 +275,8 @@ Deno.serve(async (req) => {
 
     try {
       const [companies, topics] = await Promise.all([
-        base44.asServiceRole.entities.Company.list(),
-        base44.asServiceRole.entities.Topic.list()
+        base44.entities.Company.list(),
+        base44.entities.Topic.list()
       ]);
 
       const searchText = [
