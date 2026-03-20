@@ -142,6 +142,10 @@ async function buildPrompt({ systemPrompt, userPrompt, structureGuide, data, inc
   if (structureGuide) {
     prompt += `REQUIRED STRUCTURE:\n${structureGuide}\n\n`;
   }
+
+  if (jsonMode) {
+    prompt += `OUTPUT FORMAT: You MUST respond with valid JSON only. No markdown, no prose outside JSON. Follow the provided JSON schema exactly.\n\n`;
+  }
   
   prompt += `CONTEXT:\n`;
   prompt += `- Total items analyzed: ${data.context.total_items}\n`;
