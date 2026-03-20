@@ -6,7 +6,7 @@ import { format } from "date-fns";
  * SummaryAgent - Generates structured summaries for Explore All Sources
  */
 export async function generateSummary(selectedItems, userVerbosity = "standard") {
-  const config = createAgentConfig('summary', selectedItems, {
+  const config = await createAgentConfig('summary', selectedItems, {
     dateRange: "selected items",
     focus: "multi-source synthesis",
     verbosity: userVerbosity
