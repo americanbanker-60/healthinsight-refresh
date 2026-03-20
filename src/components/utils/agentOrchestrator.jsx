@@ -2,6 +2,20 @@ import { securedInvokeLLM } from "./aiDefenseWrapper";
 import { buildStructuredInput } from "./contentPreprocessor";
 import { base44 } from "@/api/base44Client";
 
+// Exposed so ErrorBoundary recovery can clear stale config caches
+export function clearOrchestratorCache() {
+  cachedFormattingRules = null;
+  cachedShortFormPrompt = null;
+  cachedUserSettings = null;
+  cachedUserSettingsAt = 0;
+}
+
+// Global AI status hook reference — set by AIStatusProvider
+let _aiStatusCallbacks = null;
+export function registerAIStatusCallbacks(callbacks) {
+  _aiStatusCallbacks = callbacks;
+}
+
 /**
  * Centralized AI agent orchestration with validation and retry logic
  * All AI calls flow through this system
