@@ -111,7 +111,7 @@ ${JSON.stringify(insightsData, null, 2)}`;
 export async function generateCustomPackSummary(itemsWithNotes, packTitle, userVerbosity = "standard") {
   const newsletters = itemsWithNotes.map(item => item.newsletter);
   
-  const config = createAgentConfig('customPack', newsletters, {
+  const config = await createAgentConfig('customPack', newsletters, {
     dateRange: "user-curated items",
     focus: packTitle,
     hasUserNotes: itemsWithNotes.some(item => item.note),
