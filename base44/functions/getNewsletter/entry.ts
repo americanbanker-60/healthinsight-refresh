@@ -13,18 +13,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'newsletterId required' }, { status: 400 });
     }
 
-    // Try get first, fall back to filter (handles sandbox/production routing differences)
-    let newsletter = null;
-    try {
-      newsletter = await base44.asServiceRole.entities.NewsletterItem.get(newsletterId);
-    } catch {
-      // fallback: list all and find by id
-      const all = await base44.asServiceRole.entities.NewsletterItem.list('-created_date', 5000);
-      newsletter = all.find(n => n.id === newsletterId) || null;
-    }
-    if (!newsletter) {
-      return Response.json({ success: false, error: 'Newsletter not found' }, { status: 404 });
-    }
+    const newsletter = await base44.asServiceRole.entities.NewsletterItem.get(newsletterId);
     return Response.json({ success: true, newsletter });
   } catch (error) {
     return Response.json({ success: false, error: error.message }, { status: 404 });
