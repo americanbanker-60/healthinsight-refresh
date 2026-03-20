@@ -47,6 +47,12 @@ async function getUserPersonalizationLine() {
     if (settings?.preferred_sources?.length) {
       parts.push(`preferred sources: ${settings.preferred_sources.join(', ')}`);
     }
+    if (settings?.watched_sectors?.length) {
+      parts.push(`watched sectors: ${settings.watched_sectors.join(', ')}`);
+    }
+    if (settings?.target_company_types?.length) {
+      parts.push(`target company types for BD outreach: ${settings.target_company_types.join(', ')}`);
+    }
     const line = parts.length
       ? `USER PERSONALIZATION — Prioritize insights that intersect with the user's specific interests: ${parts.join(' | ')}.`
       : '';
