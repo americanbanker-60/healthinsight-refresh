@@ -44,7 +44,7 @@ export async function generateGetSmartFast(topicName, relevantNewsletters) {
  * DeepDiveAgent - Generates comprehensive research briefings
  */
 export async function generateDeepDive(contextTitle, relevantItems, userVerbosity = "standard") {
-  const config = createAgentConfig('deepDive', relevantItems, {
+  const config = await createAgentConfig('deepDive', relevantItems, {
     dateRange: "comprehensive analysis period",
     focus: contextTitle,
     verbosity: userVerbosity
