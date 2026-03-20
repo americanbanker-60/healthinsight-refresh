@@ -313,14 +313,16 @@ Deno.serve(async (req) => {
       }
 
       if (relations.length > 0) {
-        await base44.asServiceRole.entities.NewsletterRelation.bulkCreate(relations);
+        try {
+          await base44.entities.NewsletterRelation.bulkCreate(relations);
+          console.log(`Relations linked: ${relations.length}`);
+        } catch (bulkErr) {
+          console.error('NewsletterRelation bulkCreate failed:', bulkErr.message);
+        }
       }
-
-      await base44.asServiceRole.entities.NewsletterItem.update(newsletterId, { status: 'completed', is_analyzed: true });
-      console.log(`Relations linked: ${relations.length}, newsletter marked completed`);
+      console.log(`Newsletter completed with ${relations.length} relations`);
     } catch (relErr) {
       console.error('Relations linking failed (non-fatal):', relErr.message);
-      await base44.asServiceRole.entities.NewsletterItem.update(newsletterId, { status: 'completed', is_analyzed: true });
     }
 
     return Response.json({
