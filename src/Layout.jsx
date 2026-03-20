@@ -11,6 +11,9 @@ import { Shield, PlayCircle } from "lucide-react";
 import { AdminBadge } from "@/components/admin/AdminOnlyButton";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AIResearchAssistant from "@/components/layout/AIResearchAssistant";
+import { AIStatusProvider, useAIStatus } from "@/components/utils/AIStatusContext";
+import { registerAIStatusCallbacks } from "@/components/utils/agentOrchestrator";
+import { Progress } from "@/components/ui/progress";
 import {
   Sidebar,
   SidebarContent,
