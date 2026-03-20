@@ -212,6 +212,7 @@ function LayoutContent({ children, currentPageName, location }) {
 
   return (
     <div className="min-h-screen flex w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+        <AIProgressBar />
         <style>{`
           * {
             overflow-wrap: break-word;
