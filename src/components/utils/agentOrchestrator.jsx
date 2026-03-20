@@ -135,6 +135,7 @@ export async function orchestrateAgent(config) {
       const validation = validateOutput(result, structureGuide, agentType, responseJsonSchema);
       
       if (validation.valid) {
+        _aiStatusCallbacks?.stopAgent();
         return result;
       }
       
