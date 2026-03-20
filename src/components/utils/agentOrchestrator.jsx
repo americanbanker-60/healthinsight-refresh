@@ -160,40 +160,50 @@ async function buildPrompt({ systemPrompt, userPrompt, structureGuide, data, inc
   return prompt;
 }
 
-function validateOutput(output, structureGuide, agentType) {
+function validateOutput(output, structureGuide, agentType, responseJsonSchema = null) {
   const issues = [];
-  
+
+  // ── JSON-mode validation ──────────────────────────────────────────
+  if (responseJsonSchema) {
+    // output may already be a parsed object (InvokeLLM returns parsed JSON when schema is provided)
+    let parsed = output;
+    if (typeof output === 'string') {
+      try {
+        parsed = JSON.parse(output);
+      } catch (e) {
+        issues.push(`JSON parse error: ${e.message}`);
+        return { valid: false, issues, parsed: null };
+      }
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      issues.push("Response is not a JSON object");
+      return { valid: false, issues, parsed: null };
+    }
+
+    // Validate required top-level keys from schema
+    const schemaProps = responseJsonSchema?.properties || {};
+    const requiredKeys = responseJsonSchema?.required || Object.keys(schemaProps);
+    requiredKeys.forEach(key => {
+      if (!(key in parsed) || parsed[key] === null || parsed[key] === undefined || parsed[key] === '') {
+        issues.push(`Missing or empty required JSON key: "${key}"`);
+      }
+    });
+
+    return { valid: issues.length === 0, issues, parsed: issues.length === 0 ? parsed : null };
+  }
+
+  // ── Text-mode validation ──────────────────────────────────────────
   if (!output || typeof output !== 'string') {
     issues.push("Output is empty or not a string");
     return { valid: false, issues };
   }
   
-  // Check minimum length
   if (output.length < 200) {
     issues.push("Output is too short (< 200 characters)");
   }
   
-  // Agent-specific validation
   switch (agentType) {
-    case 'deepDive':
-      const requiredSections = [
-        '**Executive Summary**',
-        '**Market Overview**',
-        '**Key Drivers & Forces**',
-        '**Landscape Map**',
-        '**Recent Timeline**',
-        '**Major News Highlights**',
-        '**Most Important Excerpts**',
-        '**Consolidated Summary**'
-      ];
-      
-      requiredSections.forEach(section => {
-        if (!output.includes(section)) {
-          issues.push(`Missing required section: ${section}`);
-        }
-      });
-      break;
-      
     case 'summary':
     case 'packSummary':
       if (!output.includes('**') && !output.includes('##')) {
@@ -208,24 +218,20 @@ function validateOutput(output, structureGuide, agentType) {
       break;
   }
   
-  // Check for hallucination indicators
+  // Hallucination check
   const hallucinationPatterns = [
     /according to (recent|latest) (reports|studies) not mentioned/i,
     /industry experts suggest/i,
     /it is (widely )?known that/i,
     /research shows/i
   ];
-  
   hallucinationPatterns.forEach(pattern => {
     if (pattern.test(output)) {
       issues.push(`Potential hallucination detected: ${pattern.source}`);
     }
   });
   
-  return {
-    valid: issues.length === 0,
-    issues
-  };
+  return { valid: issues.length === 0, issues };
 }
 
 function addStricterInstructions(prompt, issues) {
