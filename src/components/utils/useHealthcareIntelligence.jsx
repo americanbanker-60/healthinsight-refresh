@@ -122,7 +122,7 @@ export function useHealthcareIntelligence(options = {}) {
 
   // Client-side filtering for fields not supported by server-side query
   const filteredNewsletters = React.useMemo(() => {
-    if (!persistentFilters) return focusFilteredNewsletters;
+    if (!persistentFilters || Object.keys(persistentFilters).length === 0) return focusFilteredNewsletters;
     
     let filtered = focusFilteredNewsletters;
     
