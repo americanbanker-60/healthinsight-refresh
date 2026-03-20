@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, RefreshCcw } from "lucide-react";
+import { clearOrchestratorCache } from "@/components/utils/agentOrchestrator";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
