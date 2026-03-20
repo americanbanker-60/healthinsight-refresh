@@ -125,7 +125,7 @@ export async function generateCustomPackSummary(itemsWithNotes, packTitle, userV
  * CompanyOverviewAgent - Generates company overviews from newsletter mentions
  */
 export async function generateCompanyOverview(companyName, relevantNewsletters) {
-  const config = createAgentConfig('companyOverview', relevantNewsletters.slice(0, 15), {
+  const config = await createAgentConfig('companyOverview', relevantNewsletters.slice(0, 15), {
     dateRange: "recent mentions",
     focus: companyName
   });
