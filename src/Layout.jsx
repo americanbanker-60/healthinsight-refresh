@@ -153,10 +153,30 @@ const navigationGroups = [
 const COLLAPSED_STORAGE_KEY = "sidebar_collapsed_groups";
 const DEFAULT_COLLAPSED = ["Settings", "Admin"];
 
+function AIProgressBar() {
+  const { isRunning, progress } = useAIStatus();
+  if (!isRunning) return null;
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[9999] h-1">
+      <Progress
+        value={progress}
+        className="h-1 rounded-none bg-transparent [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-indigo-500 [&>div]:transition-all [&>div]:duration-500"
+      />
+    </div>
+  );
+}
+
 function LayoutContent({ children, currentPageName, location }) {
   const { setOpen, isMobile } = useSidebar();
   const { role, isAdmin } = useUserRole();
   const { startWalkthrough } = useWalkthrough();
+  const aiStatus = useAIStatus();
+
+  // Register orchestrator callbacks so it can signal this context
+  useEffect(() => {
+    registerAIStatusCallbacks(aiStatus);
+    return () => registerAIStatusCallbacks(null);
+  }, [aiStatus]);
 
   const [collapsedGroups, setCollapsedGroups] = useState(() => {
     try {
