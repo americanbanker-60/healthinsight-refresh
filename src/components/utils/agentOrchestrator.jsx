@@ -13,6 +13,37 @@ const MAX_RETRIES = 2;
 let cachedFormattingRules = null;
 let cachedShortFormPrompt = null;
 
+// Short-lived user settings cache (60s TTL)
+let cachedUserSettings = null;
+let cachedUserSettingsAt = 0;
+const USER_SETTINGS_TTL_MS = 60_000;
+
+async function getUserPersonalizationLine() {
+  const now = Date.now();
+  if (cachedUserSettings && (now - cachedUserSettingsAt) < USER_SETTINGS_TTL_MS) {
+    return cachedUserSettings;
+  }
+  try {
+    const results = await base44.entities.UserSettings.list();
+    const settings = results[0];
+    const parts = [];
+    if (settings?.preferred_topics?.length) {
+      parts.push(`topics of interest: ${settings.preferred_topics.join(', ')}`);
+    }
+    if (settings?.preferred_sources?.length) {
+      parts.push(`preferred sources: ${settings.preferred_sources.join(', ')}`);
+    }
+    const line = parts.length
+      ? `USER PERSONALIZATION — Prioritize insights that intersect with the user's specific interests: ${parts.join(' | ')}.`
+      : '';
+    cachedUserSettings = line;
+    cachedUserSettingsAt = now;
+    return line;
+  } catch {
+    return '';
+  }
+}
+
 async function getFormattingRules() {
   if (cachedFormattingRules) return cachedFormattingRules;
   
