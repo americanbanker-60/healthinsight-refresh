@@ -53,6 +53,7 @@ export async function orchestrateAgent(config) {
     systemPrompt,
     userPrompt,
     structureGuide,
+    responseJsonSchema,
     maxRetries = MAX_RETRIES,
     includeFormatting = true
   } = config;
@@ -67,7 +68,8 @@ export async function orchestrateAgent(config) {
     structureGuide,
     data: structuredInput,
     includeFormatting,
-    agentType
+    agentType,
+    jsonMode: !!responseJsonSchema
   });
   
   // Execute with retries
@@ -77,26 +79,27 @@ export async function orchestrateAgent(config) {
     try {
       const result = await securedInvokeLLM({
         prompt: currentPrompt,
-        add_context_from_internet: false
+        add_context_from_internet: false,
+        response_json_schema: responseJsonSchema || null
       });
       
-      // Validate output
-      const validation = validateOutput(result, structureGuide, agentType);
+      // Validate output — JSON mode or text mode
+      const validation = validateOutput(result, structureGuide, agentType, responseJsonSchema);
       
       if (validation.valid) {
         return result;
       }
       
-      // If invalid and retries remain, try again with stricter prompt
+      // If invalid and retries remain, try again with error appended to prompt
       if (attempt < maxRetries) {
         console.warn(`Attempt ${attempt + 1} validation failed:`, validation.issues);
-        currentPrompt = addStricterInstructions(currentPrompt, validation.issues);
+        currentPrompt = addStricterInstructions(currentPrompt, validation.issues, !!responseJsonSchema);
         continue;
       }
       
-      // Final attempt failed, return with warning
+      // Final attempt failed — return best effort
       console.error(`All ${maxRetries + 1} attempts failed validation for ${agentType}`);
-      return result + "\n\n[Note: Output may not fully meet structure requirements]";
+      return result;
       
     } catch (error) {
       if (attempt === maxRetries) {
