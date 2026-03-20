@@ -19,7 +19,7 @@ export async function generateSummary(selectedItems, userVerbosity = "standard")
  * PackSummaryAgent - Generates summaries for Learning Packs
  */
 export async function generatePackSummary(packItems, packTitle, userVerbosity = "standard") {
-  const config = createAgentConfig('packSummary', packItems, {
+  const config = await createAgentConfig('packSummary', packItems, {
     dateRange: "pack-defined range",
     focus: packTitle,
     verbosity: userVerbosity
