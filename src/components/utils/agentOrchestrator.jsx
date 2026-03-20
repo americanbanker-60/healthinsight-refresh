@@ -298,7 +298,10 @@ YOU MUST:
   return stricterPrefix + prompt;
 }
 
-export function createAgentConfig(type, newsletters, context) {
+export async function createAgentConfig(type, newsletters, context) {
+  // Fetch user personalization upfront — injected into BD-facing agent prompts
+  const personalizationLine = await getUserPersonalizationLine();
+
   const configs = {
     summary: {
       agentType: 'summary',
