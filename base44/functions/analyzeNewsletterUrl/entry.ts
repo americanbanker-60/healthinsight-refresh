@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     console.log('Fetching URL:', normalizedUrl);
 
     // Check duplicate early
-    const existingCheck = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedUrl });
+    const existingCheck = await base44.entities.NewsletterItem.filter({ source_url: normalizedUrl });
     if (existingCheck.length > 0) {
       console.log('Duplicate — skipping');
       try {
