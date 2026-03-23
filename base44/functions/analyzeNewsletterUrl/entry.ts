@@ -273,7 +273,6 @@ Deno.serve(async (req) => {
 
     // Write audit log
     try {
-      const { bulkSessionId, bulkTotal } = (await req.clone().json().catch(() => ({})));
       await base44.asServiceRole.entities.UploadAuditLog.create({
         uploaded_by: user.email,
         source_type: bulkSessionId ? 'bulk_url' : 'url',
