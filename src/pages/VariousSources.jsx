@@ -390,8 +390,23 @@ export default function VariousSources() {
   const isDone = urlItems.length > 0 && !isRunning;
   const addedCount = urlItems.filter(i => i.status === "success").length;
 
+  const isPreviewSandbox = window.location.hostname.includes('preview-sandbox') || window.location.hostname.includes('preview--');
+
   return (
     <div className="p-6 md:p-10 max-w-4xl mx-auto">
+      {isPreviewSandbox && (
+        <div className="mb-6 bg-red-50 border-2 border-red-400 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-red-900 text-base">⚠️ You are in the PREVIEW SANDBOX</p>
+            <p className="text-red-800 text-sm mt-1">
+              Data saved here is <strong>NOT stored permanently</strong> and will be wiped. 
+              To save newsletters to your real library, use the <strong>published app URL</strong> (not the preview).
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="mb-8 flex items-center gap-3">
         <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl flex items-center justify-center">
           <Globe className="w-7 h-7 text-white" />
