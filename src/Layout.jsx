@@ -146,6 +146,12 @@ const navigationGroups = [
         icon: Terminal,
         roles: ["admin"],
       },
+      {
+        title: "Bulk Import Monitor",
+        url: createPageUrl("BulkImportMonitor"),
+        icon: RefreshCw,
+        roles: ["admin"],
+      },
     ]
   },
 ];

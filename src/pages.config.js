@@ -1,4 +1,5 @@
 import AIContentGenerator from './pages/AIContentGenerator';
+import BulkImportMonitor from './pages/BulkImportMonitor';
 import AdminDashboard from './pages/AdminDashboard';
 import CompaniesDirectory from './pages/CompaniesDirectory';
 import CompanyPage from './pages/CompanyPage';
@@ -24,6 +25,7 @@ import __Layout from './Layout.jsx';
 
 export const PAGES = {
     "AIContentGenerator": AIContentGenerator,
+    "BulkImportMonitor": BulkImportMonitor,
     "AdminDashboard": AdminDashboard,
     "CompaniesDirectory": CompaniesDirectory,
     "CompanyPage": CompanyPage,
