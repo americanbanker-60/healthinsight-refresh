@@ -340,11 +340,12 @@ export default function VariousSources() {
     if (urlList.length === 0) { toast.error("Please enter at least one valid URL starting with http"); return; }
     const initialItems = urlList.map(u => ({ url: u, status: "pending", title: null, errorMsg: null }));
     setUrlItems(initialItems); setIsRunning(true);
+    const bulkSessionId = `bulk_${Date.now()}`;
     const items = [...initialItems];
     for (let i = 0; i < items.length; i++) {
       items[i] = { ...items[i], status: "processing" }; setUrlItems([...items]);
       try {
-        const response = await base44.functions.invoke('analyzeNewsletterUrl', { url: items[i].url, sourceName: sourceName.trim() || undefined });
+        const response = await base44.functions.invoke('analyzeNewsletterUrl', { url: items[i].url, sourceName: sourceName.trim() || undefined, bulkSessionId, bulkTotal: urlList.length });
         const isDupe = response.data?.message?.includes('already exists');
         items[i] = { ...items[i], status: isDupe ? "duplicate" : "success", title: response.data.title || items[i].url };
       } catch (err) {
