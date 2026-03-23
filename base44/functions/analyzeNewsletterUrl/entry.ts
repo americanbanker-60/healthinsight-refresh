@@ -342,7 +342,7 @@ Deno.serve(async (req) => {
 
       if (relations.length > 0) {
         try {
-          await base44.asServiceRole.entities.NewsletterRelation.bulkCreate(relations);
+          await base44.entities.NewsletterRelation.bulkCreate(relations);
           console.log(`Relations linked: ${relations.length}`);
         } catch (bulkErr) {
           console.error('NewsletterRelation bulkCreate failed:', bulkErr.message);
