@@ -7,11 +7,22 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { newsletterId } = await req.json();
-    if (!newsletterId) return Response.json({ error: 'newsletterId required' }, { status: 400 });
+    const body = await req.json();
+    const { newsletterId, newsletterData } = body;
 
-    const a = await base44.asServiceRole.entities.NewsletterItem.get(newsletterId);
-    if (!a) return Response.json({ error: 'Newsletter not found' }, { status: 404 });
+    // Try DB lookup first; fall back to inline data passed from frontend
+    let a = null;
+    if (newsletterId) {
+      try {
+        a = await base44.asServiceRole.entities.NewsletterItem.get(newsletterId);
+      } catch (_) {
+        // not found in DB — will use inline data below
+      }
+    }
+    if (!a && newsletterData) {
+      a = newsletterData;
+    }
+    if (!a) return Response.json({ error: 'Newsletter not found and no inline data provided' }, { status: 404 });
 
     const doc = new jsPDF({ unit: 'pt', format: 'letter' });
     const PW = doc.internal.pageSize.getWidth();   // 612
