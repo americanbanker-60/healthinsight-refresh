@@ -271,6 +271,23 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Failed to get newsletter ID' }, { status: 500 });
     }
 
+    // Write audit log
+    try {
+      const { bulkSessionId, bulkTotal } = (await req.clone().json().catch(() => ({})));
+      await base44.asServiceRole.entities.UploadAuditLog.create({
+        uploaded_by: user.email,
+        source_type: bulkSessionId ? 'bulk_url' : 'url',
+        url: normalizedUrl,
+        title: result.title,
+        newsletter_id: newsletterId,
+        status: 'success',
+        bulk_session_id: bulkSessionId || null,
+        bulk_total: bulkTotal || null
+      });
+    } catch (auditErr) {
+      console.warn('Audit log write failed (non-fatal):', auditErr.message);
+    }
+
     console.log(`Newsletter ID: ${newsletterId} — linking relations`);
 
     try {
