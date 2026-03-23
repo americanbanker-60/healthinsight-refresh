@@ -69,7 +69,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { url, sourceName, bulkSessionId, bulkTotal } = await req.json();
+    const body = await req.json();
+    const { url, sourceName, bulkSessionId, bulkTotal } = body;
 
     if (!url) {
       return Response.json({ error: 'URL required' }, { status: 400 });
