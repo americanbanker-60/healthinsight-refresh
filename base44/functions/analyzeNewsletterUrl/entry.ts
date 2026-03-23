@@ -364,6 +364,19 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('ERROR:', error.message);
+    // Best-effort failure audit log
+    try {
+      const base44Err = createClientFromRequest(req);
+      const userErr = await base44Err.auth.me().catch(() => null);
+      if (userErr) {
+        await base44Err.asServiceRole.entities.UploadAuditLog.create({
+          uploaded_by: userErr.email,
+          source_type: 'url',
+          status: 'failed',
+          error_message: error.message
+        });
+      }
+    } catch (_) {}
     return Response.json({ success: false, error: error.message || 'Unknown error' }, { status: 500 });
   }
 });
