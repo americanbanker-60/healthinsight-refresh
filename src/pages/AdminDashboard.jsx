@@ -160,6 +160,11 @@ export default function AdminDashboard() {
           <BulkImportStatus />
         </div>
 
+        {/* Upload Audit Log */}
+        <div className="mb-6">
+          <UploadAuditLog />
+        </div>
+
         {/* Single ingest entry point */}
         <div className="mb-6 flex gap-3">
           <Link to={createPageUrl("VariousSources")} className="flex-1">
