@@ -10,12 +10,7 @@ Deno.serve(async (req) => {
     const { newsletterId } = await req.json();
     if (!newsletterId) return Response.json({ error: 'newsletterId required' }, { status: 400 });
 
-    let a = null;
-    try {
-      a = await base44.entities.NewsletterItem.get(newsletterId);
-    } catch {
-      a = await base44.asServiceRole.entities.NewsletterItem.get(newsletterId);
-    }
+    const a = await base44.asServiceRole.entities.NewsletterItem.get(newsletterId);
     if (!a) return Response.json({ error: 'Newsletter not found' }, { status: 404 });
 
     const doc = new jsPDF({ unit: 'pt', format: 'letter' });
