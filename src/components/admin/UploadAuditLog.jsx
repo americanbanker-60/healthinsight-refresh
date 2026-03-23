@@ -24,7 +24,7 @@ export default function UploadAuditLog() {
   });
 
   // Group by bulk_session_id or treat singles individually
-  const sessions = React.useMemo(() => {
+  const sessions = useMemo(() => {
     const groups = {};
     logs.forEach(log => {
       const key = log.bulk_session_id || `single_${log.id}`;
