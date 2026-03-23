@@ -85,6 +85,18 @@ Deno.serve(async (req) => {
     const existingCheck = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedUrl });
     if (existingCheck.length > 0) {
       console.log('Duplicate — skipping');
+      try {
+        await base44.asServiceRole.entities.UploadAuditLog.create({
+          uploaded_by: user.email,
+          source_type: bulkSessionId ? 'bulk_url' : 'url',
+          url: normalizedUrl,
+          title: existingCheck[0].title,
+          newsletter_id: existingCheck[0].id,
+          status: 'duplicate',
+          bulk_session_id: bulkSessionId || null,
+          bulk_total: bulkTotal || null
+        });
+      } catch (_) {}
       return Response.json({
         success: true,
         message: 'Newsletter with this URL already exists. Skipped to prevent duplicates.',
