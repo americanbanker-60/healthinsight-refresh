@@ -391,7 +391,7 @@ export default function VariousSources() {
   const isDone = urlItems.length > 0 && !isRunning;
   const addedCount = urlItems.filter(i => i.status === "success").length;
 
-  const isPreviewSandbox = window.location.hostname.includes('preview-sandbox') || window.location.hostname.includes('preview--');
+  const isPreviewSandbox = window.location.hostname.includes('preview-sandbox');
 
   return (
     <div className="p-6 md:p-10 max-w-4xl mx-auto">
