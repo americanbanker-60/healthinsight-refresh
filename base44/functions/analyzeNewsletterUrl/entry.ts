@@ -277,7 +277,7 @@ Deno.serve(async (req) => {
 
     console.log('AI analysis complete:', result.title);
 
-    const createdRecord = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+    const createdRecord = await base44.entities.NewsletterItem.create(newsletterData);
     const newsletterId = createdRecord?.id;
     if (!newsletterId) {
       return Response.json({ success: false, error: 'Failed to get newsletter ID' }, { status: 500 });
