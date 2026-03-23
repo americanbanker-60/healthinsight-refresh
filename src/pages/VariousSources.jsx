@@ -90,10 +90,12 @@ function AnalysisResult({ analysis, onReset }) {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   const exportPDF = async () => {
-    if (!analysis.id) { toast.error("No newsletter ID"); return; }
     setIsExportingPDF(true);
     try {
-      const response = await base44.functions.invoke('exportNewsletterPDF', { newsletterId: analysis.id });
+      const response = await base44.functions.invoke('exportNewsletterPDF', {
+        newsletterId: analysis.id,
+        newsletterData: analysis
+      });
       const { pdfBase64, filename } = response.data;
       const base64Data = pdfBase64.split(',')[1];
       const byteNumbers = new Uint8Array(atob(base64Data).split('').map(c => c.charCodeAt(0)));
