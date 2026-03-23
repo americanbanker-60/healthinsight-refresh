@@ -12,6 +12,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import IntelligenceOverhaul from "../components/admin/IntelligenceOverhaul";
 import BulkImportStatus from "../components/admin/BulkImportStatus";
+import UploadAuditLog from "../components/admin/UploadAuditLog";
 
 
 export default function AdminDashboard() {
