@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,11 +20,7 @@ import { createPageUrl } from "@/utils";
 export default function UserSettings() {
   const queryClient = useQueryClient();
   const { settings, isLoading: settingsLoading, updateSettings } = useUserSettings();
-  
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
-  });
+  const { user } = useAuth();
 
   const { data: sources = [] } = useQuery({
     queryKey: ['sources'],
@@ -91,7 +88,7 @@ export default function UserSettings() {
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto">
       <div className="mb-6">
-        <Link to={createPageUrl("KnowledgeHub")}>
+        <Link to={createPageUrl("Dashboard")}>
           <Button variant="ghost" size="sm" className="mb-4">
             <ChevronLeft className="w-4 h-4 mr-1" />
             Back to Home

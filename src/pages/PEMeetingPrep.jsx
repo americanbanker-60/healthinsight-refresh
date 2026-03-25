@@ -8,10 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Loader2, FileText, Plus, Trash2, AlertCircle, CheckCircle } from "lucide-react";
+import { Briefcase, Loader2, FileText, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import ReactMarkdown from "react-markdown";
-import { format } from "date-fns";
+import BriefPreview from "@/components/bd/BriefPreview";
+import BriefHistory from "@/components/bd/BriefHistory";
 
 const MEETING_TYPES = [
   { value: "intro", label: "Intro" },
@@ -736,73 +736,8 @@ Research the company using available web search if URLs provided, or use the req
         </Card>
 
         <div className="space-y-6">
-          <Card className="bg-white shadow-lg">
-            <CardHeader>
-              <CardTitle>Brief Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!viewing ? (
-                <div className="text-center py-12">
-                  <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-600">No brief selected</p>
-                  <p className="text-sm text-slate-500 mt-2">Generate a brief to see it here</p>
-                </div>
-              ) : (
-                <div className="prose prose-sm max-w-none">
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 mb-4 flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-indigo-900">{viewing.counterparty_name}</p>
-                      <p className="text-xs text-indigo-600 mt-1">
-                        Generated {format(new Date(viewing.created_date), "MMM d, yyyy 'at' h:mm a")}
-                      </p>
-                    </div>
-                  </div>
-                  <ReactMarkdown>{viewing.brief_markdown || "Brief not available"}</ReactMarkdown>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white shadow-lg">
-            <CardHeader>
-              <CardTitle>History ({briefs.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {briefs.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">No briefs yet</p>
-              ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {briefs.map(b => {
-                    if (!b || !b.id) return null;
-                    return (
-                      <div
-                        key={b.id}
-                        className={`p-3 border rounded-lg cursor-pointer transition ${
-                          viewingId === b.id
-                            ? 'bg-indigo-50 border-indigo-300'
-                            : 'hover:bg-slate-50 border-slate-200'
-                        }`}
-                        onClick={() => setViewingId(b.id)}
-                      >
-                        <p className="font-semibold text-sm">{b.counterparty_name || "Unnamed"}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">
-                            {b.counterparty_type || "N/A"}
-                          </Badge>
-                          {b.created_date && (
-                            <span className="text-xs text-slate-500">
-                              {format(new Date(b.created_date), "MMM d")}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <BriefPreview brief={viewing} />
+          <BriefHistory briefs={briefs} viewingId={viewingId} onSelect={setViewingId} />
         </div>
       </div>
     </div>

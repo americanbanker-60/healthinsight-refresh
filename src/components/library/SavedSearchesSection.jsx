@@ -1,5 +1,6 @@
 import React from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,16 +14,17 @@ import EmptyState from "../common/EmptyState";
 export default function SavedSearchesSection() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: savedSearches = [] } = useQuery({
     queryKey: ['savedSearches'],
     queryFn: async () => {
-      const user = await base44.auth.me();
       return await base44.entities.SavedSearch.filter(
         { created_by: user.email },
         "-created_date"
       );
     },
+    enabled: !!user,
     initialData: [],
   });
 

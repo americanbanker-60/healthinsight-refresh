@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,17 +13,18 @@ import ReactMarkdown from "react-markdown";
 
 export default function SavedSummariesSection() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [selectedSummary, setSelectedSummary] = useState(null);
 
   const { data: summaries = [] } = useQuery({
     queryKey: ['savedSummaries'],
     queryFn: async () => {
-      const user = await base44.auth.me();
       return await base44.entities.SavedSummary.filter(
         { created_by: user.email },
         "-created_date"
       );
     },
+    enabled: !!user,
     initialData: [],
   });
 

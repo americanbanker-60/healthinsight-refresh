@@ -48,7 +48,6 @@ export default function Dashboard() {
     availableSources,
   } = useHealthcareIntelligence({
     activeTab,
-    maxItems: 500,
     enableInvestmentFocus: true,
   });
 

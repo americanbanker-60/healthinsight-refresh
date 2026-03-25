@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { subDays, startOfYear } from "date-fns";
 
 /**
@@ -11,9 +12,11 @@ import { subDays, startOfYear } from "date-fns";
 export function useHealthcareIntelligence(options = {}) {
   const {
     activeTab = "all",
-    maxItems = 1000,
+    maxItems = 50,
     enableInvestmentFocus = false,
   } = options;
+
+  const { user } = useAuth();
 
   const [persistentFilters, setPersistentFilters] = React.useState({});
   const [skip, setSkip] = React.useState(0);
@@ -81,12 +84,9 @@ export function useHealthcareIntelligence(options = {}) {
 
   const { data: userConfig = {} } = useQuery({
     queryKey: ['dashboardUserConfig'],
-    queryFn: async () => {
-      const user = await base44.auth.me();
-      return user.dashboard_config || {};
-    },
+    queryFn: () => user?.dashboard_config || {},
     initialData: {},
-    enabled: enableInvestmentFocus,
+    enabled: enableInvestmentFocus && !!user,
   });
 
   // Investment focus filtering (optional)
