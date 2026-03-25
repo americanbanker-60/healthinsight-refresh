@@ -69,15 +69,18 @@ export default function NewsletterDetail() {
     }
   };
 
-  const { data: newsletter, isLoading, refetch } = useQuery({
+  const { data: newsletter, isLoading, isError, refetch } = useQuery({
     queryKey: ['newsletter', newsletterId],
     queryFn: async () => {
       const response = await base44.functions.invoke('getNewsletter', { newsletterId });
-      return response.data?.newsletter || null;
+      const result = response.data?.newsletter || null;
+      // If not found yet, throw so react-query retries
+      if (!result) throw new Error('Newsletter not yet available');
+      return result;
     },
     enabled: !!newsletterId,
-    retry: 3,
-    retryDelay: 1500,
+    retry: 8,
+    retryDelay: (attempt) => Math.min(1000 * (attempt + 1), 4000),
   });
 
   const sentimentColors = {
@@ -171,10 +174,11 @@ export default function NewsletterDetail() {
     );
   }
 
-  if (!newsletter) {
+  if (isError || (!isLoading && !newsletter)) {
     return (
       <div className="p-10 text-center">
         <p className="text-slate-500">Newsletter not found</p>
+        <Button variant="outline" className="mt-4" onClick={() => refetch()}>Try Again</Button>
       </div>
     );
   }

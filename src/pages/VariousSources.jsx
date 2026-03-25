@@ -140,11 +140,11 @@ function AnalysisResult({ analysis, onReset }) {
             <Mail className="w-4 h-4 mr-1" />Email
           </Button>
           {analysis.id && (
-            <Link to={`${createPageUrl("NewsletterDetail")}?id=${analysis.id}`}>
+            <a href={`${createPageUrl("NewsletterDetail")}?id=${analysis.id}`} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="bg-indigo-50 border-indigo-200 hover:bg-indigo-100 text-indigo-700">
                 <ExternalLink className="w-4 h-4 mr-1" />Full Detail
               </Button>
-            </Link>
+            </a>
           )}
           <Button variant="outline" size="sm" onClick={onReset}><ArrowLeft className="w-4 h-4 mr-1" />New</Button>
         </div>
