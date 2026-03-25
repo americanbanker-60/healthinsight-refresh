@@ -203,6 +203,7 @@ EXTRACTION RULES — follow these strictly:
       content_type: 'PDF',
       source_type: 'PDF',
       date_added_to_app: new Date().toISOString(),
+      uploaded_by: user.email,
       publication_date: result.publication_date || today,
       publication_date_confidence: result.publication_date_confidence || 'low',
       publication_date_source: result.publication_date_source || 'PDF document',

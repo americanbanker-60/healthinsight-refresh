@@ -4,6 +4,7 @@ import SavedSearchesSection from "../components/library/SavedSearchesSection";
 import SavedSummariesSection from "../components/library/SavedSummariesSection";
 import InsightsSection from "../components/library/InsightsSection";
 import WatchedTopicsSection from "../components/library/WatchedTopicsSection";
+import MyAnalyzedArticlesSection from "../components/library/MyAnalyzedArticlesSection";
 
 export default function MyLibrary() {
   return (
@@ -23,6 +24,7 @@ export default function MyLibrary() {
       </div>
 
       <div className="space-y-6">
+        <MyAnalyzedArticlesSection />
         <InsightsSection />
         <WatchedTopicsSection />
         <SavedSearchesSection />
