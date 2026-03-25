@@ -90,6 +90,12 @@ export default function NewsletterDetail() {
     retryDelay: (attempt) => Math.min(1500 * (attempt + 1), 4000),
   });
 
+  // Clear sessionStorage before refetching so we always get fresh server data
+  const handleRefresh = () => {
+    try { sessionStorage.removeItem(`newsletter_cache_${newsletterId}`); } catch (_) {}
+    refetch();
+  };
+
   const sentimentColors = {
     positive: "bg-green-100 text-green-800 border-green-200",
     neutral: "bg-slate-100 text-slate-800 border-slate-200",
@@ -230,7 +236,7 @@ export default function NewsletterDetail() {
       </div>
 
       <div className="mb-6">
-        <SmartDigest newsletter={newsletter} onUpdated={refetch} />
+        <SmartDigest newsletter={newsletter} onUpdated={handleRefresh} />
       </div>
 
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/60 p-8 mb-6">
