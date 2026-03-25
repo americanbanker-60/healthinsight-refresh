@@ -70,6 +70,17 @@ export default function ResearchAssistant() {
     setConversations(prev => [convo, ...prev]);
   };
 
+  const generateTitle = async (msg) => {
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Generate a concise, descriptive 4-6 word title for a healthcare research conversation that starts with this question: "${msg}"\n\nReturn ONLY the title text, no quotes, no punctuation at the end. Make it specific and meaningful (e.g. "Behavioral Health M&A Activity 2025", "ASC Sector Funding Trends", "Value-Based Care Analyst Views").`,
+      });
+      return result?.trim() || msg.slice(0, 50);
+    } catch {
+      return msg.slice(0, 50);
+    }
+  };
+
   const sendMessage = async (text) => {
     const msg = text || input.trim();
     if (!msg || isSending) return;
@@ -77,10 +88,11 @@ export default function ResearchAssistant() {
     setIsSending(true);
 
     let convo = activeConversation;
-    if (!convo) {
+    const isNewConvo = !convo;
+    if (isNewConvo) {
       convo = await base44.agents.createConversation({
         agent_name: "healthinsight_assistant",
-        metadata: { name: msg.slice(0, 50) }
+        metadata: { name: "New conversation…" }
       });
       setActiveConversation(convo);
       setConversations(prev => [convo, ...prev]);
@@ -91,6 +103,14 @@ export default function ResearchAssistant() {
 
     try {
       await base44.agents.addMessage(convo, { role: "user", content: msg });
+
+      // Generate an AI title for new conversations after the first message
+      if (isNewConvo) {
+        const aiTitle = await generateTitle(msg);
+        const updated = await base44.agents.updateConversation(convo.id, { metadata: { name: aiTitle } });
+        setActiveConversation(prev => ({ ...prev, metadata: { ...prev?.metadata, name: aiTitle } }));
+        setConversations(prev => prev.map(c => c.id === convo.id ? { ...c, metadata: { ...c.metadata, name: aiTitle } } : c));
+      }
     } finally {
       setIsSending(false);
     }
