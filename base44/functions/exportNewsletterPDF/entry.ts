@@ -188,23 +188,23 @@ Deno.serve(async (req) => {
       sectionHeader('Key Statistics');
       const cols = 2;
       const colW = (CW - 10) / cols;
-      a.key_statistics.forEach((stat, i) => {
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        if (col === 0) checkPage(52);
-        const cx = ML + col * (colW + 10);
-        const cy = y + row * 56;
-        doc.setFillColor(238, 242, 255);
-        doc.roundedRect(cx, cy - 14, colW, 48, 4, 4, 'F');
-        txt(stat.figure, cx + 8, cy + 2, { size: 14, style: 'bold', color: INDIGO });
-        block; // just spacing
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...SLATE_600);
-        const ctxLines = doc.splitTextToSize(stat.context || '', colW - 16);
-        ctxLines.slice(0, 2).forEach((l, li) => doc.text(l, cx + 8, cy + 18 + li * 11));
-        if (col === cols - 1 || i === a.key_statistics.length - 1) y = cy + 56;
-      });
+      const statH = 52;
+      for (let i = 0; i < a.key_statistics.length; i += cols) {
+        checkPage(statH + 4);
+        const rowStats = a.key_statistics.slice(i, i + cols);
+        rowStats.forEach((stat, col) => {
+          const cx = ML + col * (colW + 10);
+          doc.setFillColor(238, 242, 255);
+          doc.roundedRect(cx, y, colW, statH - 4, 4, 4, 'F');
+          txt(stat.figure, cx + 8, y + 16, { size: 14, style: 'bold', color: INDIGO });
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...SLATE_600);
+          const ctxLines = doc.splitTextToSize(stat.context || '', colW - 16);
+          ctxLines.slice(0, 2).forEach((l, li) => doc.text(l, cx + 8, y + 32 + li * 11));
+        });
+        y += statH + 4;
+      }
       y += 8;
     }
 
