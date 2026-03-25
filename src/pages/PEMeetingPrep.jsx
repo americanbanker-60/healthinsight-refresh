@@ -13,7 +13,14 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
 
-const MEETING_TYPES = ["intro", "diligence", "follow-up", "management", "other"];
+const MEETING_TYPES = [
+  { value: "intro", label: "Intro" },
+  { value: "diligence", label: "Diligence" },
+  { value: "follow-up", label: "Follow-Up" },
+  { value: "management", label: "Management Meeting" },
+  { value: "bd_coverage", label: "BD/Coverage" },
+  { value: "other", label: "Other" },
+];
 const ROLES = [
   "PE Sponsor",
   "Growth Equity",
@@ -616,7 +623,7 @@ Research the company using available web search if URLs provided, or use the req
                 </SelectTrigger>
                 <SelectContent>
                   {MEETING_TYPES.map(t => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
