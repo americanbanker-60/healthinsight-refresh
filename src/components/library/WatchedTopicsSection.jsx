@@ -1,5 +1,6 @@
 import React from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,18 +13,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WatchedTopicsSection() {
   const navigate = useNavigate();
-
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
-  });
+  const { user } = useAuth();
 
   const { data: watchedTopics = [], isLoading } = useQuery({
     queryKey: ['watchedTopics'],
     queryFn: async () => {
-      const user = await base44.auth.me();
       return await base44.entities.WatchedTopic.filter({ created_by: user.email }, "-created_date");
     },
+    enabled: !!user,
     initialData: [],
   });
 
@@ -36,7 +33,6 @@ export default function WatchedTopicsSection() {
   const { data: alerts = [] } = useQuery({
     queryKey: ['topicAlerts'],
     queryFn: async () => {
-      if (!user) return [];
       return await base44.entities.TopicAlert.filter({ created_by: user.email }, "-created_date");
     },
     initialData: [],

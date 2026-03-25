@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { FolderOpen, Plus, Trash2, FileText } from "lucide-react";
+import { FolderOpen, Plus, Trash2, FileText, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ import EmptyState from "../components/common/EmptyState";
 export default function MyCustomPacks() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newPackTitle, setNewPackTitle] = useState("");
   const [newPackDescription, setNewPackDescription] = useState("");
@@ -28,18 +30,18 @@ export default function MyCustomPacks() {
   const { data: customPacks = [], isLoading } = useQuery({
     queryKey: ['userCustomPacks'],
     queryFn: async () => {
-      const user = await base44.auth.me();
       return await base44.entities.UserCustomPack.filter({ created_by: user.email }, "-created_date");
     },
+    enabled: !!user,
     initialData: [],
   });
 
   const { data: allPackItems = [] } = useQuery({
     queryKey: ['allUserCustomPackItems'],
     queryFn: async () => {
-      const user = await base44.auth.me();
       return await base44.entities.UserCustomPackItem.filter({ created_by: user.email });
     },
+    enabled: !!user,
     initialData: [],
   });
 
@@ -158,12 +160,16 @@ export default function MyCustomPacks() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                      disabled={deletePackMutation.isPending && deletePackId === pack.id}
                       onClick={(e) => {
                         e.stopPropagation();
                         setDeletePackId(pack.id);
                       }}
                     >
-                      <Trash2 className="w-4 h-4 text-red-500" />
+                      {deletePackMutation.isPending && deletePackId === pack.id
+                        ? <Loader2 className="w-4 h-4 animate-spin text-red-400" />
+                        : <Trash2 className="w-4 h-4 text-red-500" />
+                      }
                     </Button>
                   </div>
                   <CardTitle className="text-lg group-hover:text-purple-600 transition-colors">

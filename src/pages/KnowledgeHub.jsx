@@ -8,9 +8,7 @@ import { TrendingUp, Building2, ArrowRight, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function KnowledgeHub() {
-  const { allNewsletters, isLoading, availableThemes, availableCompanies } = useHealthcareIntelligence({
-    maxItems: 1000,
-  });
+  const { allNewsletters, isLoading, availableThemes, availableCompanies } = useHealthcareIntelligence();
 
   // Calculate theme counts
   const themesWithCounts = React.useMemo(() => {
@@ -67,7 +65,7 @@ export default function KnowledgeHub() {
               <TrendingUp className="w-6 h-6 text-blue-600" />
               <h2 className="text-2xl font-bold text-slate-900">Emerging Themes</h2>
             </div>
-            <Link to={createPageUrl("TopicsDirectory")}>
+            <Link to={createPageUrl("ExploreAllSources")}>
               <Badge variant="outline" className="cursor-pointer hover:bg-blue-50 transition-colors">
                 View All
                 <ArrowRight className="w-3 h-3 ml-1" />

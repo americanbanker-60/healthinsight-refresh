@@ -1,16 +1,13 @@
 import React from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 
 /**
  * Hook to manage user settings with defaults
  */
 export function useUserSettings() {
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { user } = useAuth();
 
   const { data: settingsList, isLoading } = useQuery({
     queryKey: ['userSettings', user?.email],
