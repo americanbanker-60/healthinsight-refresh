@@ -364,8 +364,18 @@ PUT BLANK LINES BETWEEN EVERY BULLET POINT AND SECTION.`
               </div>
               <Card className="bg-white border-slate-200">
                 <CardContent className="p-5">
-                  <div className="prose prose-sm max-w-none prose-headings:text-slate-900 prose-headings:font-semibold prose-h2:text-base prose-h2:mt-6 prose-h2:mb-3 prose-h2:pb-1 prose-h2:border-b prose-h2:border-slate-200 prose-h3:text-sm prose-h3:mt-5 prose-h3:mb-2 prose-p:text-slate-700 prose-p:leading-relaxed prose-p:mb-4 prose-li:text-slate-700 prose-li:mb-2 prose-ul:mb-4 prose-ul:mt-2 prose-strong:text-slate-900 [&_ul]:space-y-2 [&_ol]:space-y-2">
-                    <ReactMarkdown>{generatedContent}</ReactMarkdown>
+                  <div className="text-sm text-slate-700 leading-relaxed space-y-4 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-slate-900 [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:pb-1 [&_h2]:border-b [&_h2]:border-slate-200 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-slate-900 [&_h3]:mt-4 [&_h3]:mb-2 [&_p]:mb-4 [&_p]:leading-relaxed [&_ul]:space-y-2 [&_ul]:mb-4 [&_ol]:space-y-2 [&_ol]:mb-4 [&_li]:text-slate-700 [&_strong]:text-slate-900 [&_strong]:font-semibold">
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
+                        h2: ({ children }) => <h2 className="text-base font-semibold text-slate-900 mt-6 mb-3 pb-1 border-b border-slate-200">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-sm font-semibold text-slate-900 mt-4 mb-2">{children}</h3>,
+                        ul: ({ children }) => <ul className="space-y-2 mb-4 list-disc pl-5">{children}</ul>,
+                        ol: ({ children }) => <ol className="space-y-2 mb-4 list-decimal pl-5">{children}</ol>,
+                        li: ({ children }) => <li className="text-slate-700 leading-relaxed">{children}</li>,
+                        strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
+                      }}
+                    >{generatedContent}</ReactMarkdown>
                   </div>
                 </CardContent>
               </Card>
