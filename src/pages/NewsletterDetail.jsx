@@ -72,6 +72,14 @@ export default function NewsletterDetail() {
   const { data: newsletter, isLoading, isError, refetch } = useQuery({
     queryKey: ['newsletter', newsletterId],
     queryFn: async () => {
+      // Fast path: use analysis data cached by AnalysisResult just before navigation
+      const cached = sessionStorage.getItem(`newsletter_cache_${newsletterId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed?.id) return parsed;
+        } catch (_) {}
+      }
       const response = await base44.functions.invoke('getNewsletter', { newsletterId });
       const result = response.data?.newsletter || null;
       // If not found yet, throw so react-query retries
