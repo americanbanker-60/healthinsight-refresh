@@ -67,6 +67,7 @@ export default function VariousSources() {
       }
       setAnalysisResult(result);
       queryClient.invalidateQueries({ queryKey: ["newsletters"] });
+      queryClient.invalidateQueries({ queryKey: ["all-newsletters"] });
     } catch (err) {
       setError(err.message || "Failed to analyze. Please check your input and try again.");
     } finally {
@@ -95,6 +96,7 @@ export default function VariousSources() {
       items[i] = { ...items[i], status: "processing" }; setUrlItems([...items]);
       try {
         const response = await base44.functions.invoke('analyzeNewsletterUrl', { url: items[i].url, sourceName: sourceName.trim() || undefined, bulkSessionId, bulkTotal: urlList.length });
+        if (!response.data?.success) throw new Error(response.data?.error || "Analysis failed");
         const isDupe = response.data?.message?.includes('already exists');
         items[i] = { ...items[i], status: isDupe ? "duplicate" : "success", title: response.data.title || items[i].url };
       } catch (err) {
@@ -104,6 +106,7 @@ export default function VariousSources() {
     }
     setIsRunning(false); setUrlInput("");
     queryClient.invalidateQueries({ queryKey: ['newsletters'] });
+    queryClient.invalidateQueries({ queryKey: ['all-newsletters'] });
     const added = items.filter(i => i.status === "success").length;
     if (added > 0) toast.success(`${added} newsletter${added !== 1 ? "s" : ""} added to the shared library`);
   };
@@ -120,6 +123,7 @@ export default function VariousSources() {
       setPdfResults(prev => [result, ...prev]);
       if (!isDupe) toast.success(`PDF added: ${result.title}`);
       queryClient.invalidateQueries({ queryKey: ['newsletters'] });
+      queryClient.invalidateQueries({ queryKey: ['all-newsletters'] });
     } catch (err) {
       setPdfResults(prev => [{ file: f.name, status: "error", errorMsg: err.message }, ...prev]);
       toast.error(`Failed: ${err.message}`);

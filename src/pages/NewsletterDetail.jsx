@@ -72,14 +72,14 @@ export default function NewsletterDetail() {
   const { data: newsletter, isLoading, isError, refetch } = useQuery({
     queryKey: ['newsletter', newsletterId],
     queryFn: async () => {
-      // Try sessionStorage cache first (set when navigating from AnalysisResult)
-      try {
-        const cached = sessionStorage.getItem(`newsletter_cache_${newsletterId}`);
-        if (cached) {
+      // Fast path: use analysis data cached by AnalysisResult just before navigation
+      const cached = sessionStorage.getItem(`newsletter_cache_${newsletterId}`);
+      if (cached) {
+        try {
           const parsed = JSON.parse(cached);
           if (parsed?.id) return parsed;
-        }
-      } catch (_) {}
+        } catch (_) {}
+      }
       const response = await base44.functions.invoke('getNewsletter', { newsletterId });
       const result = response.data?.newsletter || null;
       if (!result) throw new Error('Newsletter not yet available');
