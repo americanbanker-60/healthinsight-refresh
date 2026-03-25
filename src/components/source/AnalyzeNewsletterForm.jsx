@@ -39,7 +39,27 @@ export default function AnalyzeNewsletterForm({ sourceName, onSuccess, onCancel 
     if (newsletterId) {
       setIsRedirecting(true);
       onSuccess?.();
-      navigate(createPageUrl("NewsletterDetail") + "?id=" + newsletterId);
+
+      // Poll until the record is readable (guards against DB propagation lag)
+      let attempts = 0;
+      const maxAttempts = 8;
+      const poll = async () => {
+        try {
+          const check = await base44.entities.NewsletterItem.filter({ id: newsletterId });
+          if (check && check.length > 0) {
+            navigate(createPageUrl("NewsletterDetail") + "?id=" + newsletterId);
+            return;
+          }
+        } catch (_) {}
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 800);
+        } else {
+          // Give up polling — navigate anyway
+          navigate(createPageUrl("NewsletterDetail") + "?id=" + newsletterId);
+        }
+      };
+      setTimeout(poll, 500);
     } else {
       setError(data?.error || "Analysis failed — no newsletter ID returned.");
     }

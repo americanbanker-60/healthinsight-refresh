@@ -353,6 +353,17 @@ Deno.serve(async (req) => {
       console.error('Relations linking failed (non-fatal):', relErr.message);
     }
 
+    // Verify the record is readable before returning (guards against DB propagation lag)
+    let verifiedRecord = null;
+    for (let i = 0; i < 5; i++) {
+      try {
+        const check = await base44.entities.NewsletterItem.filter({ id: newsletterId });
+        if (check && check.length > 0) { verifiedRecord = check[0]; break; }
+      } catch (_) {}
+      await new Promise(r => setTimeout(r, 500));
+    }
+    console.log(verifiedRecord ? `Record verified readable: ${newsletterId}` : `Warning: record ${newsletterId} not yet readable after retries`);
+
     return Response.json({
       success: true,
       id: newsletterId,
