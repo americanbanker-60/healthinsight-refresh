@@ -79,8 +79,8 @@ export default function NewsletterDetail() {
       return result;
     },
     enabled: !!newsletterId,
-    retry: 8,
-    retryDelay: (attempt) => Math.min(1000 * (attempt + 1), 4000),
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1500 * (attempt + 1), 4000),
   });
 
   const sentimentColors = {
@@ -176,9 +176,12 @@ export default function NewsletterDetail() {
 
   if (isError || (!isLoading && !newsletter)) {
     return (
-      <div className="p-10 text-center">
-        <p className="text-slate-500">Newsletter not found</p>
-        <Button variant="outline" className="mt-4" onClick={() => refetch()}>Try Again</Button>
+      <div className="p-6 md:p-10 max-w-6xl mx-auto">
+        <div className="text-center py-20 text-slate-400">
+          <p className="text-lg font-medium text-slate-600 mb-1">Newsletter not found</p>
+          <p className="text-sm mb-6">This article may still be processing. Try refreshing in a moment.</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>Refresh</Button>
+        </div>
       </div>
     );
   }
