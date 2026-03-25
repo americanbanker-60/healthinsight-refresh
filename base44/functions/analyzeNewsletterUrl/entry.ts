@@ -268,6 +268,7 @@ Deno.serve(async (req) => {
       content_type: 'URL',
       source_name: sourceName || result.source_name || 'Unknown Source',
       date_added_to_app: new Date().toISOString(),
+      uploaded_by: user.email,
       publication_date_confidence: result.publication_date_confidence || 'medium',
       publication_date_source: result.publication_date_source || 'AI extraction',
       publication_date_notes: useFallback ? 'Fallback internet browsing used' : 'Direct URL upload',
