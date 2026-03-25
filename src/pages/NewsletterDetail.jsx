@@ -82,7 +82,6 @@ export default function NewsletterDetail() {
       }
       const response = await base44.functions.invoke('getNewsletter', { newsletterId });
       const result = response.data?.newsletter || null;
-      // If not found yet, throw so react-query retries
       if (!result) throw new Error('Newsletter not yet available');
       return result;
     },
