@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, RefreshCw, TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
+import { Sparkles, Loader2, RefreshCw, TrendingUp, TrendingDown, Minus, Activity, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 const SENTIMENT_CONFIG = {
   bullish:  { label: "Bullish",  color: "bg-emerald-100 text-emerald-800 border-emerald-200", icon: TrendingUp,   iconColor: "text-emerald-600" },
@@ -22,8 +23,13 @@ export default function SmartDigest({ newsletter, onUpdated, compact = false }) 
   const generate = async () => {
     setIsGenerating(true);
     try {
-      await base44.functions.invoke('generateSmartDigest', { newsletter_id: newsletter.id });
+      const response = await base44.functions.invoke('generateSmartDigest', { newsletter_id: newsletter.id });
+      if (response.data?.skipped) {
+        toast.info("Digest already up to date.");
+      }
       onUpdated?.();
+    } catch (err) {
+      toast.error("Failed to generate digest: " + (err?.message || "Unknown error"));
     } finally {
       setIsGenerating(false);
     }

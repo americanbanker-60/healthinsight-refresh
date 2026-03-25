@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     return Response.json({ message: 'Insufficient content to generate digest', skipped: true });
   }
 
-  const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+  const rawResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
     prompt: `You are a senior healthcare investment banking analyst. Based on this newsletter intelligence, generate exactly 3 concise executive summary bullets for an investment professional audience.
 
 Newsletter: "${newsletter.title}" (${newsletter.source_name})
@@ -75,8 +75,9 @@ Return JSON only:
     }
   });
 
-  const bullets = result.bullets?.slice(0, 3) || [];
-  const dealSentiment = result.deal_sentiment || 'neutral';
+  const result = rawResult?.response || rawResult;
+  const bullets = result?.bullets?.slice(0, 3) || [];
+  const dealSentiment = result?.deal_sentiment || 'neutral';
 
   // Save back to the newsletter
   await base44.asServiceRole.entities.NewsletterItem.update(newsletterId, {
