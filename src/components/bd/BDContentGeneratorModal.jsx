@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Copy, Download, Mail, FileText, Sparkles, Check, RefreshCw, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -53,6 +53,7 @@ export default function BDContentGeneratorModal({
   contextType, // "newsletter" | "topic" | "company" | "deal"
   contextData // { title, summary, companies, deals, actionLabel, etc. }
 }) {
+  const navigate = useNavigate();
   const defaultType = ACTION_LABEL_MAP[(contextData?.actionLabel || "").toLowerCase()] || "pitch_angle";
   const [contentType, setContentType] = useState(defaultType);
   const [additionalContext, setAdditionalContext] = useState("");
@@ -373,9 +374,12 @@ PUT BLANK LINES BETWEEN EVERY BULLET POINT AND SECTION.`
               <Zap className="w-3.5 h-3.5 mt-0.5 shrink-0 text-purple-600" />
               <span>
                 Want to save this topic and generate outreach anytime?{" "}
-                <Link to={createPageUrl("BDOpportunities")} className="font-semibold underline underline-offset-2 hover:text-purple-900">
+                <button
+                  onClick={() => { onClose(); navigate(createPageUrl("BDOpportunities")); }}
+                  className="font-semibold underline underline-offset-2 hover:text-purple-900"
+                >
                   Visit BD Opportunities →
-                </Link>
+                </button>
               </span>
             </div>
           )}

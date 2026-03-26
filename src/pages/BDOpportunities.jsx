@@ -131,6 +131,17 @@ function OpportunityCard({ opp, onDelete, onUpdate }) {
                   <Sparkles className="w-3 h-3 mr-1" />
                   Generate Outreach
                 </Button>
+                {opp.newsletter_id && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs text-blue-700 border-blue-200 bg-blue-50 hover:bg-blue-100"
+                    onClick={() => window.open(`${createPageUrl("NewsletterDetail")}?id=${opp.newsletter_id}`, "_blank")}
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    See HealthInsight Summary
+                  </Button>
+                )}
               </div>
 
               {/* Last generated content preview */}
