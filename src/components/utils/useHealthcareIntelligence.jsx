@@ -51,8 +51,8 @@ export function useHealthcareIntelligence(options = {}) {
       
       // Use backend function with asServiceRole to read from production DB
       const response = await base44.functions.invoke('listNewsletters', { query, sort: '-publication_date', limit: maxItems });
-      const result = response.data?.newsletters || [];
-      return result;
+      const data = response?.data ?? response;
+      return data?.newsletters || [];
     },
     initialData: [],
   });

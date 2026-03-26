@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Processes one page at a time - call repeatedly until duplicates_removed = 0
 Deno.serve(async (req) => {

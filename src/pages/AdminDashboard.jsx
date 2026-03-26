@@ -56,7 +56,7 @@ export default function AdminDashboard() {
         base44.entities.Source.list(),
         base44.entities.User.list()
       ]);
-      const newsletters = newslettersResp.data?.newsletters || [];
+      const newsletters = (newslettersResp?.data ?? newslettersResp)?.newsletters || [];
       return {
         newsletters: newsletters.length,
         companies: companies.length,

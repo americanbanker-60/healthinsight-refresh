@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Shared PE-focused analysis prompt builder
 function buildAnalysisPrompt({ contentBlock, domain, today, crossRefContext }) {
@@ -300,81 +300,16 @@ Deno.serve(async (req) => {
       console.warn('Audit log write failed (non-fatal):', auditErr.message);
     }
 
-    console.log(`Newsletter ID: ${newsletterId} — linking relations`);
-
-    try {
-      const [companies, topics] = await Promise.all([
-        base44.asServiceRole.entities.Company.list(),
-        base44.asServiceRole.entities.Topic.list()
-      ]);
-
-      const searchText = [
-        result.title || '',
-        result.tldr || '',
-        ...(result.key_takeaways || []),
-        ...(result.key_players || []),
-        ...(result.themes?.map(t => `${t.theme} ${t.description}`) || [])
-      ].join(' ').toLowerCase();
-
-      const relations = [];
-
-      for (const company of companies) {
-        let score = 0;
-        if (searchText.includes(company.company_name.toLowerCase())) score = 10;
-        for (const alias of (company.known_aliases || [])) {
-          if (alias && searchText.includes(alias.toLowerCase())) score = Math.max(score, 9);
-        }
-        for (const kw of (company.primary_keywords || [])) {
-          if (kw && searchText.includes(kw.toLowerCase())) score = Math.max(score, 7);
-        }
-        if (score > 0) relations.push({ newsletter_id: newsletterId, entity_type: 'company', entity_id: company.id, entity_name: company.company_name, relevance_score: score });
-      }
-
-      for (const topic of topics) {
-        let score = 0;
-        for (const kw of (topic.keywords || [])) {
-          if (kw && searchText.includes(kw.toLowerCase())) score = Math.max(score, 8);
-        }
-        for (const theme of (result.themes || [])) {
-          if (theme.theme && theme.theme.toLowerCase() === topic.topic_name.toLowerCase()) score = 10;
-        }
-        if (score > 0) relations.push({ newsletter_id: newsletterId, entity_type: 'topic', entity_id: topic.id, entity_name: topic.topic_name, relevance_score: score });
-      }
-
-      if (relations.length > 0) {
-        try {
-          await base44.asServiceRole.entities.NewsletterRelation.bulkCreate(relations);
-          console.log(`Relations linked: ${relations.length}`);
-        } catch (bulkErr) {
-          console.error('NewsletterRelation bulkCreate failed:', bulkErr.message);
-        }
-      }
-      console.log(`Newsletter completed with ${relations.length} relations`);
-    } catch (relErr) {
-      console.error('Relations linking failed (non-fatal):', relErr.message);
-    }
-
-    // Verify the record is readable (DB propagation can lag in some environments)
-    // We return success regardless — the record was already created above
-    let verifiedRecord = null;
-    for (let i = 0; i < 10; i++) {
-      try {
-        const check = await base44.asServiceRole.entities.NewsletterItem.filter({ id: newsletterId });
-        if (check && check.length > 0) { verifiedRecord = check[0]; break; }
-      } catch (_) {}
-      await new Promise(r => setTimeout(r, 1000));
-    }
-    console.log(verifiedRecord ? `Record verified readable: ${newsletterId}` : `DB propagation still pending for ${newsletterId} — record was saved, returning success anyway`);
-
-    // Always return success — record was created. Use verified data if available, fall back to newsletterData.
-    const returnedNewsletter = verifiedRecord || { ...newsletterData, id: newsletterId, status: 'completed', is_analyzed: true };
+    // Link relations asynchronously — record is already saved and queryable
+    base44.asServiceRole.functions.invoke('createNewsletterRelations', { newsletter_id: newsletterId })
+      .catch(err => console.error('Relations linking failed (non-fatal):', err.message));
 
     return Response.json({
       success: true,
       id: newsletterId,
       title: result.title,
       source_name: result.source_name,
-      newsletter: returnedNewsletter
+      newsletter: { ...newsletterData, id: newsletterId }
     });
 
   } catch (error) {

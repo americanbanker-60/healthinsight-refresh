@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Leases older than this are considered stale and will be re-queued
 const LEASE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes

@@ -24,7 +24,8 @@ export default function SmartDigest({ newsletter, onUpdated, compact = false }) 
     setIsGenerating(true);
     try {
       const response = await base44.functions.invoke('generateSmartDigest', { newsletter_id: newsletter.id });
-      if (response.data?.skipped) {
+      const digestData = response?.data ?? response;
+      if (digestData?.skipped) {
         toast.info("Digest already up to date.");
       }
       onUpdated?.();
