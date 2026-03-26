@@ -1,0 +1,87 @@
+{
+  "name": "BDOpportunity",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the opportunity (usually from the article/deal)"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "deal",
+        "newsletter",
+        "company",
+        "topic"
+      ],
+      "default": "newsletter",
+      "description": "What kind of signal triggered this opportunity"
+    },
+    "context_summary": {
+      "type": "string",
+      "description": "Short description of why this is an opportunity"
+    },
+    "companies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Relevant companies involved"
+    },
+    "deals": {
+      "type": "string",
+      "description": "Deal activity summary if applicable"
+    },
+    "themes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Relevant themes"
+    },
+    "newsletter_id": {
+      "type": "string",
+      "description": "ID of the source newsletter item if applicable"
+    },
+    "newsletter_title": {
+      "type": "string",
+      "description": "Title of the source newsletter"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "in_progress",
+        "contacted",
+        "closed"
+      ],
+      "default": "new",
+      "description": "Current status of this BD opportunity"
+    },
+    "notes": {
+      "type": "string",
+      "description": "User notes on this opportunity"
+    },
+    "generated_content": {
+      "type": "string",
+      "description": "Last generated email/talking points for this opportunity"
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

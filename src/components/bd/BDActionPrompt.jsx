@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Zap, Mail, Users, FileText, TrendingUp, Lightbulb } from "lucide-react";
+import { Zap, Mail, Users, FileText, TrendingUp, Lightbulb, BookmarkPlus, Check } from "lucide-react";
 import BDContentGeneratorModal from "./BDContentGeneratorModal";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 
 const actionTypes = {
   newsletter: {
@@ -37,7 +39,7 @@ const actionTypes = {
     color: "from-purple-600 to-pink-600",
     title: "Deal Signal Detected",
     actions: [
-      { label: "Add to pipeline", icon: FileText },
+      { label: "Add to pipeline", icon: BookmarkPlus },
       { label: "Reach out now", icon: Mail },
     ]
   }
@@ -52,10 +54,35 @@ export default function BDActionPrompt({
 }) {
   const [showGenerator, setShowGenerator] = useState(false);
   const [activeActionLabel, setActiveActionLabel] = useState("");
+  const [saved, setSaved] = useState(false);
   const config = actionTypes[type] || actionTypes.newsletter;
   const Icon = config.icon;
 
+  const saveToOpportunities = async () => {
+    try {
+      await base44.entities.BDOpportunity.create({
+        title: contextData?.title || "Untitled Opportunity",
+        source_type: type,
+        context_summary: context,
+        companies: contextData?.companies || [],
+        deals: contextData?.deals || "",
+        themes: contextData?.themes || [],
+        newsletter_id: contextData?.newsletter_id || "",
+        newsletter_title: contextData?.title || "",
+        status: "new",
+      });
+      setSaved(true);
+      toast.success("Saved to BD Opportunities");
+    } catch {
+      toast.error("Failed to save opportunity");
+    }
+  };
+
   const handleAction = (actionLabel) => {
+    if (actionLabel.toLowerCase() === "add to pipeline") {
+      saveToOpportunities();
+      return;
+    }
     if (onAction) {
       onAction(actionLabel);
     } else {
@@ -92,18 +119,24 @@ export default function BDActionPrompt({
           </div>
           <p className="text-xs text-white/90 mb-2">{context || "Turn this intelligence into action"}</p>
           <div className="flex gap-2 flex-wrap">
-            {config.actions.map((action, idx) => (
-              <Button
-                key={idx}
-                size="sm"
-                variant="secondary"
-                className="bg-white/20 hover:bg-white/30 text-white border-0 text-xs h-7"
-                onClick={() => handleAction(action.label)}
-              >
-                <action.icon className="w-3 h-3 mr-1" />
-                {action.label}
-              </Button>
-            ))}
+            {config.actions.map((action, idx) => {
+              const isPipeline = action.label.toLowerCase() === "add to pipeline";
+              return (
+                <Button
+                  key={idx}
+                  size="sm"
+                  variant="secondary"
+                  className="bg-white/20 hover:bg-white/30 text-white border-0 text-xs h-7"
+                  onClick={() => handleAction(action.label)}
+                  disabled={isPipeline && saved}
+                >
+                  {isPipeline && saved
+                    ? <><Check className="w-3 h-3 mr-1" />Saved!</>
+                    : <><action.icon className="w-3 h-3 mr-1" />{action.label}</>
+                  }
+                </Button>
+              );
+            })}
           </div>
         </div>
         <BDContentGeneratorModal
@@ -130,18 +163,24 @@ export default function BDActionPrompt({
                 {context || "This insight presents a business development opportunity. Take action now."}
               </p>
               <div className="flex flex-wrap gap-2">
-                {config.actions.map((action, idx) => (
-                  <Button
-                    key={idx}
-                    size="sm"
-                    variant="secondary"
-                    className="bg-white/20 hover:bg-white/30 text-white border-0"
-                    onClick={() => handleAction(action.label)}
-                  >
-                    <action.icon className="w-4 h-4 mr-2" />
-                    {action.label}
-                  </Button>
-                ))}
+                {config.actions.map((action, idx) => {
+                  const isPipeline = action.label.toLowerCase() === "add to pipeline";
+                  return (
+                    <Button
+                      key={idx}
+                      size="sm"
+                      variant="secondary"
+                      className="bg-white/20 hover:bg-white/30 text-white border-0"
+                      onClick={() => handleAction(action.label)}
+                      disabled={isPipeline && saved}
+                    >
+                      {isPipeline && saved
+                        ? <><Check className="w-4 h-4 mr-2" />Saved!</>
+                        : <><action.icon className="w-4 h-4 mr-2" />{action.label}</>
+                      }
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           </div>
