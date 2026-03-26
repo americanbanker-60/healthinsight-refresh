@@ -75,7 +75,7 @@ export default function AnalysisResult({ analysis, onReset }) {
         newsletterId: analysis.id,
         newsletterData: analysis
       });
-      const { pdfBase64, filename } = response.data;
+      const { pdfBase64, filename } = response?.data ?? response;
       const base64Data = pdfBase64.split(',')[1];
       const byteNumbers = new Uint8Array(atob(base64Data).split('').map(c => c.charCodeAt(0)));
       const blob = new Blob([byteNumbers], { type: 'application/pdf' });

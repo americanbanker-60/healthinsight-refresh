@@ -44,7 +44,7 @@ export default function NewsletterDetail() {
     setIsExportingPDF(true);
     try {
       const response = await base44.functions.invoke('exportNewsletterPDF', { newsletterId: newsletter.id });
-      const { pdfBase64, filename } = response.data;
+      const { pdfBase64, filename } = response?.data ?? response;
       // Strip the data URI prefix to get raw base64
       const base64Data = pdfBase64.split(',')[1];
       const byteCharacters = atob(base64Data);
