@@ -62,6 +62,23 @@ export default function BDActionPrompt({
 
   const saveToOpportunities = async () => {
     try {
+      // Check for duplicate: prevent saving if newsletter_id already exists
+      if (contextData?.newsletter_id) {
+        const existing = await base44.entities.BDOpportunity.filter({ newsletter_id: contextData.newsletter_id });
+        if (existing && existing.length > 0) {
+          toast.info(
+            <span>
+              This article is already in your BD Opportunities.{" "}
+              <a href={createPageUrl("BDOpportunities")} className="underline font-semibold">
+                View &amp; generate outreach →
+              </a>
+            </span>
+          );
+          setSaved(true);
+          return;
+        }
+      }
+      
       await base44.entities.BDOpportunity.create({
         title: contextData?.title || "Untitled Opportunity",
         source_type: type,
