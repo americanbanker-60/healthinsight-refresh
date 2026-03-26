@@ -52,7 +52,8 @@ export default function ExploreAllSources() {
         sort: '-publication_date',
         limit: 500
       });
-      return response.data?.newsletters || [];
+      const data = response?.data ?? response;
+      return data?.newsletters || [];
     },
     initialData: [],
   });

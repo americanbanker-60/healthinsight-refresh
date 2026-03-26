@@ -20,7 +20,8 @@ export default function MyAnalyzedArticlesSection() {
         sort: '-date_added_to_app',
         limit: 50
       });
-      return response.data?.newsletters || [];
+      const data = response?.data ?? response;
+      return data?.newsletters || [];
     },
     enabled: !!user,
     initialData: [],

@@ -52,18 +52,20 @@ export default function VariousSources() {
       let result;
       if (activeTab === "url") {
         const response = await base44.functions.invoke("analyzeNewsletterUrl", { url: url.trim() });
-        if (!response.data?.success) throw new Error(response.data?.error || "Analysis failed");
-        if (response.data.message?.includes("already exists")) toast.info("This article is already in your library.");
+        const urlData = response?.data ?? response;
+        if (!urlData?.success) throw new Error(urlData?.error || "Analysis failed");
+        if (urlData.message?.includes("already exists")) toast.info("This article is already in your library.");
         else toast.success("Saved to library!");
-        result = response.data.newsletter || { id: response.data.id, title: response.data.title, source_name: response.data.source_name, source_url: url.trim() };
+        result = urlData.newsletter || { id: urlData.id, title: urlData.title, source_name: urlData.source_name, source_url: url.trim() };
       } else {
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
         if (!uploadResult.file_url) throw new Error("File upload failed");
         const response = await base44.functions.invoke("analyzeNewsletterPDF", { file_url: uploadResult.file_url, sourceName: file.name.replace(/\.pdf$/i, "") });
-        if (!response.data?.success) throw new Error(response.data?.error || "PDF analysis failed");
-        if (response.data.message?.includes("already exists")) toast.info("This PDF is already in your library.");
+        const pdfData = response?.data ?? response;
+        if (!pdfData?.success) throw new Error(pdfData?.error || "PDF analysis failed");
+        if (pdfData.message?.includes("already exists")) toast.info("This PDF is already in your library.");
         else toast.success("Saved to library!");
-        result = response.data.newsletter || { id: response.data.id, title: response.data.title, source_name: response.data.source_name };
+        result = pdfData.newsletter || { id: pdfData.id, title: pdfData.title, source_name: pdfData.source_name };
       }
       setAnalysisResult(result);
       queryClient.invalidateQueries({ queryKey: ["newsletters"] });
@@ -96,9 +98,10 @@ export default function VariousSources() {
       items[i] = { ...items[i], status: "processing" }; setUrlItems([...items]);
       try {
         const response = await base44.functions.invoke('analyzeNewsletterUrl', { url: items[i].url, sourceName: sourceName.trim() || undefined, bulkSessionId, bulkTotal: urlList.length });
-        if (!response.data?.success) throw new Error(response.data?.error || "Analysis failed");
-        const isDupe = response.data?.message?.includes('already exists');
-        items[i] = { ...items[i], status: isDupe ? "duplicate" : "success", title: response.data.title || items[i].url };
+        const d = response?.data ?? response;
+        if (!d?.success) throw new Error(d?.error || "Analysis failed");
+        const isDupe = d?.message?.includes('already exists');
+        items[i] = { ...items[i], status: isDupe ? "duplicate" : "success", title: d.title || items[i].url };
       } catch (err) {
         items[i] = { ...items[i], status: "error", errorMsg: err.message };
       }
@@ -118,8 +121,10 @@ export default function VariousSources() {
     try {
       const uploadResponse = await base44.integrations.Core.UploadFile({ file: f });
       const response = await base44.functions.invoke('analyzeNewsletterPDF', { file_url: uploadResponse.file_url, sourceName: sourceName.trim() || undefined });
-      const isDupe = response.data?.message?.includes('already exists');
-      const result = { file: f.name, title: response.data.title || f.name, status: isDupe ? "duplicate" : "success" };
+      const data = response?.data ?? response;
+      if (!data?.success) throw new Error(data?.error || 'PDF analysis failed');
+      const isDupe = data?.message?.includes('already exists');
+      const result = { file: f.name, title: data.title || f.name, status: isDupe ? "duplicate" : "success" };
       setPdfResults(prev => [result, ...prev]);
       if (!isDupe) toast.success(`PDF added: ${result.title}`);
       queryClient.invalidateQueries({ queryKey: ['newsletters'] });
