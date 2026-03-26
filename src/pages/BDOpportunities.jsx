@@ -63,7 +63,18 @@ function OpportunityCard({ opp, onDelete, onUpdate }) {
                 {opp.created_date ? formatDistanceToNow(new Date(opp.created_date), { addSuffix: true }) : ""}
               </p>
             </div>
-            <div className="flex gap-1 shrink-0">
+            <div className="flex gap-1 shrink-0 items-start">
+              {opp.newsletter_id && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs text-blue-700 border-blue-200 bg-blue-50 hover:bg-blue-100 whitespace-nowrap"
+                  onClick={() => window.open(`${createPageUrl("NewsletterDetail")}?id=${opp.newsletter_id}`, "_blank")}
+                >
+                  <ExternalLink className="w-3 h-3 mr-1" />
+                  See HealthInsight Summary
+                </Button>
+              )}
               <Button size="sm" variant="ghost" onClick={() => setExpanded(e => !e)} className="text-slate-400 hover:text-slate-600">
                 {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </Button>
@@ -120,17 +131,6 @@ function OpportunityCard({ opp, onDelete, onUpdate }) {
                   <Sparkles className="w-3 h-3 mr-1" />
                   Generate Outreach
                 </Button>
-                {opp.newsletter_id && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-xs"
-                    onClick={() => window.open(`${createPageUrl("NewsletterDetail")}?id=${opp.newsletter_id}`, "_blank")}
-                  >
-                    <ExternalLink className="w-3 h-3 mr-1" />
-                    View Source
-                  </Button>
-                )}
               </div>
 
               {/* Last generated content preview */}
