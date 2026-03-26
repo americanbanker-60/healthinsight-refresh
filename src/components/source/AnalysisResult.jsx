@@ -135,13 +135,6 @@ export default function AnalysisResult({ analysis, onReset }) {
         </div>
       </div>
 
-      {analysis.tldr && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5">
-          <h3 className="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wide">TL;DR</h3>
-          <p className="text-slate-800 font-medium leading-relaxed">{analysis.tldr}</p>
-        </div>
-      )}
-
       <BDActionPrompt
         type={analysis.ma_activities?.length > 0 ? "deal" : analysis.funding_rounds?.length > 0 ? "newsletter" : "newsletter"}
         context={
@@ -160,6 +153,13 @@ export default function AnalysisResult({ analysis, onReset }) {
           themes: analysis.themes?.map(t => t.theme),
         }}
       />
+
+      {analysis.tldr && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5">
+          <h3 className="font-bold text-slate-900 mb-2 text-xs uppercase tracking-wide">TL;DR</h3>
+          <p className="text-slate-800 font-medium leading-relaxed">{analysis.tldr}</p>
+        </div>
+      )}
 
       {analysis.key_statistics?.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-xl p-5">
