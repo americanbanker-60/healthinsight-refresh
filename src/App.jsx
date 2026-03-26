@@ -54,7 +54,7 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={`/${landingPageKey}`} replace />} />
+      <Route path="/" element={<Navigate to="/Dashboard" replace />} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
