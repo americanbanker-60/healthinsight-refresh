@@ -1,4 +1,3 @@
-import AIContentGenerator from './pages/AIContentGenerator';
 import BulkImportMonitor from './pages/BulkImportMonitor';
 import AdminDashboard from './pages/AdminDashboard';
 import CompaniesDirectory from './pages/CompaniesDirectory';
@@ -10,7 +9,6 @@ import DeepDiveResults from './pages/DeepDiveResults';
 import DevSuperAgent from './pages/DevSuperAgent';
 import ExploreAllSources from './pages/ExploreAllSources';
 import KnowledgeHub from './pages/KnowledgeHub';
-import LandingPage from './pages/LandingPage';
 import MyCustomPacks from './pages/MyCustomPacks';
 import MyLibrary from './pages/MyLibrary';
 import NewsletterDetail from './pages/NewsletterDetail';
@@ -24,7 +22,6 @@ import VariousSources from './pages/VariousSources';
 import __Layout from './Layout.jsx';
 
 export const PAGES = {
-    "AIContentGenerator": AIContentGenerator,
     "BulkImportMonitor": BulkImportMonitor,
     "AdminDashboard": AdminDashboard,
     "CompaniesDirectory": CompaniesDirectory,
@@ -36,7 +33,6 @@ export const PAGES = {
     "DevSuperAgent": DevSuperAgent,
     "ExploreAllSources": ExploreAllSources,
     "KnowledgeHub": KnowledgeHub,
-    "LandingPage": LandingPage,
     "MyCustomPacks": MyCustomPacks,
     "MyLibrary": MyLibrary,
     "NewsletterDetail": NewsletterDetail,
