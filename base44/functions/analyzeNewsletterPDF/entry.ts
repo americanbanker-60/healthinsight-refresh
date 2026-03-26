@@ -34,12 +34,9 @@ Deno.serve(async (req) => {
     // Build cross-reference context from existing DB
     let crossRefContext = '';
     try {
+      const allRecent = await base44.asServiceRole.entities.NewsletterItem.list('-publication_date', 100);
       const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const recentNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter(
-        { publication_date: { $gte: sixtyDaysAgo }, is_analyzed: true },
-        '-publication_date',
-        50
-      );
+      const recentNewsletters = allRecent.filter(n => n.is_analyzed && n.publication_date >= sixtyDaysAgo).slice(0, 50);
 
       if (recentNewsletters.length > 0) {
         const companyMentions = {};

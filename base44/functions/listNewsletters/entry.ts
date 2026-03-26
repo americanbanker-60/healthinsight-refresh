@@ -10,9 +10,20 @@ Deno.serve(async (req) => {
 
     const { query = {}, sort = '-publication_date', limit = 1000 } = await req.json();
 
-    const newsletters = await base44.asServiceRole.entities.NewsletterItem.filter(query, sort, limit);
-    return Response.json({ success: true, newsletters });
+    // Use list() instead of filter() — the SDK's filter() does not reliably support
+    // boolean field comparisons or sort/limit parameters. list() + client-side filter
+    // is the proven pattern used by scrapeSource and fixAnalyzedFlag.
+    const all = await base44.asServiceRole.entities.NewsletterItem.list(sort, limit * 2);
+
+    const newsletters = Object.keys(query).length === 0
+      ? all
+      : all.filter(n => Object.entries(query).every(([k, v]) => n[k] === v));
+
+    console.log(`listNewsletters: fetched ${all.length} total, returned ${newsletters.length} after filter`, JSON.stringify(query));
+
+    return Response.json({ success: true, newsletters: newsletters.slice(0, limit) });
   } catch (error) {
+    console.error('listNewsletters error:', error.message);
     return Response.json({ success: false, error: error.message }, { status: 500 });
   }
 });
