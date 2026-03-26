@@ -24,6 +24,8 @@ export default function MyAnalyzedArticlesSection() {
       return data?.newsletters || [];
     },
     enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: true,
     initialData: [],
   });
 
