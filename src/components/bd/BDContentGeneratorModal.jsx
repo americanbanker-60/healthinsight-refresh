@@ -5,7 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Copy, Download, Mail, FileText, Sparkles, Check, RefreshCw } from "lucide-react";
+import { Loader2, Copy, Download, Mail, FileText, Sparkles, Check, RefreshCw, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -364,6 +366,19 @@ PUT BLANK LINES BETWEEN EVERY BULLET POINT AND SECTION.`
               </>
             )}
           </Button>
+
+          {/* BD Opportunities nav tip */}
+          {generatedContent && (
+            <div className="flex items-start gap-2 bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 text-xs text-purple-800">
+              <Zap className="w-3.5 h-3.5 mt-0.5 shrink-0 text-purple-600" />
+              <span>
+                Want to save this topic and generate outreach anytime?{" "}
+                <Link to={createPageUrl("BDOpportunities")} className="font-semibold underline underline-offset-2 hover:text-purple-900">
+                  Visit BD Opportunities →
+                </Link>
+              </span>
+            </div>
+          )}
 
           {/* Generated Content */}
           {generatedContent && (

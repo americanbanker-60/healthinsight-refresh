@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Zap, Mail, Users, FileText, TrendingUp, Lightbulb, BookmarkPlus, Check } from "lucide-react";
+import { Zap, Mail, Users, FileText, TrendingUp, Lightbulb, BookmarkPlus, Check, ArrowRight } from "lucide-react";
 import BDContentGeneratorModal from "./BDContentGeneratorModal";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 const actionTypes = {
   newsletter: {
@@ -72,7 +74,14 @@ export default function BDActionPrompt({
         status: "new",
       });
       setSaved(true);
-      toast.success("Saved to BD Opportunities");
+      toast.success(
+        <span>
+          Saved to BD Opportunities.{" "}
+          <a href={createPageUrl("BDOpportunities")} className="underline font-semibold">
+            View &amp; generate outreach →
+          </a>
+        </span>
+      );
     } catch {
       toast.error("Failed to save opportunity");
     }
@@ -182,6 +191,15 @@ export default function BDActionPrompt({
                   );
                 })}
               </div>
+              {saved && (
+                <Link
+                  to={createPageUrl("BDOpportunities")}
+                  className="inline-flex items-center gap-1 text-xs text-white/80 hover:text-white underline underline-offset-2 mt-1"
+                >
+                  <ArrowRight className="w-3 h-3" />
+                  Go to BD Opportunities to generate outreach
+                </Link>
+              )}
             </div>
           </div>
         </CardContent>
