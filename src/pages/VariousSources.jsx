@@ -90,6 +90,18 @@ export default function VariousSources() {
           throw new Error("No newsletter ID returned from PDF analysis");
         }
       }
+      // Belt-and-suspenders: also write directly from the frontend client (dataEnv:'prod')
+      // in case the backend asServiceRole write used a different data environment.
+      // Errors here are non-fatal — the record may already exist in prod.
+      if (result?.title && result?.source_url) {
+        try {
+          await base44.entities.NewsletterItem.create({
+            ...result,
+            is_analyzed: true,
+            status: 'completed',
+          });
+        } catch (_) {}
+      }
       setAnalysisResult(result);
       queryClient.invalidateQueries({ queryKey: ["newsletters"] });
       queryClient.invalidateQueries({ queryKey: ["all-newsletters"] });

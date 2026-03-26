@@ -15,13 +15,11 @@ export default function MyAnalyzedArticlesSection() {
   const { data: articles = [] } = useQuery({
     queryKey: ["my-analyzed-articles", user?.email],
     queryFn: async () => {
-      const response = await base44.functions.invoke('listNewsletters', {
-        query: { uploaded_by: user.email, is_analyzed: true },
-        sort: '-date_added_to_app',
-        limit: 50
-      });
-      const data = response?.data ?? response;
-      return data?.newsletters || [];
+      // Use direct entity access with the frontend client (dataEnv: 'prod').
+      const all = await base44.entities.NewsletterItem.list('-date_added_to_app', 100);
+      return (all || []).filter(n =>
+        n.uploaded_by === user.email && (!!n.is_analyzed || n.status === 'completed')
+      );
     },
     enabled: !!user,
     staleTime: 0,

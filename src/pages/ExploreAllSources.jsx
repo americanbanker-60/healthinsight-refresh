@@ -47,15 +47,15 @@ export default function ExploreAllSources() {
   const { data: newsletters = [], isLoading } = useQuery({
     queryKey: ['all-newsletters'],
     queryFn: async () => {
-      const response = await base44.functions.invoke('listNewsletters', {
-        query: { is_analyzed: true },
-        sort: '-publication_date',
-        limit: 500
-      });
-      const data = response?.data ?? response;
-      return data?.newsletters || [];
+      // Use direct entity access with the frontend client (dataEnv: 'prod').
+      // This is more reliable than going through listNewsletters → asServiceRole,
+      // where the data environment may differ from where user uploads are saved.
+      const all = await base44.entities.NewsletterItem.list('-publication_date', 500);
+      return (all || []).filter(n => !!n.is_analyzed || n.status === 'completed');
     },
     initialData: [],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const { data: sources = [] } = useQuery({
