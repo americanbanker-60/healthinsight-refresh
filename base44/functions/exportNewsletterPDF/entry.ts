@@ -350,7 +350,13 @@ Deno.serve(async (req) => {
     }
 
     const pdfBase64 = doc.output('datauristring'); // data:application/pdf;base64,...
-    const filename = (a.title || 'newsletter_analysis').replace(/[^a-z0-9\s]/gi, '').trim().replace(/\s+/g, '_').slice(0, 60) + '.pdf';
+
+    // Build a clean filename: "SourceName - YYYY-MM-DD.pdf"
+    const sourcePart = (a.source_name || 'HealthInsight').replace(/[^a-z0-9\s\-]/gi, '').trim().replace(/\s+/g, '_').slice(0, 30);
+    const datePart = a.publication_date
+      ? a.publication_date.slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
+    const filename = `${sourcePart}_${datePart}.pdf`;
 
     return Response.json({ pdfBase64, filename });
 
