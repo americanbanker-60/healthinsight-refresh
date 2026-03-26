@@ -38,8 +38,6 @@ Deno.serve(async (req) => {
       content_type: analysisResult.content_type || (analysisResult.source_url?.startsWith('http') ? 'URL' : 'PDF'),
     });
 
-    console.log(`Saved newsletter: ${record.id} - ${analysisResult.title}`);
-
     // Link companies and topics in the background
     if (record?.id) {
       base44.asServiceRole.functions.invoke('createNewsletterRelations', {

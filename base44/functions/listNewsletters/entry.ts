@@ -35,8 +35,6 @@ Deno.serve(async (req) => {
       return 0;
     });
 
-    console.log(`listNewsletters: fetched ${all.length} total, returned ${filtered.length} after filter`, JSON.stringify(query));
-
     return Response.json({ success: true, newsletters: filtered.slice(0, limit) });
   } catch (error) {
     console.error('listNewsletters error:', error.message);
