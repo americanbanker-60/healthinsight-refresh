@@ -27,7 +27,6 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import EnhanceSummaryButton from "../components/newsletter/EnhanceSummaryButton";
-import SmartDigest from "../components/newsletter/SmartDigest";
 import SummaryParagraphs from "../components/newsletter/SummaryParagraphs";
 import EditableNewsletterSection from "../components/newsletter/EditableNewsletterSection";
 import BDActionPrompt, { BDInsightBadge } from "../components/bd/BDActionPrompt";
@@ -233,10 +232,6 @@ export default function NewsletterDetail() {
           </Button>
           <EnhanceSummaryButton newsletter={newsletter} onEnhanced={refetch} />
         </div>
-      </div>
-
-      <div className="mb-6">
-        <SmartDigest newsletter={newsletter} onUpdated={handleRefresh} />
       </div>
 
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/60 p-8 mb-6">

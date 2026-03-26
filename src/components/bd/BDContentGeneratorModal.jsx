@@ -33,17 +33,39 @@ const contentTypes = {
   }
 };
 
+// Map action button labels to a sensible default content type
+const ACTION_LABEL_MAP = {
+  "add to pipeline": "talking_points",
+  "reach out now": "intro_email",
+  "draft outreach email": "intro_email",
+  "identify target contacts": "talking_points",
+  "build target list": "talking_points",
+  "create pitch angle": "pitch_angle",
+  "research contacts": "talking_points",
+  "draft intro email": "intro_email",
+};
+
 export default function BDContentGeneratorModal({ 
   open, 
   onClose, 
   contextType, // "newsletter" | "topic" | "company" | "deal"
-  contextData // { title, summary, companies, deals, etc. }
+  contextData // { title, summary, companies, deals, actionLabel, etc. }
 }) {
-  const [contentType, setContentType] = useState("pitch_angle");
+  const defaultType = ACTION_LABEL_MAP[(contextData?.actionLabel || "").toLowerCase()] || "pitch_angle";
+  const [contentType, setContentType] = useState(defaultType);
   const [additionalContext, setAdditionalContext] = useState("");
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Reset and pre-select content type whenever the modal opens with a new action
+  React.useEffect(() => {
+    if (open) {
+      setContentType(ACTION_LABEL_MAP[(contextData?.actionLabel || "").toLowerCase()] || "pitch_angle");
+      setGeneratedContent("");
+      setAdditionalContext("");
+    }
+  }, [open, contextData?.actionLabel]);
 
   const generateContent = async () => {
     setIsGenerating(true);
@@ -261,9 +283,6 @@ PUT BLANK LINES BETWEEN EVERY BULLET POINT AND SECTION.`
   };
 
   const handleClose = () => {
-    setGeneratedContent("");
-    setAdditionalContext("");
-    setContentType("pitch_angle");
     onClose();
   };
 

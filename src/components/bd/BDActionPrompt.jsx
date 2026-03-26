@@ -51,6 +51,7 @@ export default function BDActionPrompt({
   contextData = {} // Data to pass to the generator modal
 }) {
   const [showGenerator, setShowGenerator] = useState(false);
+  const [activeActionLabel, setActiveActionLabel] = useState("");
   const config = actionTypes[type] || actionTypes.newsletter;
   const Icon = config.icon;
 
@@ -58,7 +59,7 @@ export default function BDActionPrompt({
     if (onAction) {
       onAction(actionLabel);
     } else {
-      // Default behavior: open the generator modal
+      setActiveActionLabel(actionLabel);
       setShowGenerator(true);
     }
   };
@@ -75,7 +76,7 @@ export default function BDActionPrompt({
           open={showGenerator}
           onClose={() => setShowGenerator(false)}
           contextType={type}
-          contextData={contextData}
+          contextData={{ ...contextData, actionLabel: activeActionLabel }}
         />
       </>
     );
@@ -109,7 +110,7 @@ export default function BDActionPrompt({
           open={showGenerator}
           onClose={() => setShowGenerator(false)}
           contextType={type}
-          contextData={contextData}
+          contextData={{ ...contextData, actionLabel: activeActionLabel }}
         />
       </>
     );
@@ -150,7 +151,7 @@ export default function BDActionPrompt({
         open={showGenerator}
         onClose={() => setShowGenerator(false)}
         contextType={type}
-        contextData={contextData}
+        contextData={{ ...contextData, actionLabel: activeActionLabel }}
       />
     </>
   );

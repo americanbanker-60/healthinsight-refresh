@@ -8,6 +8,7 @@ import { Loader2, CheckCircle2, Download, Mail, ExternalLink, ArrowLeft,
   TrendingUp, Lightbulb, Briefcase, DollarSign, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
+import BDActionPrompt from "@/components/bd/BDActionPrompt";
 
 function EmailDialog({ open, onOpenChange, analysis }) {
   const [recipientEmail, setRecipientEmail] = useState("");
@@ -226,6 +227,25 @@ export default function AnalysisResult({ analysis, onReset }) {
             ))}
           </div>
         </div>
+      )}
+
+      {(analysis.ma_activities?.length > 0 || analysis.funding_rounds?.length > 0) && (
+        <BDActionPrompt
+          type={analysis.ma_activities?.length > 0 ? "deal" : "newsletter"}
+          context={
+            analysis.ma_activities?.length > 0
+              ? `${analysis.ma_activities.length} M&A deal(s) detected. Consider reaching out to involved parties or tracking these companies.`
+              : `${analysis.funding_rounds.length} funding event(s) identified. These companies may need advisory services.`
+          }
+          contextData={{
+            title: analysis.title,
+            summary: analysis.tldr || analysis.summary,
+            companies: analysis.key_players,
+            deals: analysis.ma_activities?.map(m => `${m.acquirer} acquiring ${m.target}`).join("; ") ||
+                   analysis.funding_rounds?.map(f => `${f.company} raised ${f.amount}`).join("; "),
+            themes: analysis.themes?.map(t => t.theme),
+          }}
+        />
       )}
 
       <EmailDialog open={showEmailDialog} onOpenChange={setShowEmailDialog} analysis={analysis} />
