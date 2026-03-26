@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, Download, Copy, Save, ThumbsUp, ThumbsDown, Star } from "lucide-react";
+import { Sparkles, Loader2, Download, Copy, Save, ThumbsUp, ThumbsDown, Star, BookMarked, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -22,6 +24,9 @@ export default function AIContentGenerator() {
   const [additionalInstructions, setAdditionalInstructions] = useState("");
   const [autoSummaries, setAutoSummaries] = useState([]);
   const [showRating, setShowRating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("generate");
+  const [expandedId, setExpandedId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: sources = [] } = useQuery({
@@ -37,6 +42,20 @@ export default function AIContentGenerator() {
     queryKey: ['newsletters'],
     queryFn: () => base44.entities.Newsletter.list('-publication_date', 100),
     initialData: [],
+  });
+
+  const { data: savedSummaries = [] } = useQuery({
+    queryKey: ['savedSummaries'],
+    queryFn: () => base44.entities.SavedSummary.list('-created_date', 50),
+    initialData: [],
+  });
+
+  const deleteSummaryMutation = useMutation({
+    mutationFn: (id) => base44.entities.SavedSummary.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedSummaries'] });
+      toast.success("Deleted.");
+    },
   });
 
   const { data: preferences = [] } = useQuery({
@@ -206,6 +225,26 @@ Return professional, well-structured content in markdown format.`;
     toast.success("Copied to clipboard");
   };
 
+  const saveContent = async () => {
+    setIsSaving(true);
+    try {
+      const title = `${contentType.charAt(0).toUpperCase() + contentType.slice(1)} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      await base44.entities.SavedSummary.create({
+        summary_title: title,
+        summary_body: generatedContent,
+        sources_included: selectedSources.length > 0 ? selectedSources : selectedCategories,
+        search_context: additionalInstructions || contentType,
+      });
+      queryClient.invalidateQueries({ queryKey: ['savedSummaries'] });
+      await handleAction('saved', 5);
+      toast.success("Saved to My Content!");
+    } catch (err) {
+      toast.error("Failed to save: " + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const downloadContent = async () => {
     const blob = new Blob([generatedContent], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
@@ -219,12 +258,70 @@ Return professional, well-structured content in markdown format.`;
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">AI Content Generator</h1>
-        <p className="text-slate-600 text-lg">Generate summaries, articles, and reports from your newsletter sources</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">AI Content Generator</h1>
+          <p className="text-slate-600 text-lg">Generate summaries, articles, and reports from your newsletter sources</p>
+        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="generate"><Sparkles className="w-4 h-4 mr-1.5" />Generate</TabsTrigger>
+            <TabsTrigger value="saved">
+              <BookMarked className="w-4 h-4 mr-1.5" />
+              My Content {savedSummaries.length > 0 && <span className="ml-1.5 bg-purple-100 text-purple-700 text-xs font-semibold px-1.5 py-0.5 rounded-full">{savedSummaries.length}</span>}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      {/* My Saved Content Tab */}
+      {activeTab === "saved" && (
+        <div className="space-y-4">
+          {savedSummaries.length === 0 ? (
+            <div className="text-center py-20 text-slate-400">
+              <BookMarked className="w-12 h-12 mx-auto mb-4 text-slate-200" />
+              <p className="font-medium text-slate-500">No saved content yet</p>
+              <p className="text-sm mt-1">Generate content and click Save to build your library.</p>
+            </div>
+          ) : (
+            savedSummaries.map((item) => (
+              <Card key={item.id} className="border-slate-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-slate-900">{item.summary_title}</h3>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Saved {format(new Date(item.created_date), "MMM d, yyyy 'at' h:mm a")}
+                        {item.sources_included?.length > 0 && ` · ${item.sources_included.slice(0, 3).join(', ')}${item.sources_included.length > 3 ? ` +${item.sources_included.length - 3} more` : ''}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}>
+                        {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(item.summary_body); toast.success("Copied!"); }}>
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-600 hover:bg-red-50" onClick={() => deleteSummaryMutation.mutate(item.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                {expandedId === item.id && (
+                  <CardContent className="pt-0 border-t border-slate-100">
+                    <div className="prose prose-slate max-w-none mt-4 text-sm">
+                      <ReactMarkdown>{item.summary_body}</ReactMarkdown>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeTab === "generate" && <div className="grid lg:grid-cols-2 gap-6">
         {/* Configuration Panel */}
         <div className="space-y-6">
           <Card>
@@ -372,6 +469,9 @@ Return professional, well-structured content in markdown format.`;
                     <Button size="sm" variant="outline" onClick={downloadContent}>
                       <Download className="w-4 h-4" />
                     </Button>
+                    <Button size="sm" onClick={saveContent} disabled={isSaving} className="bg-purple-600 hover:bg-purple-700 text-white">
+                      {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4 mr-1" />Save</>}
+                    </Button>
                   </div>
                 )}
               </CardTitle>
@@ -435,7 +535,7 @@ Return professional, well-structured content in markdown format.`;
             </CardContent>
           </Card>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
