@@ -50,15 +50,14 @@ export default function AdminDashboard() {
     queryKey: ['adminStats'],
     queryFn: async () => {
       // Use backend functions with asServiceRole to read from production DB
-      const [newslettersResp, companies, sources, users] = await Promise.all([
-        base44.functions.invoke('listNewsletters', { query: {}, sort: '-updated_date', limit: 10000 }),
+      const [newsletters, companies, sources, users] = await Promise.all([
+        base44.entities.NewsletterItem.list('-created_date', 10000),
         base44.entities.Company.list(),
         base44.entities.Source.list(),
         base44.entities.User.list()
       ]);
-      const newsletters = (newslettersResp?.data ?? newslettersResp)?.newsletters || [];
       return {
-        newsletters: newsletters.length,
+        newsletters: (newsletters || []).length,
         companies: companies.length,
         sources: sources.filter(s => !s.is_deleted).length,
         users: users.length,
@@ -258,8 +257,9 @@ export default function AdminDashboard() {
                   if (!confirm('Run deduplication scan? This will merge duplicate newsletters.')) return;
                   try {
                     const response = await base44.functions.invoke('deduplicateNewsletters', {});
-                    if (response.data.success) {
-                      toast.success(`Merged ${response.data.merged} duplicate groups, deleted ${response.data.deleted} records`);
+                    const dedupeData = response?.data ?? response;
+                    if (dedupeData.success) {
+                      toast.success(`Merged ${dedupeData.merged} duplicate groups, deleted ${dedupeData.deleted} records`);
                     } else {
                       toast.error('Deduplication failed');
                     }
@@ -290,8 +290,9 @@ export default function AdminDashboard() {
                   setFixingFlag(true);
                   try {
                     const response = await base44.functions.invoke('fixAnalyzedFlag', {});
-                    if (response.data.success) {
-                      toast.success(`Fixed! ${response.data.newly_fixed} newsletters updated. ${response.data.already_flagged} were already correct.`);
+                    const flagData = response?.data ?? response;
+                    if (flagData.success) {
+                      toast.success(`Fixed! ${flagData.newly_fixed} newsletters updated. ${flagData.already_flagged} were already correct.`);
                       queryClient.invalidateQueries({ queryKey: ['allNewslettersForStats'] });
                       queryClient.invalidateQueries({ queryKey: ['newsletters'] });
                     } else {
