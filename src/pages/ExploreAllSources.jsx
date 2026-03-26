@@ -46,7 +46,14 @@ export default function ExploreAllSources() {
 
   const { data: newsletters = [], isLoading } = useQuery({
     queryKey: ['all-newsletters'],
-    queryFn: () => base44.entities.NewsletterItem.list("-publication_date", 500),
+    queryFn: async () => {
+      const response = await base44.functions.invoke('listNewsletters', {
+        query: { is_analyzed: true },
+        sort: '-publication_date',
+        limit: 500
+      });
+      return response.data?.newsletters || [];
+    },
     initialData: [],
   });
 

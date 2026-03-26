@@ -14,12 +14,14 @@ export default function MyAnalyzedArticlesSection() {
 
   const { data: articles = [] } = useQuery({
     queryKey: ["my-analyzed-articles", user?.email],
-    queryFn: () =>
-      base44.entities.NewsletterItem.filter(
-        { uploaded_by: user.email, is_analyzed: true },
-        "-date_added_to_app",
-        50
-      ),
+    queryFn: async () => {
+      const response = await base44.functions.invoke('listNewsletters', {
+        query: { uploaded_by: user.email, is_analyzed: true },
+        sort: '-date_added_to_app',
+        limit: 50
+      });
+      return response.data?.newsletters || [];
+    },
     enabled: !!user,
     initialData: [],
   });

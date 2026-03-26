@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     console.log('Fetching URL:', normalizedUrl);
 
     // Check duplicate early
-    const existingCheck = await base44.entities.NewsletterItem.filter({ source_url: normalizedUrl });
+    const existingCheck = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedUrl });
     if (existingCheck.length > 0) {
       console.log('Duplicate — skipping');
       try {
@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     try {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const recentNewsletters = await base44.entities.NewsletterItem.filter(
+      const recentNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter(
         { publication_date: { $gte: sixtyDaysAgo }, is_analyzed: true },
         '-publication_date',
         50
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
 
     console.log('AI analysis complete:', result.title);
 
-    const createdRecord = await base44.entities.NewsletterItem.create(newsletterData);
+    const createdRecord = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
     const newsletterId = createdRecord?.id;
     if (!newsletterId) {
       return Response.json({ success: false, error: 'Failed to get newsletter ID' }, { status: 500 });
@@ -304,8 +304,8 @@ Deno.serve(async (req) => {
 
     try {
       const [companies, topics] = await Promise.all([
-        base44.entities.Company.list(),
-        base44.entities.Topic.list()
+        base44.asServiceRole.entities.Company.list(),
+        base44.asServiceRole.entities.Topic.list()
       ]);
 
       const searchText = [
@@ -343,7 +343,7 @@ Deno.serve(async (req) => {
 
       if (relations.length > 0) {
         try {
-          await base44.entities.NewsletterRelation.bulkCreate(relations);
+          await base44.asServiceRole.entities.NewsletterRelation.bulkCreate(relations);
           console.log(`Relations linked: ${relations.length}`);
         } catch (bulkErr) {
           console.error('NewsletterRelation bulkCreate failed:', bulkErr.message);
@@ -358,7 +358,7 @@ Deno.serve(async (req) => {
     let verifiedRecord = null;
     for (let i = 0; i < 5; i++) {
       try {
-        const check = await base44.entities.NewsletterItem.filter({ id: newsletterId });
+        const check = await base44.asServiceRole.entities.NewsletterItem.filter({ id: newsletterId });
         if (check && check.length > 0) { verifiedRecord = check[0]; break; }
       } catch (_) {}
       await new Promise(r => setTimeout(r, 500));
