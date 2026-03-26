@@ -120,6 +120,18 @@ export default function AnalysisResult({ analysis, onReset }) {
           </Button>
           {analysis.id && (
             <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => {
+                sessionStorage.setItem(`newsletter_cache_${analysis.id}`, JSON.stringify(analysis));
+                window.location.href = `${createPageUrl("NewsletterDetail")}?id=${analysis.id}`;
+              }}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-1" />View in Library
+            </Button>
+          )}
+          {analysis.id && (
+            <Button
               variant="outline"
               size="sm"
               className="bg-indigo-50 border-indigo-200 hover:bg-indigo-100 text-indigo-700"

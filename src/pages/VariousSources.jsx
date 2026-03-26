@@ -56,7 +56,19 @@ export default function VariousSources() {
         if (!urlData?.success) throw new Error(urlData?.error || "Analysis failed");
         if (urlData.message?.includes("already exists")) toast.info("This article is already in your library.");
         else toast.success("Saved to library!");
-        result = urlData.newsletter || { id: urlData.id, title: urlData.title, source_name: urlData.source_name, source_url: url.trim() };
+        // If full newsletter object not returned (e.g. duplicate path), fetch it by ID
+        if (urlData.newsletter) {
+          result = urlData.newsletter;
+        } else if (urlData.id) {
+          try {
+            const fetched = await base44.entities.NewsletterItem.filter({ id: urlData.id });
+            result = fetched?.[0] || { id: urlData.id, title: urlData.title, source_name: urlData.source_name, source_url: url.trim() };
+          } catch {
+            result = { id: urlData.id, title: urlData.title, source_name: urlData.source_name, source_url: url.trim() };
+          }
+        } else {
+          throw new Error("No newsletter ID returned from analysis");
+        }
       } else {
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
         if (!uploadResult.file_url) throw new Error("File upload failed");
@@ -65,7 +77,18 @@ export default function VariousSources() {
         if (!pdfData?.success) throw new Error(pdfData?.error || "PDF analysis failed");
         if (pdfData.message?.includes("already exists")) toast.info("This PDF is already in your library.");
         else toast.success("Saved to library!");
-        result = pdfData.newsletter || { id: pdfData.id, title: pdfData.title, source_name: pdfData.source_name };
+        if (pdfData.newsletter) {
+          result = pdfData.newsletter;
+        } else if (pdfData.id) {
+          try {
+            const fetched = await base44.entities.NewsletterItem.filter({ id: pdfData.id });
+            result = fetched?.[0] || { id: pdfData.id, title: pdfData.title, source_name: pdfData.source_name };
+          } catch {
+            result = { id: pdfData.id, title: pdfData.title, source_name: pdfData.source_name };
+          }
+        } else {
+          throw new Error("No newsletter ID returned from PDF analysis");
+        }
       }
       setAnalysisResult(result);
       queryClient.invalidateQueries({ queryKey: ["newsletters"] });
