@@ -86,8 +86,8 @@ export default function NewsletterDetail() {
       return result;
     },
     enabled: !!newsletterId,
-    retry: 3,
-    retryDelay: (attempt) => Math.min(1500 * (attempt + 1), 4000),
+    retry: 6,
+    retryDelay: (attempt) => Math.min(2000 * (attempt + 1), 8000),
   });
 
   // Clear sessionStorage before refetching so we always get fresh server data

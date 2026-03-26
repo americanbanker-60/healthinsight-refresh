@@ -354,23 +354,27 @@ Deno.serve(async (req) => {
       console.error('Relations linking failed (non-fatal):', relErr.message);
     }
 
-    // Verify the record is readable before returning (guards against DB propagation lag)
+    // Verify the record is readable (DB propagation can lag in some environments)
+    // We return success regardless — the record was already created above
     let verifiedRecord = null;
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) {
       try {
         const check = await base44.entities.NewsletterItem.filter({ id: newsletterId });
         if (check && check.length > 0) { verifiedRecord = check[0]; break; }
       } catch (_) {}
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 1000));
     }
-    console.log(verifiedRecord ? `Record verified readable: ${newsletterId}` : `Warning: record ${newsletterId} not yet readable after retries`);
+    console.log(verifiedRecord ? `Record verified readable: ${newsletterId}` : `DB propagation still pending for ${newsletterId} — record was saved, returning success anyway`);
+
+    // Always return success — record was created. Use verified data if available, fall back to newsletterData.
+    const returnedNewsletter = verifiedRecord || { ...newsletterData, id: newsletterId, status: 'completed', is_analyzed: true };
 
     return Response.json({
       success: true,
       id: newsletterId,
       title: result.title,
       source_name: result.source_name,
-      newsletter: { ...newsletterData, id: newsletterId, status: 'completed', is_analyzed: true }
+      newsletter: returnedNewsletter
     });
 
   } catch (error) {
