@@ -142,6 +142,25 @@ export default function AnalysisResult({ analysis, onReset }) {
         </div>
       )}
 
+      <BDActionPrompt
+        type={analysis.ma_activities?.length > 0 ? "deal" : analysis.funding_rounds?.length > 0 ? "newsletter" : "newsletter"}
+        context={
+          analysis.ma_activities?.length > 0
+            ? `${analysis.ma_activities.length} M&A deal(s) detected. Consider reaching out to involved parties or tracking these companies.`
+            : analysis.funding_rounds?.length > 0
+            ? `${analysis.funding_rounds.length} funding event(s) identified. These companies may need advisory services.`
+            : `This article contains ${analysis.key_takeaways?.length || 0} insights that could support client conversations or outreach.`
+        }
+        contextData={{
+          title: analysis.title,
+          summary: analysis.tldr || analysis.summary,
+          companies: analysis.key_players,
+          deals: analysis.ma_activities?.map(m => `${m.acquirer} acquiring ${m.target}`).join("; ") ||
+                 analysis.funding_rounds?.map(f => `${f.company} raised ${f.amount}`).join("; "),
+          themes: analysis.themes?.map(t => t.theme),
+        }}
+      />
+
       {analysis.key_statistics?.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-xl p-5">
           <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
@@ -227,25 +246,6 @@ export default function AnalysisResult({ analysis, onReset }) {
             ))}
           </div>
         </div>
-      )}
-
-      {(analysis.ma_activities?.length > 0 || analysis.funding_rounds?.length > 0) && (
-        <BDActionPrompt
-          type={analysis.ma_activities?.length > 0 ? "deal" : "newsletter"}
-          context={
-            analysis.ma_activities?.length > 0
-              ? `${analysis.ma_activities.length} M&A deal(s) detected. Consider reaching out to involved parties or tracking these companies.`
-              : `${analysis.funding_rounds.length} funding event(s) identified. These companies may need advisory services.`
-          }
-          contextData={{
-            title: analysis.title,
-            summary: analysis.tldr || analysis.summary,
-            companies: analysis.key_players,
-            deals: analysis.ma_activities?.map(m => `${m.acquirer} acquiring ${m.target}`).join("; ") ||
-                   analysis.funding_rounds?.map(f => `${f.company} raised ${f.amount}`).join("; "),
-            themes: analysis.themes?.map(t => t.theme),
-          }}
-        />
       )}
 
       <EmailDialog open={showEmailDialog} onOpenChange={setShowEmailDialog} analysis={analysis} />
