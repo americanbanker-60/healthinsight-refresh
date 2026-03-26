@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen, Globe, Briefcase, ChevronDown, FileUp, Terminal, RefreshCw, Zap } from "lucide-react";
+import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen, Globe, Briefcase, ChevronDown, FileUp, Terminal, RefreshCw, Zap, LogOut } from "lucide-react";
 import { WalkthroughProvider, useWalkthrough } from "@/components/walkthrough/WalkthroughManager";
 import { useUserRole } from "@/components/auth/RoleGuard";
 import { AdminGuard } from "@/components/auth/AdminGuard";
@@ -11,6 +11,7 @@ import { Shield, PlayCircle } from "lucide-react";
 import { AdminBadge } from "@/components/admin/AdminOnlyButton";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AIResearchAssistant from "@/components/layout/AIResearchAssistant";
+import { base44 } from "@/api/base44Client";
 import { AIStatusProvider, useAIStatus } from "@/components/utils/AIStatusContext";
 import { registerAIStatusCallbacks } from "@/components/utils/agentOrchestrator";
 import { Progress } from "@/components/ui/progress";
@@ -183,6 +184,11 @@ function LayoutContent({ children, currentPageName, location }) {
   const { role, isAdmin } = useUserRole();
   const { startWalkthrough } = useWalkthrough();
   const aiStatus = useAIStatus();
+  const [currentUser, setCurrentUser] = React.useState(null);
+
+  React.useEffect(() => {
+    base44.auth.me().then(setCurrentUser).catch(() => {});
+  }, []);
 
   // Register orchestrator callbacks so it can signal this context
   useEffect(() => {
@@ -311,11 +317,13 @@ function LayoutContent({ children, currentPageName, location }) {
             </Button>
 
             <div className="flex items-center gap-3 px-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center">
-                <span className="text-slate-600 font-semibold text-sm">U</span>
+              <div className="w-9 h-9 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center shrink-0">
+                <span className="text-slate-600 font-semibold text-sm">
+                  {currentUser?.full_name?.[0]?.toUpperCase() || "U"}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-slate-900 text-sm truncate">Healthcare Analyst</p>
+                <p className="font-medium text-slate-900 text-sm truncate">{currentUser?.full_name || "User"}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="outline" className="text-xs px-2 py-0">
                     <Shield className="w-3 h-3 mr-1" />
@@ -323,6 +331,15 @@ function LayoutContent({ children, currentPageName, location }) {
                   </Badge>
                 </div>
               </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="shrink-0 text-slate-400 hover:text-red-500 hover:bg-red-50 w-8 h-8"
+                onClick={() => base44.auth.logout()}
+                title="Log out"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
             </div>
           </SidebarFooter>
         </Sidebar>
