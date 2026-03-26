@@ -79,6 +79,24 @@ export default function BDActionPrompt({
         }
       }
       
+      // Also check by title if no newsletter_id (fallback for older saves)
+      const titleToCheck = contextData?.title || contextData?.newsletter_title;
+      if (titleToCheck) {
+        const existingByTitle = await base44.entities.BDOpportunity.filter({ title: titleToCheck });
+        if (existingByTitle && existingByTitle.length > 0) {
+          toast.info(
+            <span>
+              This article is already in your BD Opportunities.{" "}
+              <a href={createPageUrl("BDOpportunities")} className="underline font-semibold">
+                View &amp; generate outreach →
+              </a>
+            </span>
+          );
+          setSaved(true);
+          return;
+        }
+      }
+      
       await base44.entities.BDOpportunity.create({
         title: contextData?.title || "Untitled Opportunity",
         source_type: type,
