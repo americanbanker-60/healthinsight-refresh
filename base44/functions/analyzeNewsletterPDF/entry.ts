@@ -208,7 +208,8 @@ EXTRACTION RULES — follow these strictly:
       publication_date_confidence: result.publication_date_confidence || 'low',
       publication_date_source: result.publication_date_source || 'PDF document',
       publication_date_notes: 'Direct PDF upload',
-      status: 'processing'
+      status: 'completed',
+      is_analyzed: true
     };
 
     console.log('Creating newsletter record...');
