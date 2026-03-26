@@ -1,3 +1,4 @@
+// DEPRECATED: safe to remove — integration re-exports not imported anywhere; use base44.integrations.Core directly
 import { base44 } from './base44Client';
 
 

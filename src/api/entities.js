@@ -1,3 +1,4 @@
+// DEPRECATED: safe to remove — exports (Query, User) are not imported anywhere in the app
 import { base44 } from './base44Client';
 
 

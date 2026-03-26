@@ -1,3 +1,4 @@
+// DEPRECATED: safe to remove — not imported anywhere in the app
 import React from "react";
 import { useUserRole } from "../auth/RoleGuard";
 import { AlertCircle } from "lucide-react";

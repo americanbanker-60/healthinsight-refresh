@@ -1,3 +1,4 @@
+// DEPRECATED: safe to remove — not imported anywhere in the app
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
