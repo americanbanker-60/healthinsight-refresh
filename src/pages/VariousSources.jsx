@@ -90,17 +90,31 @@ export default function VariousSources() {
           throw new Error("No newsletter ID returned from PDF analysis");
         }
       }
-      // Belt-and-suspenders: also write directly from the frontend client (dataEnv:'prod')
-      // in case the backend asServiceRole write used a different data environment.
-      // Errors here are non-fatal — the record may already exist in prod.
+      // Ensure the record is in the frontend's dataEnv:'prod' data environment.
+      // The backend asServiceRole write may target a different environment.
+      // Strategy: look it up by source_url first; if already there, use it.
+      // If not, create it without the backend ID (which is env-specific).
       if (result?.title && result?.source_url) {
         try {
-          await base44.entities.NewsletterItem.create({
-            ...result,
-            is_analyzed: true,
-            status: 'completed',
-          });
-        } catch (_) {}
+          const existing = await base44.entities.NewsletterItem.filter({ source_url: result.source_url });
+          if (existing?.length > 0) {
+            // Both environments are the same — backend record is already visible in prod.
+            result = existing[0];
+          } else {
+            // Environments differ — write directly via the frontend prod client.
+            const { id: _backendId, ...createFields } = result;
+            const prodRecord = await base44.entities.NewsletterItem.create({
+              ...createFields,
+              is_analyzed: true,
+              status: 'completed',
+            });
+            if (prodRecord?.id) {
+              result = { ...result, id: prodRecord.id };
+            }
+          }
+        } catch (envErr) {
+          console.warn('Frontend env write/check failed (non-fatal):', envErr?.message);
+        }
       }
       setAnalysisResult(result);
       queryClient.invalidateQueries({ queryKey: ["newsletters"] });
