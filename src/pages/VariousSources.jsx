@@ -50,9 +50,14 @@ export default function VariousSources() {
   // Checks for an existing prod record first (by source_url) to avoid duplicates,
   // then creates if not found. Triggers relations linking async.
   const saveAnalysisToProd = async (analysis) => {
-    if (analysis.source_url) {
+    // Check for an existing record by this user only — avoid returning stale records
+    // created under a different auth context (service role, previous sessions, etc.)
+    if (analysis.source_url && user?.email) {
       try {
-        const existing = await base44.entities.NewsletterItem.filter({ source_url: analysis.source_url });
+        const existing = await base44.entities.NewsletterItem.filter({
+          source_url: analysis.source_url,
+          created_by: user.email,
+        });
         if (existing?.[0]) return existing[0];
       } catch (_) {}
     }
