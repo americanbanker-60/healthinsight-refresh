@@ -43,7 +43,10 @@ export default function NewsletterDetail() {
   const exportPDF = async () => {
     setIsExportingPDF(true);
     try {
-      const response = await base44.functions.invoke('exportNewsletterPDF', { newsletterId: newsletter.id });
+      const response = await base44.functions.invoke('exportNewsletterPDF', {
+        newsletterId: newsletter.id,
+        newsletterData: newsletter
+      });
       const { pdfBase64, filename } = response?.data ?? response;
       // Strip the data URI prefix to get raw base64
       const base64Data = pdfBase64.split(',')[1];
@@ -79,8 +82,14 @@ export default function NewsletterDetail() {
           if (parsed?.id) return parsed;
         } catch (_) {}
       }
+      // Try frontend entity access first (dataEnv:'prod') — works for prod-env IDs
+      try {
+        const records = await base44.entities.NewsletterItem.filter({ id: newsletterId });
+        if (records?.[0]) return records[0];
+      } catch (_) {}
+      // Fall back to getNewsletter (asServiceRole) — works for backend-env IDs
       const response = await base44.functions.invoke('getNewsletter', { newsletterId });
-      const result = response.data?.newsletter || null;
+      const result = (response?.data ?? response)?.newsletter || null;
       if (!result) throw new Error('Newsletter not yet available');
       return result;
     },
