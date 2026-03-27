@@ -17,15 +17,13 @@ Deno.serve(async (req) => {
 
     console.log('Extracting data from PDF:', file_url);
 
-    // Check for duplicate first
+    // Check for duplicate first (asServiceRole env check)
     const existingNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: file_url });
     if (existingNewsletters.length > 0) {
-      console.log('Duplicate PDF — skipping');
       return Response.json({
         success: true,
-        message: 'Newsletter with this PDF already exists. Skipped to prevent duplicates.',
-        id: existingNewsletters[0].id,
-        title: existingNewsletters[0].title
+        isDuplicate: true,
+        analysis: existingNewsletters[0]
       });
     }
 
@@ -191,8 +189,6 @@ EXTRACTION RULES — follow these strictly:
       result.title = result.source_name || sourceName || 'Untitled Document';
     }
 
-    console.log('PDF analysis complete:', result.title);
-
     const newsletterData = {
       ...result,
       source_url: file_url,
@@ -209,24 +205,11 @@ EXTRACTION RULES — follow these strictly:
       is_analyzed: true
     };
 
-    console.log('Creating newsletter record...');
-    const createdRecord = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
-    const newsletterId = createdRecord?.id;
-
-    if (!newsletterId) {
-      return Response.json({ success: false, error: 'Failed to get newsletter ID' }, { status: 500 });
-    }
-
-    // Link relations asynchronously — record is already saved and queryable
-    base44.asServiceRole.functions.invoke('createNewsletterRelations', { newsletter_id: newsletterId })
-      .catch(err => console.error('Relations linking failed (non-fatal):', err.message));
-
+    // Return analysis data — the frontend saves directly to its dataEnv:'prod' client
     return Response.json({
       success: true,
-      id: newsletterId,
-      title: result.title,
-      source_name: result.source_name,
-      newsletter: { ...newsletterData, id: newsletterId }
+      isDuplicate: false,
+      analysis: newsletterData
     });
 
   } catch (error) {

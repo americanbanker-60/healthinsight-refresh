@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { url, sourceName, bulkSessionId, bulkTotal } = body;
+    const { url, sourceName } = body;
 
     if (!url) {
       return Response.json({ error: 'URL required' }, { status: 400 });
@@ -79,30 +79,14 @@ Deno.serve(async (req) => {
     // Normalize URL
     const normalizeUrl = (u) => u.trim().toLowerCase().replace(/\/+$/, '');
     const normalizedUrl = normalizeUrl(url);
-    console.log('Fetching URL:', normalizedUrl);
 
-    // Check duplicate early
+    // Check duplicate early (asServiceRole env check — catches reruns against backend env)
     const existingCheck = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedUrl });
     if (existingCheck.length > 0) {
-      console.log('Duplicate — skipping');
-      try {
-        await base44.asServiceRole.entities.UploadAuditLog.create({
-          uploaded_by: user.email,
-          source_type: bulkSessionId ? 'bulk_url' : 'url',
-          url: normalizedUrl,
-          title: existingCheck[0].title,
-          newsletter_id: existingCheck[0].id,
-          status: 'duplicate',
-          bulk_session_id: bulkSessionId || null,
-          bulk_total: bulkTotal || null
-        });
-      } catch (_) {}
       return Response.json({
         success: true,
-        message: 'Newsletter with this URL already exists. Skipped to prevent duplicates.',
-        id: existingCheck[0].id,
-        title: existingCheck[0].title,
-        source_name: existingCheck[0].source_name
+        isDuplicate: true,
+        analysis: existingCheck[0]
       });
     }
 
@@ -180,7 +164,6 @@ Deno.serve(async (req) => {
       console.warn('Cross-reference context fetch failed (non-fatal):', ctxErr.message);
     }
 
-    console.log(`Analyzing with AI... (mode: ${useFallback ? 'internet-fallback' : 'html-content'})`);
 
     const contentBlock = useFallback
       ? `URL to analyze: ${normalizedUrl}\nDomain: ${domain}`
@@ -272,40 +255,11 @@ Deno.serve(async (req) => {
       is_analyzed: true
     };
 
-    console.log('AI analysis complete:', result.title);
-
-    const createdRecord = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
-    const newsletterId = createdRecord?.id;
-    if (!newsletterId) {
-      return Response.json({ success: false, error: 'Failed to get newsletter ID' }, { status: 500 });
-    }
-
-    // Write audit log
-    try {
-      await base44.asServiceRole.entities.UploadAuditLog.create({
-        uploaded_by: user.email,
-        source_type: bulkSessionId ? 'bulk_url' : 'url',
-        url: normalizedUrl,
-        title: result.title,
-        newsletter_id: newsletterId,
-        status: 'success',
-        bulk_session_id: bulkSessionId || null,
-        bulk_total: bulkTotal || null
-      });
-    } catch (auditErr) {
-      console.warn('Audit log write failed (non-fatal):', auditErr.message);
-    }
-
-    // Link relations asynchronously — record is already saved and queryable
-    base44.asServiceRole.functions.invoke('createNewsletterRelations', { newsletter_id: newsletterId })
-      .catch(err => console.error('Relations linking failed (non-fatal):', err.message));
-
+    // Return analysis data — the frontend saves directly to its dataEnv:'prod' client
     return Response.json({
       success: true,
-      id: newsletterId,
-      title: result.title,
-      source_name: result.source_name,
-      newsletter: { ...newsletterData, id: newsletterId }
+      isDuplicate: false,
+      analysis: newsletterData
     });
 
   } catch (error) {

@@ -44,78 +44,65 @@ export default function VariousSources() {
     setFile(f); setError("");
   };
 
+  // Save analysis data to the frontend's dataEnv:'prod' entity client.
+  // Checks for an existing prod record first (by source_url) to avoid duplicates,
+  // then creates if not found. Triggers relations linking async.
+  const saveAnalysisToProd = async (analysis) => {
+    if (analysis.source_url) {
+      try {
+        const existing = await base44.entities.NewsletterItem.filter({ source_url: analysis.source_url });
+        if (existing?.[0]) return existing[0];
+      } catch (_) {}
+    }
+    const { id: _drop, ...fields } = analysis;
+    const created = await base44.entities.NewsletterItem.create({
+      ...fields,
+      is_analyzed: true,
+      status: 'completed',
+    });
+    if (!created?.id) throw new Error("Library save failed — entity create returned no ID");
+    base44.functions.invoke('createNewsletterRelations', {
+      newsletter_id: created.id,
+      newsletter_data: created
+    }).catch(() => {});
+    return created;
+  };
+
   const analyzeSingle = async () => {
     if (activeTab === "url" && !url.trim()) { setError("Please enter a URL"); return; }
     if (activeTab === "pdf" && !file) { setError("Please select a PDF file"); return; }
     setIsAnalyzing(true); setError("");
     try {
-      let result;
+      let analysis;
+      let isDuplicate = false;
+
       if (activeTab === "url") {
         const response = await base44.functions.invoke("analyzeNewsletterUrl", { url: url.trim() });
-        const urlData = response?.data ?? response;
-        if (!urlData?.success) throw new Error(urlData?.error || "Analysis failed");
-        if (urlData.message?.includes("already exists")) toast.info("This article is already in your library.");
-        else toast.success("Saved to library!");
-        // If full newsletter object not returned (e.g. duplicate path), fetch it by ID
-        if (urlData.newsletter) {
-          result = urlData.newsletter;
-        } else if (urlData.id) {
-          try {
-            const fetched = await base44.entities.NewsletterItem.filter({ id: urlData.id });
-            result = fetched?.[0] || { id: urlData.id, title: urlData.title, source_name: urlData.source_name, source_url: url.trim() };
-          } catch {
-            result = { id: urlData.id, title: urlData.title, source_name: urlData.source_name, source_url: url.trim() };
-          }
-        } else {
-          throw new Error("No newsletter ID returned from analysis");
-        }
+        const data = response?.data ?? response;
+        if (!data?.success) throw new Error(data?.error || "Analysis failed");
+        analysis = data.analysis;
+        isDuplicate = !!data.isDuplicate;
       } else {
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
         if (!uploadResult.file_url) throw new Error("File upload failed");
-        const response = await base44.functions.invoke("analyzeNewsletterPDF", { file_url: uploadResult.file_url, sourceName: file.name.replace(/\.pdf$/i, "") });
-        const pdfData = response?.data ?? response;
-        if (!pdfData?.success) throw new Error(pdfData?.error || "PDF analysis failed");
-        if (pdfData.message?.includes("already exists")) toast.info("This PDF is already in your library.");
-        else toast.success("Saved to library!");
-        if (pdfData.newsletter) {
-          result = pdfData.newsletter;
-        } else if (pdfData.id) {
-          try {
-            const fetched = await base44.entities.NewsletterItem.filter({ id: pdfData.id });
-            result = fetched?.[0] || { id: pdfData.id, title: pdfData.title, source_name: pdfData.source_name };
-          } catch {
-            result = { id: pdfData.id, title: pdfData.title, source_name: pdfData.source_name };
-          }
-        } else {
-          throw new Error("No newsletter ID returned from PDF analysis");
-        }
+        const response = await base44.functions.invoke("analyzeNewsletterPDF", {
+          file_url: uploadResult.file_url,
+          sourceName: file.name.replace(/\.pdf$/i, "")
+        });
+        const data = response?.data ?? response;
+        if (!data?.success) throw new Error(data?.error || "PDF analysis failed");
+        analysis = data.analysis;
+        isDuplicate = !!data.isDuplicate;
       }
-      // Ensure the record is in the frontend's dataEnv:'prod' data environment.
-      // The backend asServiceRole write may target a different environment.
-      // Strategy: look it up by source_url first; if already there, use it.
-      // If not, create it without the backend ID (which is env-specific).
-      if (result?.title && result?.source_url) {
-        try {
-          const existing = await base44.entities.NewsletterItem.filter({ source_url: result.source_url });
-          if (existing?.length > 0) {
-            // Both environments are the same — backend record is already visible in prod.
-            result = existing[0];
-          } else {
-            // Environments differ — write directly via the frontend prod client.
-            const { id: _backendId, ...createFields } = result;
-            const prodRecord = await base44.entities.NewsletterItem.create({
-              ...createFields,
-              is_analyzed: true,
-              status: 'completed',
-            });
-            if (prodRecord?.id) {
-              result = { ...result, id: prodRecord.id };
-            }
-          }
-        } catch (envErr) {
-          console.warn('Frontend env write/check failed (non-fatal):', envErr?.message);
-        }
-      }
+
+      if (!analysis) throw new Error("No analysis data returned");
+
+      // Save to prod env (frontend dataEnv:'prod' client — guaranteed correct environment)
+      const result = await saveAnalysisToProd(analysis);
+
+      if (isDuplicate) toast.info("This article is already in your library.");
+      else toast.success("Saved to library!");
+
       setAnalysisResult(result);
       queryClient.invalidateQueries({ queryKey: ["newsletters"] });
       queryClient.invalidateQueries({ queryKey: ["all-newsletters"] });
@@ -142,16 +129,15 @@ export default function VariousSources() {
     if (urlList.length === 0) { toast.error("Please enter at least one valid URL starting with http"); return; }
     const initialItems = urlList.map(u => ({ url: u, status: "pending", title: null, errorMsg: null }));
     setUrlItems(initialItems); setIsRunning(true);
-    const bulkSessionId = `bulk_${Date.now()}`;
     const items = [...initialItems];
     for (let i = 0; i < items.length; i++) {
       items[i] = { ...items[i], status: "processing" }; setUrlItems([...items]);
       try {
-        const response = await base44.functions.invoke('analyzeNewsletterUrl', { url: items[i].url, sourceName: sourceName.trim() || undefined, bulkSessionId, bulkTotal: urlList.length });
+        const response = await base44.functions.invoke('analyzeNewsletterUrl', { url: items[i].url, sourceName: sourceName.trim() || undefined });
         const d = response?.data ?? response;
         if (!d?.success) throw new Error(d?.error || "Analysis failed");
-        const isDupe = d?.message?.includes('already exists');
-        items[i] = { ...items[i], status: isDupe ? "duplicate" : "success", title: d.title || items[i].url };
+        const saved = await saveAnalysisToProd(d.analysis);
+        items[i] = { ...items[i], status: d.isDuplicate ? "duplicate" : "success", title: saved?.title || items[i].url };
       } catch (err) {
         items[i] = { ...items[i], status: "error", errorMsg: err.message };
       }
@@ -174,10 +160,10 @@ export default function VariousSources() {
       const response = await base44.functions.invoke('analyzeNewsletterPDF', { file_url: uploadResponse.file_url, sourceName: sourceName.trim() || undefined });
       const data = response?.data ?? response;
       if (!data?.success) throw new Error(data?.error || 'PDF analysis failed');
-      const isDupe = data?.message?.includes('already exists');
-      const result = { file: f.name, title: data.title || f.name, status: isDupe ? "duplicate" : "success" };
-      setPdfResults(prev => [result, ...prev]);
-      if (!isDupe) toast.success(`PDF added: ${result.title}`);
+      const saved = await saveAnalysisToProd(data.analysis);
+      const entry = { file: f.name, title: saved?.title || f.name, status: data.isDuplicate ? "duplicate" : "success" };
+      setPdfResults(prev => [entry, ...prev]);
+      if (!data.isDuplicate) toast.success(`PDF added: ${entry.title}`);
       queryClient.invalidateQueries({ queryKey: ['newsletters'] });
       queryClient.invalidateQueries({ queryKey: ['all-newsletters'] });
       queryClient.invalidateQueries({ queryKey: ['my-analyzed-articles'] });
