@@ -86,7 +86,11 @@ Deno.serve(async (req) => {
       return Response.json({
         success: true,
         isDuplicate: true,
-        analysis: existingCheck[0]
+        analysis: existingCheck[0],
+        newsletter: existingCheck[0],
+        id: existingCheck[0].id,
+        title: existingCheck[0].title,
+        source_name: existingCheck[0].source_name
       });
     }
 
@@ -255,11 +259,13 @@ Deno.serve(async (req) => {
       is_analyzed: true
     };
 
-    // Return analysis data — the frontend saves directly to its dataEnv:'prod' client
+    // Return analysis data — the frontend saves directly to its dataEnv:'prod' client.
+    // 'newsletter' field included for backward compatibility with older frontend bundles.
     return Response.json({
       success: true,
       isDuplicate: false,
-      analysis: newsletterData
+      analysis: newsletterData,
+      newsletter: newsletterData
     });
 
   } catch (error) {

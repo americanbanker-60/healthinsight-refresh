@@ -23,7 +23,10 @@ Deno.serve(async (req) => {
       return Response.json({
         success: true,
         isDuplicate: true,
-        analysis: existingNewsletters[0]
+        analysis: existingNewsletters[0],
+        newsletter: existingNewsletters[0],
+        id: existingNewsletters[0].id,
+        title: existingNewsletters[0].title
       });
     }
 
@@ -205,11 +208,13 @@ EXTRACTION RULES — follow these strictly:
       is_analyzed: true
     };
 
-    // Return analysis data — the frontend saves directly to its dataEnv:'prod' client
+    // Return analysis data — the frontend saves directly to its dataEnv:'prod' client.
+    // 'newsletter' field included for backward compatibility with older frontend bundles.
     return Response.json({
       success: true,
       isDuplicate: false,
-      analysis: newsletterData
+      analysis: newsletterData,
+      newsletter: newsletterData
     });
 
   } catch (error) {
