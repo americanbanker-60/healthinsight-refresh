@@ -47,8 +47,20 @@ export default function VariousSources() {
   };
 
   // Save analysis data to the frontend's dataEnv:'prod' entity client.
-  // Checks for an existing prod record first (by source_url) to avoid duplicates,
-  // then creates if not found. Triggers relations linking async.
+  // Also persists to localStorage as a guaranteed bridge — entity field filtering
+  // (created_by / uploaded_by) has proven unreliable; localStorage ensures My Library
+  // always shows records from this device regardless of entity schema behavior.
+  const localKey = user?.email ? `hi_analyzed_${user.email}` : null;
+
+  const pushToLocalStorage = (record) => {
+    if (!localKey) return;
+    try {
+      const prev = JSON.parse(localStorage.getItem(localKey) || '[]');
+      const next = [record, ...prev.filter(r => r.id !== record.id)].slice(0, 200);
+      localStorage.setItem(localKey, JSON.stringify(next));
+    } catch (_) {}
+  };
+
   const saveAnalysisToProd = async (analysis) => {
     // Check for an existing record by this user only — avoid returning stale records
     // created under a different auth context (service role, previous sessions, etc.)
@@ -58,7 +70,10 @@ export default function VariousSources() {
           source_url: analysis.source_url,
           created_by: user.email,
         });
-        if (existing?.[0]) return existing[0];
+        if (existing?.[0]) {
+          pushToLocalStorage(existing[0]);
+          return existing[0];
+        }
       } catch (_) {}
     }
     const { id: _drop, ...fields } = analysis;
@@ -67,8 +82,11 @@ export default function VariousSources() {
       is_analyzed: true,
       status: 'completed',
       uploaded_by: user?.email || fields.uploaded_by,
+      created_by: user?.email,
     });
     if (!created?.id) throw new Error("Library save failed — entity create returned no ID");
+    // Store in localStorage so My Library can always find this record
+    pushToLocalStorage(created);
     base44.functions.invoke('createNewsletterRelations', {
       newsletter_id: created.id,
       newsletter_data: created

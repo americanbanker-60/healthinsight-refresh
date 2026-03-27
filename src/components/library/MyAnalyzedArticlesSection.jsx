@@ -15,13 +15,35 @@ export default function MyAnalyzedArticlesSection() {
   const { data: articles = [] } = useQuery({
     queryKey: ["my-analyzed-articles", user?.email],
     queryFn: async () => {
-      // Server-side filter by created_by (platform auto-sets this on frontend entity creates).
-      // This mirrors the pattern used by SavedSearchesSection which is known to work.
-      const mine = await base44.entities.NewsletterItem.filter(
-        { created_by: user.email },
-        '-date_added_to_app'
-      );
-      return (mine || []).filter(n => !!n.is_analyzed || n.status === 'completed');
+      // Primary: localStorage bridge written by saveAnalysisToProd at save time.
+      // This is guaranteed to contain articles from this device regardless of whether
+      // entity field filtering (created_by / uploaded_by) works for this entity type.
+      const LOCAL_KEY = `hi_analyzed_${user.email}`;
+      let localRecords = [];
+      try { localRecords = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch (_) {}
+
+      // Supplement: entity queries for records from other devices / before localStorage bridge
+      let entityRecords = [];
+      try {
+        const r = await base44.entities.NewsletterItem.filter(
+          { uploaded_by: user.email }, '-date_added_to_app'
+        );
+        entityRecords = r || [];
+      } catch (_) {}
+      if (!entityRecords.length) {
+        try {
+          const r = await base44.entities.NewsletterItem.filter(
+            { created_by: user.email }, '-date_added_to_app'
+          );
+          entityRecords = r || [];
+        } catch (_) {}
+      }
+
+      // Merge without duplicates — entity records win (may be more up-to-date),
+      // localStorage fills in anything not found via entity queries.
+      const seenIds = new Set(entityRecords.map(a => a.id));
+      const merged = [...entityRecords, ...localRecords.filter(r => !seenIds.has(r.id))];
+      return merged.filter(n => !!n.is_analyzed || n.status === 'completed');
     },
     enabled: !!user,
     staleTime: 0,
