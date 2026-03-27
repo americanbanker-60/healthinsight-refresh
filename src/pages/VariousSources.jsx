@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ import UrlRow, { STATUS } from "@/components/source/UrlRow";
 // ─── Main Page ────────────────────────────────────────────────────
 export default function VariousSources() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Single URL / PDF tab
   const [activeTab, setActiveTab] = useState("url");
@@ -59,6 +61,7 @@ export default function VariousSources() {
       ...fields,
       is_analyzed: true,
       status: 'completed',
+      uploaded_by: user?.email || fields.uploaded_by,
     });
     if (!created?.id) throw new Error("Library save failed — entity create returned no ID");
     base44.functions.invoke('createNewsletterRelations', {

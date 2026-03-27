@@ -18,7 +18,8 @@ export default function MyAnalyzedArticlesSection() {
       // Use direct entity access with the frontend client (dataEnv: 'prod').
       const all = await base44.entities.NewsletterItem.list('-date_added_to_app', 100);
       return (all || []).filter(n =>
-        n.uploaded_by === user.email && (!!n.is_analyzed || n.status === 'completed')
+        (n.uploaded_by === user.email || n.created_by === user.email) &&
+        (!!n.is_analyzed || n.status === 'completed')
       );
     },
     enabled: !!user,
