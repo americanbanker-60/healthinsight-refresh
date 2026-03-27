@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Zap, Mail, Users, FileText, TrendingUp, Lightbulb, BookmarkPlus, Check, ArrowRight } from "lucide-react";
+import { Zap, Mail, FileText, TrendingUp, Lightbulb, BookmarkPlus, Check, ArrowRight } from "lucide-react";
 import BDContentGeneratorModal from "./BDContentGeneratorModal";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ const actionTypes = {
     title: "Turn This Into Outreach",
     actions: [
       { label: "Draft outreach email", icon: Mail },
-      { label: "Identify target contacts", icon: Users },
+      { label: "Add to pipeline", icon: BookmarkPlus },
     ]
   },
   topic: {
@@ -23,8 +23,8 @@ const actionTypes = {
     color: "from-amber-500 to-orange-600",
     title: "BD Opportunity",
     actions: [
-      { label: "Build target list", icon: Users },
       { label: "Create pitch angle", icon: FileText },
+      { label: "Add to pipeline", icon: BookmarkPlus },
     ]
   },
   company: {
@@ -32,8 +32,8 @@ const actionTypes = {
     color: "from-green-600 to-emerald-600",
     title: "Outreach Opportunity",
     actions: [
-      { label: "Research contacts", icon: Users },
       { label: "Draft intro email", icon: Mail },
+      { label: "Add to pipeline", icon: BookmarkPlus },
     ]
   },
   deal: {
