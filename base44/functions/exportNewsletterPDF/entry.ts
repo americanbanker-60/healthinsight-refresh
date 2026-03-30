@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
         doc.setDrawColor(134, 239, 172);
         doc.setLineWidth(0.5);
         doc.roundedRect(ML, y, CW, boxH, 4, 4, 'FD');
-        txt(`${deal.acquirer || '?'} → ${deal.target || '?'}`, ML + 12, y + 16, { size: 11, style: 'bold', color: GREEN });
+        txt(`${deal.acquirer || '?'} > ${deal.target || '?'}`, ML + 12, y + 16, { size: 11, style: 'bold', color: GREEN });
         let metaX = ML + 12;
         if (deal.deal_value) {
           txt(deal.deal_value, metaX, y + 30, { size: 9, style: 'bold', color: EMERALD });
