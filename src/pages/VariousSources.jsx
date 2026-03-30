@@ -62,35 +62,23 @@ export default function VariousSources() {
   };
 
   const saveAnalysisToProd = async (analysis) => {
-    // Check for an existing record by this user only — avoid returning stale records
-    // created under a different auth context (service role, previous sessions, etc.)
-    if (analysis.source_url && user?.email) {
-      try {
-        const existing = await base44.entities.NewsletterItem.filter({
-          source_url: analysis.source_url,
-          created_by: user.email,
-        });
-        if (existing?.[0]) {
-          pushToLocalStorage(existing[0]);
-          return existing[0];
-        }
-      } catch (_) {}
-    }
+    // Route through backend function (asServiceRole) to bypass RLS on NewsletterItem
     const { id: _drop, ...fields } = analysis;
-    const created = await base44.entities.NewsletterItem.create({
-      ...fields,
-      is_analyzed: true,
-      status: 'completed',
-      uploaded_by: user?.email || fields.uploaded_by,
-      created_by: user?.email,
+    const response = await base44.functions.invoke('saveAnalyzedNewsletter', {
+      analysisResult: {
+        ...fields,
+        uploaded_by: user?.email || fields.uploaded_by,
+      }
     });
-    if (!created?.id) throw new Error("Library save failed — entity create returned no ID");
-    // Store in localStorage so My Library can always find this record
+    const data = response?.data ?? response;
+    if (!data?.id) throw new Error(data?.error || "Library save failed — no ID returned");
+    // Fetch the full record so we can use it locally
+    let created = { id: data.id, title: data.title, ...fields };
+    try {
+      const fetched = await base44.entities.NewsletterItem.get(data.id);
+      if (fetched?.id) created = fetched;
+    } catch (_) {}
     pushToLocalStorage(created);
-    base44.functions.invoke('createNewsletterRelations', {
-      newsletter_id: created.id,
-      newsletter_data: created
-    }).catch(() => {});
     return created;
   };
 
