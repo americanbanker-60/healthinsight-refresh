@@ -15,35 +15,24 @@ export default function MyAnalyzedArticlesSection() {
   const { data: articles = [] } = useQuery({
     queryKey: ["my-analyzed-articles", user?.email],
     queryFn: async () => {
-      // Primary: localStorage bridge written by saveAnalysisToProd at save time.
-      // This is guaranteed to contain articles from this device regardless of whether
-      // entity field filtering (created_by / uploaded_by) works for this entity type.
-      const LOCAL_KEY = `hi_analyzed_${user.email}`;
-      let localRecords = [];
-      try { localRecords = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch (_) {}
-
-      // Supplement: entity queries for records from other devices / before localStorage bridge
-      let entityRecords = [];
+      // Primary: backend function queries same asServiceRole env where records are saved.
+      // This guarantees read-after-write consistency regardless of data env configuration.
       try {
-        const r = await base44.entities.NewsletterItem.filter(
-          { uploaded_by: user.email }, '-date_added_to_app'
-        );
-        entityRecords = r || [];
+        const response = await base44.functions.invoke('getMyNewsletters');
+        const data = response?.data ?? response;
+        if (data?.success && data?.items?.length > 0) {
+          return data.items;
+        }
       } catch (_) {}
-      if (!entityRecords.length) {
-        try {
-          const r = await base44.entities.NewsletterItem.filter(
-            { created_by: user.email }, '-date_added_to_app'
-          );
-          entityRecords = r || [];
-        } catch (_) {}
-      }
 
-      // Merge without duplicates — entity records win (may be more up-to-date),
-      // localStorage fills in anything not found via entity queries.
-      const seenIds = new Set(entityRecords.map(a => a.id));
-      const merged = [...entityRecords, ...localRecords.filter(r => !seenIds.has(r.id))];
-      return merged.filter(n => !!n.is_analyzed || n.status === 'completed');
+      // Fallback: localStorage bridge (records saved to localStorage at analyze time)
+      const LOCAL_KEY = `hi_analyzed_${user.email}`;
+      try {
+        const local = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+        if (local.length > 0) return local.filter(n => !!n.is_analyzed || n.status === 'completed');
+      } catch (_) {}
+
+      return [];
     },
     enabled: !!user,
     staleTime: 0,

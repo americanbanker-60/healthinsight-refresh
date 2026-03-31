@@ -17,8 +17,11 @@ Deno.serve(async (req) => {
 
     console.log('Extracting data from PDF:', file_url);
 
-    // Check for duplicate first (asServiceRole env check)
-    const existingNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: file_url });
+    // Check for duplicate for this user only
+    const existingNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter({
+      source_url: file_url,
+      uploaded_by: user.email
+    });
     if (existingNewsletters.length > 0) {
       return Response.json({
         success: true,
@@ -208,13 +211,27 @@ EXTRACTION RULES — follow these strictly:
       is_analyzed: true
     };
 
-    // Return analysis data — the frontend saves directly to its dataEnv:'prod' client.
-    // 'newsletter' field included for backward compatibility with older frontend bundles.
+    // Save to DB via asServiceRole so getMyNewsletters (same env) can find it.
+    let savedRecord = newsletterData;
+    try {
+      const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+      if (created?.id) {
+        savedRecord = created;
+        base44.asServiceRole.functions.invoke('createNewsletterRelations', {
+          newsletter_id: created.id,
+          newsletter_data: created
+        }).catch(() => {});
+      }
+    } catch (saveErr) {
+      console.warn('DB save failed (non-fatal, returning analysis only):', saveErr.message);
+    }
+
     return Response.json({
       success: true,
       isDuplicate: false,
-      analysis: newsletterData,
-      newsletter: newsletterData
+      analysis: savedRecord,
+      newsletter: savedRecord,
+      id: savedRecord.id
     });
 
   } catch (error) {

@@ -80,8 +80,12 @@ Deno.serve(async (req) => {
     const normalizeUrl = (u) => u.trim().toLowerCase().replace(/\/+$/, '');
     const normalizedUrl = normalizeUrl(url);
 
-    // Check duplicate early (asServiceRole env check — catches reruns against backend env)
-    const existingCheck = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedUrl });
+    // Check duplicate for this user only — scoped by uploaded_by to avoid returning
+    // another user's record as "already in your library"
+    const existingCheck = await base44.asServiceRole.entities.NewsletterItem.filter({
+      source_url: normalizedUrl,
+      uploaded_by: user.email
+    });
     if (existingCheck.length > 0) {
       return Response.json({
         success: true,
@@ -259,13 +263,28 @@ Deno.serve(async (req) => {
       is_analyzed: true
     };
 
-    // Return analysis data — the frontend saves directly to its dataEnv:'prod' client.
-    // 'newsletter' field included for backward compatibility with older frontend bundles.
+    // Save to DB via asServiceRole so getMyNewsletters (same env) can find it.
+    let savedRecord = newsletterData;
+    try {
+      const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+      if (created?.id) {
+        savedRecord = created;
+        // Link relations async — don't block the response
+        base44.asServiceRole.functions.invoke('createNewsletterRelations', {
+          newsletter_id: created.id,
+          newsletter_data: created
+        }).catch(() => {});
+      }
+    } catch (saveErr) {
+      console.warn('DB save failed (non-fatal, returning analysis only):', saveErr.message);
+    }
+
     return Response.json({
       success: true,
       isDuplicate: false,
-      analysis: newsletterData,
-      newsletter: newsletterData
+      analysis: savedRecord,
+      newsletter: savedRecord,
+      id: savedRecord.id
     });
 
   } catch (error) {

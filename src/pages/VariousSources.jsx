@@ -46,52 +46,16 @@ export default function VariousSources() {
     setFile(f); setError("");
   };
 
-  // Save analysis data to the frontend's dataEnv:'prod' entity client.
-  // Also persists to localStorage as a guaranteed bridge — entity field filtering
-  // (created_by / uploaded_by) has proven unreliable; localStorage ensures My Library
-  // always shows records from this device regardless of entity schema behavior.
-  const localKey = user?.email ? `hi_analyzed_${user.email}` : null;
-
+  // Write a saved record to localStorage so My Library has an immediate local bridge
+  // while getMyNewsletters (backend) propagates.
   const pushToLocalStorage = (record) => {
-    if (!localKey) return;
+    if (!user?.email || !record?.id) return;
     try {
-      const prev = JSON.parse(localStorage.getItem(localKey) || '[]');
+      const key = `hi_analyzed_${user.email}`;
+      const prev = JSON.parse(localStorage.getItem(key) || '[]');
       const next = [record, ...prev.filter(r => r.id !== record.id)].slice(0, 200);
-      localStorage.setItem(localKey, JSON.stringify(next));
+      localStorage.setItem(key, JSON.stringify(next));
     } catch (_) {}
-  };
-
-  const saveAnalysisToProd = async (analysis) => {
-    // Check for an existing record by this user only — avoid returning stale records
-    // created under a different auth context (service role, previous sessions, etc.)
-    if (analysis.source_url && user?.email) {
-      try {
-        const existing = await base44.entities.NewsletterItem.filter({
-          source_url: analysis.source_url,
-          created_by: user.email,
-        });
-        if (existing?.[0]) {
-          pushToLocalStorage(existing[0]);
-          return existing[0];
-        }
-      } catch (_) {}
-    }
-    const { id: _drop, ...fields } = analysis;
-    const created = await base44.entities.NewsletterItem.create({
-      ...fields,
-      is_analyzed: true,
-      status: 'completed',
-      uploaded_by: user?.email || fields.uploaded_by,
-      created_by: user?.email,
-    });
-    if (!created?.id) throw new Error("Library save failed — entity create returned no ID");
-    // Store in localStorage so My Library can always find this record
-    pushToLocalStorage(created);
-    base44.functions.invoke('createNewsletterRelations', {
-      newsletter_id: created.id,
-      newsletter_data: created
-    }).catch(() => {});
-    return created;
   };
 
   const analyzeSingle = async () => {
@@ -123,13 +87,13 @@ export default function VariousSources() {
 
       if (!analysis) throw new Error("No analysis data returned");
 
-      // Save to prod env (frontend dataEnv:'prod' client — guaranteed correct environment)
-      const result = await saveAnalysisToProd(analysis);
+      // Backend already saved to DB. Store in localStorage as immediate local bridge.
+      pushToLocalStorage(analysis);
 
       if (isDuplicate) toast.info("This article is already in your library.");
       else toast.success("Saved to library!");
 
-      setAnalysisResult(result);
+      setAnalysisResult(analysis);
       queryClient.invalidateQueries({ queryKey: ["newsletters"] });
       queryClient.invalidateQueries({ queryKey: ["all-newsletters"] });
       queryClient.invalidateQueries({ queryKey: ["my-analyzed-articles"] });
@@ -162,8 +126,8 @@ export default function VariousSources() {
         const response = await base44.functions.invoke('analyzeNewsletterUrl', { url: items[i].url, sourceName: sourceName.trim() || undefined });
         const d = response?.data ?? response;
         if (!d?.success) throw new Error(d?.error || "Analysis failed");
-        const saved = await saveAnalysisToProd(d.analysis);
-        items[i] = { ...items[i], status: d.isDuplicate ? "duplicate" : "success", title: saved?.title || items[i].url };
+        pushToLocalStorage(d.analysis);
+        items[i] = { ...items[i], status: d.isDuplicate ? "duplicate" : "success", title: d.analysis?.title || items[i].url };
       } catch (err) {
         items[i] = { ...items[i], status: "error", errorMsg: err.message };
       }
@@ -186,8 +150,8 @@ export default function VariousSources() {
       const response = await base44.functions.invoke('analyzeNewsletterPDF', { file_url: uploadResponse.file_url, sourceName: sourceName.trim() || undefined });
       const data = response?.data ?? response;
       if (!data?.success) throw new Error(data?.error || 'PDF analysis failed');
-      const saved = await saveAnalysisToProd(data.analysis);
-      const entry = { file: f.name, title: saved?.title || f.name, status: data.isDuplicate ? "duplicate" : "success" };
+      pushToLocalStorage(data.analysis);
+      const entry = { file: f.name, title: data.analysis?.title || f.name, status: data.isDuplicate ? "duplicate" : "success" };
       setPdfResults(prev => [entry, ...prev]);
       if (!data.isDuplicate) toast.success(`PDF added: ${entry.title}`);
       queryClient.invalidateQueries({ queryKey: ['newsletters'] });
