@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     console.log('Starting newsletter deduplication...');
 
     // Fetch all newsletters
-    const allNewsletters = await base44.asServiceRole.entities.NewsletterItem.list('-created_date');
+    const allNewsletters = await base44.asServiceRole.entities.NewsletterItem.list('-created_date', 2000);
     console.log(`Found ${allNewsletters.length} newsletters to check`);
 
     // Track duplicates by URL and title
