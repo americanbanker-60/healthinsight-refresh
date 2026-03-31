@@ -15,24 +15,33 @@ export default function MyAnalyzedArticlesSection() {
   const { data: articles = [] } = useQuery({
     queryKey: ["my-analyzed-articles", user?.email],
     queryFn: async () => {
-      // Primary: backend function queries same asServiceRole env where records are saved.
-      // This guarantees read-after-write consistency regardless of data env configuration.
+      // Always use the backend as the source of truth.
+      // Never fall back to localStorage — stale IDs there cause "not found" errors.
+      const response = await base44.functions.invoke('getMyNewsletters');
+      const data = response?.data ?? response;
+      if (!data?.success) return [];
+
+      // Clear stale localStorage so ghost entries don't appear on other pages
       try {
-        const response = await base44.functions.invoke('getMyNewsletters');
-        const data = response?.data ?? response;
-        if (data?.success && data?.items?.length > 0) {
-          return data.items;
+        const LOCAL_KEY = `hi_analyzed_${user.email}`;
+        localStorage.removeItem(LOCAL_KEY);
+      } catch (_) {}
+
+      const items = data.items || [];
+      // Client-side dedup by source_url then title as safety net
+      const seenUrls = new Set();
+      const seenTitles = new Set();
+      return items.filter(n => {
+        if (n.source_url) {
+          if (seenUrls.has(n.source_url)) return false;
+          seenUrls.add(n.source_url);
+        } else if (n.title) {
+          const key = n.title.trim().toLowerCase();
+          if (seenTitles.has(key)) return false;
+          seenTitles.add(key);
         }
-      } catch (_) {}
-
-      // Fallback: localStorage bridge (records saved to localStorage at analyze time)
-      const LOCAL_KEY = `hi_analyzed_${user.email}`;
-      try {
-        const local = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
-        if (local.length > 0) return local.filter(n => !!n.is_analyzed || n.status === 'completed');
-      } catch (_) {}
-
-      return [];
+        return true;
+      });
     },
     enabled: !!user,
     staleTime: 0,
