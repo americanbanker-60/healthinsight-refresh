@@ -21,7 +21,20 @@ export default function MyAnalyzedArticlesSection() {
         const response = await base44.functions.invoke('getMyNewsletters');
         const data = response?.data ?? response;
         if (data?.success && data?.items?.length > 0) {
-          return data.items;
+          // Client-side dedup by source_url then title as safety net
+          const seenUrls = new Set();
+          const seenTitles = new Set();
+          return data.items.filter(n => {
+            if (n.source_url) {
+              if (seenUrls.has(n.source_url)) return false;
+              seenUrls.add(n.source_url);
+            } else if (n.title) {
+              const key = n.title.trim().toLowerCase();
+              if (seenTitles.has(key)) return false;
+              seenTitles.add(key);
+            }
+            return true;
+          });
         }
       } catch (_) {}
 
