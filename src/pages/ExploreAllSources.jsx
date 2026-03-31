@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { X, Eye, BookOpen, FileText } from "lucide-react";
+import { X, Eye } from "lucide-react";
 import DateRangePicker from "../components/common/DateRangePicker";
 import SortControl from "../components/common/SortControl";
 import { format, subDays, startOfYear } from "date-fns";
