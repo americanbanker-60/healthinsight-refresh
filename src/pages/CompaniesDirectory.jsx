@@ -54,7 +54,7 @@ export default function CompaniesDirectory() {
   });
 
   const createCompanyMutation = useMutation({
-    mutationFn: (companyData) => base44.entities.Company.create(companyData),
+    mutationFn: (companyData) => base44.functions.invoke('adminEntityWrite', { entity: 'Company', operation: 'create', data: companyData }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setShowAddDialog(false);

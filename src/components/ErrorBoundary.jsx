@@ -56,7 +56,7 @@ class ErrorBoundary extends React.Component {
             <p className="text-xs text-slate-400 mt-3">
               Recovery Mode clears AI configuration caches and retries without a full reload.
             </p>
-            {process.env.NODE_ENV === 'development' && (
+            {import.meta.env.DEV && (
               <details className="mt-6 text-left">
                 <summary className="text-sm font-medium text-slate-700 cursor-pointer">
                   Error Details

@@ -17,7 +17,7 @@ export default function SourceEditor({ onCancel }) {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Source.create(data),
+    mutationFn: (data) => base44.functions.invoke('adminEntityWrite', { entity: 'Source', operation: 'create', data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sources'] });
       toast.success("Source created successfully");

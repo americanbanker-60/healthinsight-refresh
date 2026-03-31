@@ -20,7 +20,7 @@ export default function SourceList({ sources, showDeleted }) {
   const queryClient = useQueryClient();
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Source.update(id, data),
+    mutationFn: ({ id, data }) => base44.functions.invoke('adminEntityWrite', { entity: 'Source', operation: 'update', id, data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sources'] });
       setEditingId(null);
@@ -29,7 +29,7 @@ export default function SourceList({ sources, showDeleted }) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Source.update(id, { is_deleted: true }),
+    mutationFn: (id) => base44.functions.invoke('adminEntityWrite', { entity: 'Source', operation: 'update', id, data: { is_deleted: true } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sources'] });
       toast.success("Source deleted successfully");
@@ -37,7 +37,7 @@ export default function SourceList({ sources, showDeleted }) {
   });
 
   const restoreMutation = useMutation({
-    mutationFn: (id) => base44.entities.Source.update(id, { is_deleted: false }),
+    mutationFn: (id) => base44.functions.invoke('adminEntityWrite', { entity: 'Source', operation: 'update', id, data: { is_deleted: false } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sources'] });
       toast.success("Source restored successfully");
