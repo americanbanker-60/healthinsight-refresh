@@ -48,7 +48,7 @@ export default function SmartSearchInput({ value, onChange, availableTopics = []
     setIsLoadingAI(true);
     try {
       // Fetch analyzed newsletters to search themes and summaries
-      const analyzedNewsletters = await base44.entities.Newsletter.filter(
+      const analyzedNewsletters = await base44.entities.NewsletterItem.filter(
         { is_analyzed: true },
         '-publication_date',
         1000

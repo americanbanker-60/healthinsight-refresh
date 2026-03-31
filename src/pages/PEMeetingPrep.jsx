@@ -322,7 +322,7 @@ Use web search to find accurate information about all their healthcare holdings.
       const newsletterIds = [...new Set(relevantRelations.map(r => r.newsletter_id))];
       
       // Fetch newsletter details
-      const newsletters = await base44.entities.Newsletter.filter(
+      const newsletters = await base44.entities.NewsletterItem.filter(
         { id: { $in: newsletterIds } },
         "-publication_date",
         100

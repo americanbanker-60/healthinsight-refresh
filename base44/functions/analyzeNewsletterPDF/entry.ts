@@ -15,8 +15,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'file_url required' }, { status: 400 });
     }
 
-    console.log('Extracting data from PDF:', file_url);
-
     // Check for duplicate for this user only
     const existingNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter({
       source_url: file_url,

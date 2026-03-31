@@ -49,7 +49,7 @@ export default function CompaniesDirectory() {
 
   const { data: newsletters = [] } = useQuery({
     queryKey: ['newsletters'],
-    queryFn: () => base44.entities.Newsletter.list("-publication_date"),
+    queryFn: () => base44.entities.NewsletterItem.list("-publication_date"),
     initialData: [],
   });
 

@@ -19,7 +19,7 @@ export default function SourcesOverviewSection() {
 
   const { data: newsletters = [] } = useQuery({
     queryKey: ['all-newsletters'],
-    queryFn: () => base44.entities.Newsletter.list("-publication_date", 500),
+    queryFn: () => base44.entities.NewsletterItem.list("-publication_date", 500),
     initialData: [],
   });
 

@@ -221,7 +221,7 @@ export default function NewsletterDetail() {
         <div className="flex gap-2">
           <Button
             onClick={exportPDF}
-            disabled={isExportingPDF}
+            disabled={isExportingPDF || !newsletter}
             variant="outline"
             className="bg-indigo-50 border-indigo-200 hover:bg-indigo-100 text-indigo-700"
           >
