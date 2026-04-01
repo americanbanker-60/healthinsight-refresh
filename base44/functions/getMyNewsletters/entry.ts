@@ -1,8 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-// Returns analyzed newsletters uploaded by the current user.
-// Uses asServiceRole so it queries the same DB environment as the analyze
-// functions that save records — guaranteeing consistent read-after-write.
+// Returns analyzed newsletters for the current user.
+// Uses base44.entities (user-authenticated client) and filters by created_by,
+// which the platform auto-sets on every user-client create — the same mechanism
+// that makes SavedSearch.filter({ created_by }) work reliably.
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -12,15 +13,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const items = await base44.asServiceRole.entities.NewsletterItem.filter(
-      { uploaded_by: user.email }, '-date_added_to_app', 200
+    const items = await base44.entities.NewsletterItem.filter(
+      { created_by: user.email }, '-date_added_to_app', 200
     );
 
     const analyzed = (items || []).filter(
       n => !!n.is_analyzed || n.status === 'completed'
     );
 
-    // Deduplicate by source_url (keep the most recent per URL), then by title
+    // Deduplicate by source_url (keep most recent per URL), then by title
     const seenUrls = new Set();
     const seenTitles = new Set();
     const deduped = analyzed.filter(n => {

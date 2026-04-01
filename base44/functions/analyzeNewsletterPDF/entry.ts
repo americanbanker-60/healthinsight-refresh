@@ -15,10 +15,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'file_url required' }, { status: 400 });
     }
 
-    // Check for duplicate for this user only
-    const existingNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter({
+    // Check for duplicate for this user only — use user client so created_by is consistent
+    const existingNewsletters = await base44.entities.NewsletterItem.filter({
       source_url: file_url,
-      uploaded_by: user.email
+      created_by: user.email
     });
     if (existingNewsletters.length > 0) {
       return Response.json({
@@ -237,10 +237,10 @@ EXTRACTION RULES — follow these strictly:
       is_analyzed: true
     };
 
-    // Save to DB via asServiceRole so getMyNewsletters (same env) can find it.
+    // Save via user-authenticated client (see analyzeNewsletterUrl for reasoning).
     let savedRecord = newsletterData;
     try {
-      const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+      const created = await base44.entities.NewsletterItem.create(newsletterData);
       if (created?.id) {
         savedRecord = created;
         base44.asServiceRole.functions.invoke('createNewsletterRelations', {
