@@ -171,7 +171,7 @@ export default function NewsletterDetail() {
         body
       });
 
-      toast.success(`Newsletter sent to ${recipientEmail}`);
+      toast.success(`Article sent to ${recipientEmail}`);
       setShowEmailDialog(false);
       setRecipientEmail("");
     } catch (error) {
@@ -199,7 +199,7 @@ export default function NewsletterDetail() {
     return (
       <div className="p-6 md:p-10 max-w-6xl mx-auto">
         <div className="text-center py-20 text-slate-400">
-          <p className="text-lg font-medium text-slate-600 mb-1">Newsletter not found</p>
+          <p className="text-lg font-medium text-slate-600 mb-1">Article not found</p>
           <p className="text-sm mb-6">This article may still be processing. Try refreshing in a moment.</p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>Refresh</Button>
         </div>
@@ -297,7 +297,7 @@ export default function NewsletterDetail() {
                 ? `${newsletter.ma_activities.length} M&A deal(s) detected. Consider reaching out to involved parties or tracking these companies.`
                 : newsletter.funding_rounds?.length > 0
                 ? `${newsletter.funding_rounds.length} funding event(s) identified. These companies may need advisory services.`
-                : `This newsletter contains ${newsletter.key_takeaways?.length || 0} insights that could support client conversations or outreach.`
+                : `This article contains ${newsletter.key_takeaways?.length || 0} insights that could support client conversations or outreach.`
             }
             contextData={{
               title: newsletter.title,
@@ -486,9 +486,9 @@ export default function NewsletterDetail() {
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Send Newsletter via Email</DialogTitle>
+            <DialogTitle>Send Article via Email</DialogTitle>
             <DialogDescription>
-              Enter the recipient's email address to send this healthcare intelligence newsletter.
+              Enter the recipient's email address to share this healthcare intelligence article.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">

@@ -138,7 +138,7 @@ export default function VariousSources() {
     queryClient.invalidateQueries({ queryKey: ['all-newsletters'] });
     queryClient.invalidateQueries({ queryKey: ['my-analyzed-articles'] });
     const added = items.filter(i => i.status === "success").length;
-    if (added > 0) toast.success(`${added} newsletter${added !== 1 ? "s" : ""} added to the shared library`);
+    if (added > 0) toast.success(`${added} article${added !== 1 ? "s" : ""} added to the shared library`);
   };
 
   const handleBulkPdfUpload = async (event) => {
@@ -188,7 +188,7 @@ export default function VariousSources() {
             <p className="font-bold text-red-900 text-base">⚠️ You are in the PREVIEW SANDBOX</p>
             <p className="text-red-800 text-sm mt-1">
               Data saved here is <strong>NOT stored permanently</strong> and will be wiped. 
-              To save newsletters to your real library, use the <strong>published app URL</strong> (not the preview).
+              To save articles to your real library, use the <strong>published app URL</strong> (not the preview).
             </p>
           </div>
         </div>
@@ -290,7 +290,7 @@ export default function VariousSources() {
           <Card className="border-slate-200">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Link2 className="w-4 h-4 text-slate-600" />Paste Newsletter URL(s)
+                <Link2 className="w-4 h-4 text-slate-600" />Paste Article URL(s)
               </CardTitle>
               <CardDescription>One URL per line. Duplicates are removed automatically before processing.</CardDescription>
             </CardHeader>
@@ -348,7 +348,7 @@ export default function VariousSources() {
               <CardTitle className="flex items-center gap-2 text-base">
                 <FileText className="w-4 h-4 text-slate-600" />Upload a PDF
               </CardTitle>
-              <CardDescription>Upload any healthcare newsletter or report as a PDF file.</CardDescription>
+              <CardDescription>Upload any healthcare article, newsletter, or report as a PDF file.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button type="button" variant="outline" className="w-full border-slate-300"
