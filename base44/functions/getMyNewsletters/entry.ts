@@ -1,9 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Returns analyzed newsletters for the current user.
-// Uses base44.entities (user-authenticated client) and filters by created_by,
-// which the platform auto-sets on every user-client create — the same mechanism
-// that makes SavedSearch.filter({ created_by }) work reliably.
+// Records are created via asServiceRole with uploaded_by: user.email explicitly set.
+// We filter by uploaded_by here to find them — this mirrors how processBulkImportQueue
+// creates records (asServiceRole.create) and is proven to work.
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -13,8 +13,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const items = await base44.entities.NewsletterItem.filter(
-      { created_by: user.email }, '-date_added_to_app', 200
+    const items = await base44.asServiceRole.entities.NewsletterItem.filter(
+      { uploaded_by: user.email }, '-date_added_to_app', 200
     );
 
     const analyzed = (items || []).filter(
