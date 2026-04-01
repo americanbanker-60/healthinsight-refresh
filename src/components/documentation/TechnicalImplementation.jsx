@@ -236,12 +236,12 @@ Deno.serve(async (req) => {
             <div className="bg-slate-50 p-3 rounded text-xs">
               <pre>{`const { data: newsletters = [], isLoading } = useQuery({
   queryKey: ['newsletters'],
-  queryFn: () => base44.entities.Newsletter.list("-publication_date", 500),
+  queryFn: () => base44.entities.NewsletterItem.list("-publication_date", 500),
   initialData: [],
 });
 
 const createMutation = useMutation({
-  mutationFn: (data) => base44.entities.Newsletter.create(data),
+  mutationFn: (data) => base44.entities.NewsletterItem.create(data),
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['newsletters'] });
     toast.success("Created successfully");

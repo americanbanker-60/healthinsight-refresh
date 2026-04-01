@@ -40,7 +40,7 @@ export default function TopicPage() {
     queryKey: ['topic-relations', topicId],
     queryFn: async () => {
       if (!topicId) return [];
-      return base44.entities.NewsletterItemRelation.filter({ entity_type: 'topic', entity_id: topicId }, '-relevance_score');
+      return base44.entities.NewsletterRelation.filter({ entity_type: 'topic', entity_id: topicId }, '-relevance_score');
     },
     enabled: !!topicId,
     initialData: [],

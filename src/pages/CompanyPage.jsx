@@ -38,7 +38,7 @@ export default function CompanyPage() {
     queryKey: ['company-relations', companyId],
     queryFn: async () => {
       if (!companyId) return [];
-      return base44.entities.NewsletterItemRelation.filter({ entity_type: 'company', entity_id: companyId }, '-relevance_score');
+      return base44.entities.NewsletterRelation.filter({ entity_type: 'company', entity_id: companyId }, '-relevance_score');
     },
     enabled: !!companyId,
     initialData: [],
