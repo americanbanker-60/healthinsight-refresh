@@ -193,18 +193,46 @@ EXTRACTION RULES — follow these strictly:
       result.title = result.source_name || sourceName || 'Untitled Document';
     }
 
+    // Normalize arrays — same pattern as processBulkImportQueue.
+    // Build field-by-field (never spread ...result) to avoid passing unknown fields
+    // like cross_reference_signals that cause asServiceRole.create() to fail silently.
+    const normalizedThemes = (result.themes || []).map(t =>
+      typeof t === 'string' ? { theme: t, description: '' } : t
+    );
+    const normalizedStats = (result.key_statistics || []).map(s =>
+      typeof s === 'string' ? { figure: s, context: '' } : s
+    );
+    const normalizedMA = (result.ma_activities || []).map(m =>
+      typeof m === 'string' ? { acquirer: '', target: '', deal_value: '', description: m } : m
+    );
+    const normalizedFunding = (result.funding_rounds || []).map(f =>
+      typeof f === 'string' ? { company: '', amount: f, round_type: '', description: f } : f
+    );
+
     const newsletterData = {
-      ...result,
+      title: result.title,
       source_url: file_url,
       source_name: sourceName || result.source_name || 'PDF Upload',
       content_type: 'PDF',
       source_type: 'PDF',
-      date_added_to_app: new Date().toISOString(),
-      uploaded_by: user.email,
       publication_date: result.publication_date || today,
       publication_date_confidence: result.publication_date_confidence || 'low',
       publication_date_source: result.publication_date_source || 'PDF document',
       publication_date_notes: 'Direct PDF upload',
+      tldr: result.tldr || null,
+      key_takeaways: result.key_takeaways || [],
+      key_statistics: normalizedStats,
+      themes: normalizedThemes,
+      key_players: result.key_players || [],
+      ma_activities: normalizedMA,
+      funding_rounds: normalizedFunding,
+      recommended_actions: result.recommended_actions || [],
+      sentiment: result.sentiment || null,
+      market_sentiment: result.market_sentiment || null,
+      deal_value: result.deal_value || null,
+      primary_sector: result.primary_sector || null,
+      date_added_to_app: new Date().toISOString(),
+      uploaded_by: user.email,
       status: 'completed',
       is_analyzed: true
     };
@@ -219,9 +247,11 @@ EXTRACTION RULES — follow these strictly:
           newsletter_id: created.id,
           newsletter_data: created
         }).catch(() => {});
+      } else {
+        console.error('DB save returned no ID — record may not have been created');
       }
     } catch (saveErr) {
-      console.warn('DB save failed (non-fatal, returning analysis only):', saveErr.message);
+      console.error('DB save failed:', saveErr.message);
     }
 
     return Response.json({
