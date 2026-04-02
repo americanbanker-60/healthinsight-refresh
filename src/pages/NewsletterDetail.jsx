@@ -74,7 +74,7 @@ export default function NewsletterDetail() {
   const { data: newsletter, isLoading, isError, refetch } = useQuery({
     queryKey: ['newsletter', newsletterId],
     queryFn: async () => {
-      // Fast path: use analysis data cached by AnalysisResult just before navigation
+      // 1. sessionStorage cache — set by AnalysisResult or MyAnalyzedArticlesSection on click
       const cached = sessionStorage.getItem(`newsletter_cache_${newsletterId}`);
       if (cached) {
         try {
@@ -82,12 +82,21 @@ export default function NewsletterDetail() {
           if (parsed?.id) return parsed;
         } catch (_) {}
       }
-      // Try frontend entity access first (dataEnv:'prod') — works for prod-env IDs
+      // 2. User-client entity filter (works when dataEnv:'prod' matches save env)
       try {
         const records = await base44.entities.NewsletterItem.filter({ id: newsletterId });
         if (records?.[0]) return records[0];
       } catch (_) {}
-      // Fall back to getNewsletter (asServiceRole) — works for backend-env IDs
+      // 3. getMyNewsletters (proven working) — find the specific article by ID
+      try {
+        const response = await base44.functions.invoke('getMyNewsletters');
+        const data = response?.data ?? response;
+        if (data?.success) {
+          const found = (data.items || []).find(n => n.id === newsletterId);
+          if (found) return found;
+        }
+      } catch (_) {}
+      // 4. getNewsletter backend function
       const response = await base44.functions.invoke('getNewsletter', { newsletterId });
       const result = (response?.data ?? response)?.newsletter || null;
       if (!result) throw new Error('Newsletter not yet available');
