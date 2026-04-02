@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Search, Plus, X, Scan, RefreshCw } from "lucide-react";
+import { Building2, Search, Plus, X, Scan, RefreshCw, Sparkles } from "lucide-react";
 import SortControl from "../components/common/SortControl";
 import { GridCardSkeleton } from "../components/common/CardSkeleton";
 import { toast } from "sonner";
@@ -34,6 +34,7 @@ export default function CompaniesDirectory() {
   const [aliasInput, setAliasInput] = useState("");
   const [keywordInput, setKeywordInput] = useState("");
   const [scanningCompanyId, setScanningCompanyId] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { data: companies = [], isLoading, isFetching } = useQuery({
     queryKey: ['companies'],
@@ -45,6 +46,24 @@ export default function CompaniesDirectory() {
     queryClient.invalidateQueries({ queryKey: ['companies'] });
     queryClient.invalidateQueries({ queryKey: ['newsletters'] });
     toast.success('Data refreshed');
+  };
+
+  const handleSyncFromArticles = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await base44.functions.invoke('backfillCompaniesFromArticles');
+      const data = response?.data ?? response;
+      if (data?.success) {
+        toast.success(`Sync complete: ${data.companies_created} new companies added from ${data.articles_processed} articles`);
+        queryClient.invalidateQueries({ queryKey: ['companies'] });
+      } else {
+        toast.error('Sync failed: ' + (data?.error || 'Unknown error'));
+      }
+    } catch (err) {
+      toast.error('Sync failed: ' + err.message);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const { data: newsletters = [] } = useQuery({
@@ -210,6 +229,10 @@ export default function CompaniesDirectory() {
               <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isFetching}>
                 <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
                 Refresh
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSyncFromArticles} disabled={isSyncing}>
+                <Sparkles className={`w-4 h-4 mr-2 ${isSyncing ? "animate-pulse" : ""}`} />
+                {isSyncing ? "Syncing..." : "Sync from Articles"}
               </Button>
               <AdminOnlyButton>
                 <Button onClick={() => setShowAddDialog(true)} className="bg-blue-600 hover:bg-blue-700">

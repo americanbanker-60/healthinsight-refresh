@@ -31,6 +31,27 @@ Deno.serve(async (req) => {
       base44.asServiceRole.entities.Topic.list()
     ]);
 
+    // Auto-create Company records from key_players if they don't exist yet
+    const existingCompanyNames = new Set(companies.map((c: any) => c.company_name.toLowerCase()));
+    const newCompanies: any[] = [];
+    if (newsletter.key_players && Array.isArray(newsletter.key_players)) {
+      for (const playerName of newsletter.key_players) {
+        if (playerName && !existingCompanyNames.has(playerName.toLowerCase())) {
+          try {
+            const created = await base44.asServiceRole.entities.Company.create({
+              company_name: playerName,
+              description: `Identified in: ${(newsletter.title || '').slice(0, 150)}`
+            });
+            if (created?.id) {
+              newCompanies.push(created);
+              existingCompanyNames.add(playerName.toLowerCase());
+            }
+          } catch (_) {}
+        }
+      }
+    }
+    const allCompanies = [...companies, ...newCompanies];
+
     // Build searchable text from newsletter
     const searchText = [
       newsletter.title || '',
@@ -46,7 +67,7 @@ Deno.serve(async (req) => {
     const relations = [];
 
     // Match companies
-    for (const company of companies) {
+    for (const company of allCompanies) {
       let relevanceScore = 0;
       let matchType = null;
 
