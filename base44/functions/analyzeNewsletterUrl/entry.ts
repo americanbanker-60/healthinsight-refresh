@@ -80,10 +80,11 @@ Deno.serve(async (req) => {
     const normalizeUrl = (u) => u.trim().toLowerCase().replace(/\/+$/, '');
     const normalizedUrl = normalizeUrl(url);
 
-    // Check duplicate for this user only — filter by uploaded_by (explicitly set on create)
-    const existingCheck = await base44.asServiceRole.entities.NewsletterItem.filter({
+    // Check duplicate for this user only — use user client (not asServiceRole).
+    // asServiceRole in user-invoked functions returns 403; user client works correctly.
+    const existingCheck = await base44.entities.NewsletterItem.filter({
       source_url: normalizedUrl,
-      uploaded_by: user.email
+      created_by: user.email
     });
     if (existingCheck.length > 0) {
       return Response.json({
@@ -292,15 +293,14 @@ Deno.serve(async (req) => {
       is_analyzed: true
     };
 
-    // Save via asServiceRole — this is the proven pattern (processBulkImportQueue uses it).
-    // uploaded_by is explicitly set in newsletterData above, so getMyNewsletters can
-    // filter by { uploaded_by: user.email } to find this user's records.
+    // Save via user client (NOT asServiceRole — that returns 403 in user-invoked functions).
+    // Platform auto-sets created_by on user-client creates; getMyNewsletters filters by that.
     let savedRecord = newsletterData;
     try {
-      const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+      const created = await base44.entities.NewsletterItem.create(newsletterData);
       if (created?.id) {
         savedRecord = created;
-        base44.asServiceRole.functions.invoke('createNewsletterRelations', {
+        base44.functions.invoke('createNewsletterRelations', {
           newsletter_id: created.id,
           newsletter_data: created
         }).catch(() => {});
