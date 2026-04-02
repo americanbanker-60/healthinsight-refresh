@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Copy, Download, Mail, FileText, Sparkles, Check, RefreshCw, Zap } from "lucide-react";
+import { Loader2, Copy, Download, Mail, FileText, Sparkles, Check, RefreshCw, Zap, BookmarkCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -60,6 +60,7 @@ export default function BDContentGeneratorModal({
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [savedToBD, setSavedToBD] = useState(false);
 
   // Reset and pre-select content type whenever the modal opens with a new action
   React.useEffect(() => {
@@ -67,8 +68,47 @@ export default function BDContentGeneratorModal({
       setContentType(ACTION_LABEL_MAP[(contextData?.actionLabel || "").toLowerCase()] || "pitch_angle");
       setGeneratedContent("");
       setAdditionalContext("");
+      setSavedToBD(false);
     }
   }, [open, contextData?.actionLabel]);
+
+  // Auto-save generated content to BDOpportunity with timestamp and article link
+  const autoSaveToOpportunity = async (content, type) => {
+    const timestamp = new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const savedContent = `**${contentTypes[type].label} · ${timestamp}**\n\n${content}`;
+    try {
+      if (contextData?.opportunityId) {
+        // Update existing opportunity (called from BD Opportunities page)
+        await base44.entities.BDOpportunity.update(contextData.opportunityId, { generated_content: savedContent });
+      } else {
+        // Find existing opportunity for this newsletter or create a new one
+        let existingId = null;
+        if (contextData?.newsletterId) {
+          const existing = await base44.entities.BDOpportunity.filter({ newsletter_id: contextData.newsletterId });
+          if (existing?.[0]) existingId = existing[0].id;
+        }
+        if (existingId) {
+          await base44.entities.BDOpportunity.update(existingId, { generated_content: savedContent });
+        } else {
+          await base44.entities.BDOpportunity.create({
+            title: contextData?.title || "Untitled Opportunity",
+            source_type: contextType || "newsletter",
+            context_summary: contextData?.summary || "",
+            companies: contextData?.companies || [],
+            deals: contextData?.deals || "",
+            themes: contextData?.themes || [],
+            newsletter_id: contextData?.newsletterId || "",
+            newsletter_title: contextData?.title || "",
+            status: "new",
+            generated_content: savedContent,
+          });
+        }
+      }
+      setSavedToBD(true);
+    } catch (_) {
+      // Non-fatal — content was generated, save just didn't persist
+    }
+  };
 
   const generateContent = async () => {
     setIsGenerating(true);
@@ -95,6 +135,7 @@ export default function BDContentGeneratorModal({
       }
       
       setGeneratedContent(output);
+      autoSaveToOpportunity(output, contentType);
     } catch (error) {
       console.error("Generation error:", error);
       toast.error("Failed to generate content. Please try again.");
@@ -373,18 +414,19 @@ PUT BLANK LINES BETWEEN EVERY BULLET POINT AND SECTION.`
             )}
           </Button>
 
-          {/* BD Opportunities nav tip */}
-          {generatedContent && (
-            <div className="flex items-start gap-2 bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 text-xs text-purple-800">
-              <Zap className="w-3.5 h-3.5 mt-0.5 shrink-0 text-purple-600" />
+          {/* Auto-save confirmation */}
+          {savedToBD && (
+            <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-800">
+              <BookmarkCheck className="w-3.5 h-3.5 shrink-0 text-green-600" />
               <span>
-                Want to save this topic and generate outreach anytime?{" "}
+                Saved to{" "}
                 <button
                   onClick={() => { onClose(); navigate(createPageUrl("BDOpportunities")); }}
-                  className="font-semibold underline underline-offset-2 hover:text-purple-900"
+                  className="font-semibold underline underline-offset-2 hover:text-green-900"
                 >
-                  Visit BD Opportunities →
+                  BD Opportunities
                 </button>
+                {" "}with timestamp and article link.
               </span>
             </div>
           )}

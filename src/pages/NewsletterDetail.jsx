@@ -314,7 +314,9 @@ export default function NewsletterDetail() {
               companies: newsletter.key_players,
               deals: newsletter.ma_activities?.map(m => `${m.acquirer} acquiring ${m.target}`).join("; ") ||
                      newsletter.funding_rounds?.map(f => `${f.company} raised ${f.amount}`).join("; "),
-              themes: newsletter.themes?.map(t => t.theme)
+              themes: newsletter.themes?.map(t => t.theme),
+              newsletterId: newsletter.id,
+              newsletter_id: newsletter.id,
             }}
           />
         </div>

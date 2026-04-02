@@ -162,6 +162,8 @@ export default function AnalysisResult({ analysis, onReset }) {
           deals: analysis.ma_activities?.map(m => `${m.acquirer} acquiring ${m.target}`).join("; ") ||
                  analysis.funding_rounds?.map(f => `${f.company} raised ${f.amount}`).join("; "),
           themes: analysis.themes?.map(t => t.theme),
+          newsletterId: analysis.id,
+          newsletter_id: analysis.id,
         }}
       />
 

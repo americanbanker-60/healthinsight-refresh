@@ -167,6 +167,8 @@ function OpportunityCard({ opp, onDelete, onUpdate }) {
           deals: opp.deals,
           themes: opp.themes,
           actionLabel: "reach out now",
+          opportunityId: opp.id,
+          newsletterId: opp.newsletter_id,
         }}
       />
     </>
