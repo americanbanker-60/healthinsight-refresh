@@ -21,7 +21,8 @@ export default function CompanyPage() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const companyId = urlParams.get('id');
-  
+  const companyName = urlParams.get('company'); // name-based routing from KnowledgeHub
+
   const [timeRange, setTimeRange] = useState(90);
   const [detailNewsletterId, setDetailNewsletterId] = useState(null);
 
@@ -64,6 +65,19 @@ export default function CompanyPage() {
   const { data: topics = [] } = useQuery({
     queryKey: ['topics'],
     queryFn: () => base44.entities.Topic.list("sort_order"),
+    initialData: [],
+  });
+
+  // Name-based routing: fetch articles directly filtered by company name (used from KnowledgeHub)
+  const { data: nameBasedNewsletters = [], isLoading: nameBasedLoading } = useQuery({
+    queryKey: ['company-by-name', companyName],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('listNewsletters', { query: { is_analyzed: true } });
+      const data = response?.data ?? response;
+      const all = data?.newsletters || [];
+      return all.filter(n => n.key_players?.includes(companyName));
+    },
+    enabled: !!companyName && !companyId,
     initialData: [],
   });
 
@@ -166,6 +180,69 @@ export default function CompanyPage() {
   };
 
   const detailNewsletter = newsletters.find(n => n.id === detailNewsletterId);
+
+  // Name-based view (from KnowledgeHub links like ?company=UnitedHealth)
+  if (companyName && !companyId) {
+    if (nameBasedLoading) {
+      return (
+        <div className="p-6 md:p-10 max-w-7xl mx-auto">
+          <Skeleton className="h-12 w-2/3 mb-4" />
+          <Skeleton className="h-64 mb-6" />
+          <Skeleton className="h-96" />
+        </div>
+      );
+    }
+    return (
+      <div className="p-6 md:p-10 max-w-7xl mx-auto">
+        <BackButton className="mb-4" />
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+              <Building2 className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold text-slate-900 tracking-tight">{companyName}</h1>
+          </div>
+          <Badge variant="outline">{nameBasedNewsletters.length} article{nameBasedNewsletters.length !== 1 ? 's' : ''} mentioning this company</Badge>
+        </div>
+        <div className="space-y-3">
+          {nameBasedNewsletters.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-slate-500">
+                No articles found mentioning this company yet.
+              </CardContent>
+            </Card>
+          ) : nameBasedNewsletters.map(newsletter => {
+            const pubDate = newsletter.publication_date
+              ? new Date(newsletter.publication_date)
+              : new Date(newsletter.created_date);
+            return (
+              <Card
+                key={newsletter.id}
+                className="border-slate-200 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => {
+                  try { sessionStorage.setItem(`newsletter_cache_${newsletter.id}`, JSON.stringify(newsletter)); } catch (_) {}
+                  window.open(`${createPageUrl("NewsletterDetail")}?id=${newsletter.id}`, "_blank");
+                }}
+              >
+                <CardContent className="p-4">
+                  <h4 className="font-semibold text-sm mb-1">{newsletter.title}</h4>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                    {newsletter.source_name && (
+                      <Badge variant="outline" className="text-xs">{newsletter.source_name}</Badge>
+                    )}
+                    <span>{format(pubDate, "MMM d, yyyy")}</span>
+                  </div>
+                  {newsletter.tldr && (
+                    <p className="text-xs text-slate-600 line-clamp-2">{newsletter.tldr}</p>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   if (companyLoading) {
     return (
