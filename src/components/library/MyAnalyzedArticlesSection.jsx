@@ -12,36 +12,47 @@ import { format } from "date-fns";
 export default function MyAnalyzedArticlesSection() {
   const { user } = useAuth();
 
+  const LOCAL_KEY = user?.email ? `hi_analyzed_${user.email}` : null;
+
+  const dedup = (items) => {
+    const seenUrls = new Set();
+    const seenTitles = new Set();
+    return items.filter(n => {
+      if (n.source_url) {
+        if (seenUrls.has(n.source_url)) return false;
+        seenUrls.add(n.source_url);
+      } else if (n.title) {
+        const key = n.title.trim().toLowerCase();
+        if (seenTitles.has(key)) return false;
+        seenTitles.add(key);
+      }
+      return true;
+    });
+  };
+
   const { data: articles = [] } = useQuery({
     queryKey: ["my-analyzed-articles", user?.email],
     queryFn: async () => {
-      // Always use the backend as the source of truth.
-      // Never fall back to localStorage — stale IDs there cause "not found" errors.
-      const response = await base44.functions.invoke('getMyNewsletters');
-      const data = response?.data ?? response;
-      if (!data?.success) return [];
-
-      // Clear stale localStorage so ghost entries don't appear on other pages
+      // Primary: backend function (asServiceRole, same env as save)
       try {
-        const LOCAL_KEY = `hi_analyzed_${user.email}`;
-        localStorage.removeItem(LOCAL_KEY);
+        const response = await base44.functions.invoke('getMyNewsletters');
+        const data = response?.data ?? response;
+        if (data?.success && (data.items || []).length > 0) {
+          return dedup(data.items);
+        }
       } catch (_) {}
 
-      const items = data.items || [];
-      // Client-side dedup by source_url then title as safety net
-      const seenUrls = new Set();
-      const seenTitles = new Set();
-      return items.filter(n => {
-        if (n.source_url) {
-          if (seenUrls.has(n.source_url)) return false;
-          seenUrls.add(n.source_url);
-        } else if (n.title) {
-          const key = n.title.trim().toLowerCase();
-          if (seenTitles.has(key)) return false;
-          seenTitles.add(key);
+      // Fallback: localStorage bridge written by VariousSources immediately after analysis.
+      // Covers the window between save and when the backend query catches up.
+      try {
+        if (LOCAL_KEY) {
+          const local = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+          const analyzed = local.filter(n => !!n.is_analyzed || n.status === 'completed');
+          if (analyzed.length > 0) return dedup(analyzed);
         }
-        return true;
-      });
+      } catch (_) {}
+
+      return [];
     },
     enabled: !!user,
     staleTime: 0,

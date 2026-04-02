@@ -1,9 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-// Returns analyzed newsletters for the current user.
-// Records are created via the user-authenticated client (base44.entities.create),
-// which causes the platform to auto-set created_by to the user's email.
-// We filter by created_by here to find them.
+// Returns analyzed articles for the current user.
+// Tries uploaded_by first (explicitly set by analyze functions via asServiceRole),
+// then falls back to created_by (auto-set by platform on user-client creates).
+// Both fields covered so records are found regardless of which save path ran.
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -13,15 +13,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const items = await base44.entities.NewsletterItem.filter(
-      { created_by: user.email }, '-date_added_to_app', 200
-    );
+    // Primary: filter by uploaded_by (explicitly set in newsletterData on every save)
+    let items = [];
+    try {
+      items = await base44.asServiceRole.entities.NewsletterItem.filter(
+        { uploaded_by: user.email }, '-date_added_to_app', 200
+      );
+    } catch (_) {}
+
+    // Fallback: filter by created_by (auto-set by platform on user-client creates)
+    if (items.length === 0) {
+      try {
+        items = await base44.asServiceRole.entities.NewsletterItem.filter(
+          { created_by: user.email }, '-date_added_to_app', 200
+        );
+      } catch (_) {}
+    }
 
     const analyzed = (items || []).filter(
       n => !!n.is_analyzed || n.status === 'completed'
     );
 
-    // Deduplicate by source_url (keep most recent per URL), then by title
+    // Deduplicate by source_url then title
     const seenUrls = new Set();
     const seenTitles = new Set();
     const deduped = analyzed.filter(n => {

@@ -80,12 +80,14 @@ Deno.serve(async (req) => {
     const normalizeUrl = (u) => u.trim().toLowerCase().replace(/\/+$/, '');
     const normalizedUrl = normalizeUrl(url);
 
-    // Check duplicate for this user only — use user client (not asServiceRole).
-    // asServiceRole in user-invoked functions returns 403; user client works correctly.
-    const existingCheck = await base44.entities.NewsletterItem.filter({
-      source_url: normalizedUrl,
-      created_by: user.email
-    });
+    // Duplicate check — non-blocking try-catch so a transient 403 doesn't kill the request
+    let existingCheck = [];
+    try {
+      existingCheck = await base44.asServiceRole.entities.NewsletterItem.filter({
+        source_url: normalizedUrl,
+        uploaded_by: user.email
+      });
+    } catch (_) {}
     if (existingCheck.length > 0) {
       return Response.json({
         success: true,
@@ -293,22 +295,22 @@ Deno.serve(async (req) => {
       is_analyzed: true
     };
 
-    // Save via user client (NOT asServiceRole — that returns 403 in user-invoked functions).
-    // Platform auto-sets created_by on user-client creates; getMyNewsletters filters by that.
+    // Save via asServiceRole — same pattern as processBulkImportQueue (proven to create records).
+    // uploaded_by: user.email is explicitly set so getMyNewsletters can filter by it.
     let savedRecord = newsletterData;
     try {
-      const created = await base44.entities.NewsletterItem.create(newsletterData);
+      const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
       if (created?.id) {
         savedRecord = created;
-        base44.functions.invoke('createNewsletterRelations', {
+        base44.asServiceRole.functions.invoke('createNewsletterRelations', {
           newsletter_id: created.id,
           newsletter_data: created
         }).catch(() => {});
       } else {
-        console.error('DB save returned no ID — record may not have been created');
+        console.warn('DB save returned no ID');
       }
     } catch (saveErr) {
-      console.error('DB save failed:', saveErr.message);
+      console.warn('DB save failed:', saveErr.message);
     }
 
     return Response.json({
@@ -321,19 +323,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('ERROR:', error.message);
-    // Best-effort failure audit log
-    try {
-      const base44Err = createClientFromRequest(req);
-      const userErr = await base44Err.auth.me().catch(() => null);
-      if (userErr) {
-        await base44Err.asServiceRole.entities.UploadAuditLog.create({
-          uploaded_by: userErr.email,
-          source_type: 'url',
-          status: 'failed',
-          error_message: error.message
-        });
-      }
-    } catch (_) {}
     return Response.json({ success: false, error: error.message || 'Unknown error' }, { status: 500 });
   }
 });

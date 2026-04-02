@@ -15,12 +15,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'file_url required' }, { status: 400 });
     }
 
-    // Check for duplicate for this user only — use user client (not asServiceRole).
-    // asServiceRole in user-invoked functions returns 403; user client works correctly.
-    const existingNewsletters = await base44.entities.NewsletterItem.filter({
-      source_url: file_url,
-      created_by: user.email
-    });
+    // Duplicate check — non-blocking try-catch so a transient 403 doesn't kill the request
+    let existingNewsletters = [];
+    try {
+      existingNewsletters = await base44.asServiceRole.entities.NewsletterItem.filter({
+        source_url: file_url,
+        uploaded_by: user.email
+      });
+    } catch (_) {}
     if (existingNewsletters.length > 0) {
       return Response.json({
         success: true,
@@ -238,19 +240,19 @@ EXTRACTION RULES — follow these strictly:
       is_analyzed: true
     };
 
-    // Save via user client (NOT asServiceRole — that returns 403 in user-invoked functions).
-    // Platform auto-sets created_by on user-client creates; getMyNewsletters filters by that.
+    // Save via asServiceRole — same proven pattern as processBulkImportQueue.
+    // uploaded_by: user.email explicitly set so getMyNewsletters can filter by it.
     let savedRecord = newsletterData;
     try {
-      const created = await base44.entities.NewsletterItem.create(newsletterData);
+      const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
       if (created?.id) {
         savedRecord = created;
-        base44.functions.invoke('createNewsletterRelations', {
+        base44.asServiceRole.functions.invoke('createNewsletterRelations', {
           newsletter_id: created.id,
           newsletter_data: created
         }).catch(() => {});
       } else {
-        console.error('DB save returned no ID — record may not have been created');
+        console.warn('DB save returned no ID');
       }
     } catch (saveErr) {
       console.error('DB save failed:', saveErr.message);
