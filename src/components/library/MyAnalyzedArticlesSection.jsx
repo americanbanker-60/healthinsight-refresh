@@ -128,6 +128,11 @@ export default function MyAnalyzedArticlesSection() {
               <Link
                 to={`${createPageUrl("NewsletterDetail")}?id=${article.id}`}
                 className="shrink-0 text-indigo-600 hover:text-indigo-800"
+                onClick={() => {
+                  try {
+                    if (article.id) sessionStorage.setItem(`newsletter_cache_${article.id}`, JSON.stringify(article));
+                  } catch (_) {}
+                }}
               >
                 <ExternalLink className="w-4 h-4" />
               </Link>
