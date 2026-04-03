@@ -1,385 +1,195 @@
 import React from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Shield, Lightbulb, Building2, Settings, Users, BarChart3, Newspaper, Sparkles, Loader2, Database, Globe } from "lucide-react";
+import {
+  Shield, Building2, Settings, Users, Newspaper,
+  Database, Globe, Loader2, Trash2, Wrench
+} from "lucide-react";
 import { useUserRole, RoleGuard } from "../components/auth/RoleGuard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import IntelligenceOverhaul from "../components/admin/IntelligenceOverhaul";
 import BulkImportStatus from "../components/admin/BulkImportStatus";
-import UploadAuditLog from "../components/admin/UploadAuditLog";
-
 
 export default function AdminDashboard() {
   const { user } = useUserRole();
   const queryClient = useQueryClient();
-  const [generatingTopics, setGeneratingTopics] = React.useState(false);
+  const [deduping, setDeduping] = React.useState(false);
   const [fixingFlag, setFixingFlag] = React.useState(false);
 
-  const generateTopicsMutation = useMutation({
-    mutationFn: async () => {
-      const response = await base44.functions.invoke('autoGenerateTopics');
-      return response.data;
-    },
-    onSuccess: (data) => {
-      toast.success(`Generated ${data.topicsCreated} new topics!`);
-      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
-    },
-    onError: (error) => {
-      toast.error(`Failed to generate topics: ${error.message}`);
-    },
-  });
-
-  const handleGenerateTopics = async () => {
-    setGeneratingTopics(true);
-    try {
-      await generateTopicsMutation.mutateAsync();
-    } finally {
-      setGeneratingTopics(false);
-    }
-  };
-
-
-
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['adminStats'],
+    queryKey: ["adminStats"],
     queryFn: async () => {
-      // Use backend functions with asServiceRole to read from production DB
       const [newsletters, companies, sources, users] = await Promise.all([
-        base44.entities.NewsletterItem.list('-created_date', 10000),
+        base44.entities.NewsletterItem.list("-created_date", 10000),
         base44.entities.Company.list(),
         base44.entities.Source.list(),
-        base44.entities.User.list()
+        base44.entities.User.list(),
       ]);
+      const analyzed = (newsletters || []).filter(n => n.is_analyzed).length;
       return {
-        newsletters: (newsletters || []).length,
+        articles: (newsletters || []).length,
+        analyzed,
         companies: companies.length,
         sources: sources.filter(s => !s.is_deleted).length,
         users: users.length,
-        admins: users.filter(u => u.role === 'admin').length
       };
     },
-    initialData: { newsletters: 0, companies: 0, sources: 0, users: 0, admins: 0 }
+    initialData: { articles: 0, analyzed: 0, companies: 0, sources: 0, users: 0 },
   });
+
+  const handleDedup = async () => {
+    if (!confirm("Run deduplication scan? This will merge duplicate articles.")) return;
+    setDeduping(true);
+    try {
+      const response = await base44.functions.invoke("deduplicateNewsletters", {});
+      const data = response?.data ?? response;
+      if (data?.success) {
+        toast.success(`Merged ${data.merged} duplicate groups, deleted ${data.deleted} records`);
+        queryClient.invalidateQueries({ queryKey: ["adminStats"] });
+      } else {
+        toast.error("Deduplication failed");
+      }
+    } catch (err) {
+      toast.error("Error: " + err.message);
+    } finally {
+      setDeduping(false);
+    }
+  };
+
+  const handleFixFlags = async () => {
+    if (!confirm("Scan all articles and mark those with content as analyzed?")) return;
+    setFixingFlag(true);
+    try {
+      const response = await base44.functions.invoke("fixAnalyzedFlag", {});
+      const data = response?.data ?? response;
+      if (data?.success) {
+        toast.success(`Fixed ${data.newly_fixed} articles. ${data.already_flagged} were already correct.`);
+        queryClient.invalidateQueries({ queryKey: ["adminStats"] });
+        queryClient.invalidateQueries({ queryKey: ["newsletters"] });
+      } else {
+        toast.error("Fix failed");
+      }
+    } catch (err) {
+      toast.error("Error: " + err.message);
+    } finally {
+      setFixingFlag(false);
+    }
+  };
+
+  const statCards = [
+    { label: "Total Articles", value: stats.articles, sub: `${stats.analyzed} analyzed`, icon: Newspaper, color: "blue" },
+    { label: "Companies", value: stats.companies, icon: Building2, color: "purple" },
+    { label: "Sources", value: stats.sources, icon: Database, color: "green" },
+    { label: "Users", value: stats.users, icon: Users, color: "orange" },
+  ];
+
+  const colorMap = {
+    blue:   { card: "from-blue-50 to-blue-100 border-blue-200",   text: "text-blue-700",   icon: "text-blue-500" },
+    purple: { card: "from-purple-50 to-purple-100 border-purple-200", text: "text-purple-700", icon: "text-purple-500" },
+    green:  { card: "from-green-50 to-green-100 border-green-200", text: "text-green-700",  icon: "text-green-500" },
+    orange: { card: "from-orange-50 to-orange-100 border-orange-200", text: "text-orange-700", icon: "text-orange-500" },
+  };
 
   return (
     <RoleGuard allowedRoles={["admin"]}>
-      <div className="p-6 md:p-10 max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
-                <Shield className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Admin Dashboard</h1>
-                <p className="text-slate-600 text-lg">System management and configuration</p>
-              </div>
-            </div>
+      <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-8">
+
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+            <Shield className="w-7 h-7 text-white" />
           </div>
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-            <Shield className="w-5 h-5 text-amber-600 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-amber-900">Administrator Access</p>
-              <p className="text-xs text-amber-700 mt-1">
-                You are logged in as <span className="font-semibold">{user?.email}</span>. 
-                These controls affect the entire application and all users.
-              </p>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
+            <p className="text-slate-500 text-sm">{user?.email} · Administrator</p>
           </div>
         </div>
 
-        {/* System Stats */}
+        {/* Stats */}
         {isLoading ? (
-          <div className="grid md:grid-cols-4 gap-4 mb-6">
-            {Array(4).fill(0).map((_, i) => (
-              <Card key={i}>
-                <CardContent className="pt-6">
-                  <Skeleton className="h-20" />
-                </CardContent>
-              </Card>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}><CardContent className="pt-6"><Skeleton className="h-16" /></CardContent></Card>
             ))}
           </div>
         ) : (
-          <div className="grid md:grid-cols-4 gap-4 mb-8">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-blue-900">Newsletters</p>
-                    <p className="text-3xl font-bold text-blue-700">{stats.newsletters}</p>
-                  </div>
-                  <Newspaper className="w-8 h-8 text-blue-600 opacity-50" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-purple-900">Companies</p>
-                    <p className="text-3xl font-bold text-purple-700">{stats.companies}</p>
-                  </div>
-                  <Building2 className="w-8 h-8 text-purple-600 opacity-50" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-green-900">Sources</p>
-                    <p className="text-3xl font-bold text-green-700">{stats.sources}</p>
-                  </div>
-                  <Database className="w-8 h-8 text-green-600 opacity-50" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-orange-900">Users</p>
-                    <p className="text-3xl font-bold text-orange-700">{stats.users}</p>
-                  </div>
-                  <Users className="w-8 h-8 text-orange-600 opacity-50" />
-                </div>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {statCards.map(({ label, value, sub, icon: Icon, color }) => {
+              const c = colorMap[color];
+              return (
+                <Card key={label} className={`bg-gradient-to-br ${c.card}`}>
+                  <CardContent className="pt-5 pb-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className={`text-xs font-medium ${c.text} opacity-75 mb-1`}>{label}</p>
+                        <p className={`text-3xl font-bold ${c.text}`}>{value}</p>
+                        {sub && <p className={`text-xs ${c.text} opacity-60 mt-1`}>{sub}</p>}
+                      </div>
+                      <Icon className={`w-7 h-7 ${c.icon} opacity-40 mt-1`} />
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
 
-        {/* Bulk Import Queue Status */}
-        <div className="mb-6">
-          <BulkImportStatus />
-        </div>
+        {/* Bulk Import Queue */}
+        <BulkImportStatus />
 
-        {/* Upload Audit Log */}
-        <div className="mb-6">
-          <UploadAuditLog />
-        </div>
+        {/* Maintenance */}
+        <div>
+          <h2 className="text-lg font-semibold text-slate-800 mb-3 flex items-center gap-2">
+            <Wrench className="w-4 h-4 text-slate-500" />
+            Maintenance
+          </h2>
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
 
-        {/* Single ingest entry point */}
-        <div className="mb-6 flex gap-3">
-          <Link to={createPageUrl("VariousSources")} className="flex-1">
-            <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 text-lg py-5">
-              <Newspaper className="w-5 h-5 mr-2" />
-              Add Newsletter (URL or PDF)
-            </Button>
-          </Link>
-        </div>
-
-        {/* Intelligence Overhaul - Process Newsletters */}
-        <div className="mb-6">
-          <IntelligenceOverhaul />
-        </div>
-
-        {/* Admin Actions */}
-        <h2 className="text-2xl font-bold text-slate-900 mb-4">System Management</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="w-5 h-5 text-green-600" />
+            <Link to={createPageUrl("ManageSources")}>
+              <Button variant="outline" className="w-full justify-start gap-2">
+                <Globe className="w-4 h-4 text-green-600" />
                 Manage Sources
-              </CardTitle>
-              <CardDescription>Add and manage newsletter sources</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to={createPageUrl("ManageSources")}>
-                <Button className="w-full bg-green-600 hover:bg-green-700">Manage Sources</Button>
-              </Link>
-            </CardContent>
-          </Card>
+              </Button>
+            </Link>
 
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-blue-600" />
-                Companies
-              </CardTitle>
-              <CardDescription>Manage company metadata and profiles</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to={createPageUrl("CompaniesDirectory")}>
-                <Button className="w-full">Manage Companies</Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-slate-600" />
+            <Link to={createPageUrl("DashboardSettings")}>
+              <Button variant="outline" className="w-full justify-start gap-2">
+                <Settings className="w-4 h-4 text-slate-500" />
                 Dashboard Settings
-              </CardTitle>
-              <CardDescription>Configure dashboard display options</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to={createPageUrl("DashboardSettings")}>
-                <Button className="w-full">Dashboard Settings</Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-indigo-600" />
-                System Analytics
-              </CardTitle>
-              <CardDescription>View usage patterns and metrics</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" variant="outline" disabled>
-                Coming Soon
               </Button>
-            </CardContent>
-          </Card>
+            </Link>
 
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-slate-600" />
-                Data Cleanup
-              </CardTitle>
-              <CardDescription>Deduplicate newsletters and manage database integrity</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={async () => {
-                  if (!confirm('Run deduplication scan? This will merge duplicate newsletters.')) return;
-                  try {
-                    const response = await base44.functions.invoke('deduplicateNewsletters', {});
-                    const dedupeData = response?.data ?? response;
-                    if (dedupeData.success) {
-                      toast.success(`Merged ${dedupeData.merged} duplicate groups, deleted ${dedupeData.deleted} records`);
-                    } else {
-                      toast.error('Deduplication failed');
-                    }
-                  } catch (error) {
-                    toast.error(`Error: ${error.message}`);
-                  }
-                }}
-                className="w-full"
-              >
-                Run Deduplication
-              </Button>
-            </CardContent>
-          </Card>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={handleDedup}
+              disabled={deduping}
+            >
+              {deduping
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Trash2 className="w-4 h-4 text-red-400" />}
+              {deduping ? "Running..." : "Deduplicate"}
+            </Button>
 
-          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Database className="w-5 h-5 text-amber-600" />
-                Fix Dashboard Stats
-              </CardTitle>
-              <CardDescription>Mark all analyzed newsletters with the correct flag so they appear in dashboard stats and search</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                disabled={fixingFlag}
-                onClick={async () => {
-                  if (!confirm('This will scan all newsletters and mark those with content as analyzed. Run now?')) return;
-                  setFixingFlag(true);
-                  try {
-                    const response = await base44.functions.invoke('fixAnalyzedFlag', {});
-                    const flagData = response?.data ?? response;
-                    if (flagData.success) {
-                      toast.success(`Fixed! ${flagData.newly_fixed} newsletters updated. ${flagData.already_flagged} were already correct.`);
-                      queryClient.invalidateQueries({ queryKey: ['allNewslettersForStats'] });
-                      queryClient.invalidateQueries({ queryKey: ['newsletters'] });
-                    } else {
-                      toast.error('Fix failed');
-                    }
-                  } catch (error) {
-                    toast.error(`Error: ${error.message}`);
-                  } finally {
-                    setFixingFlag(false);
-                  }
-                }}
-                className="w-full bg-amber-600 hover:bg-amber-700"
-              >
-                {fixingFlag ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Running Fix...</>
-                ) : (
-                  'Fix Analyzed Flag'
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={handleFixFlags}
+              disabled={fixingFlag}
+            >
+              {fixingFlag
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Database className="w-4 h-4 text-amber-500" />}
+              {fixingFlag ? "Running..." : "Fix Analyzed Flags"}
+            </Button>
 
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-amber-600" />
-                Auto-Generate Topics
-              </CardTitle>
-              <CardDescription>Create topics from your current sources</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={handleGenerateTopics}
-                disabled={generatingTopics}
-                className="w-full"
-              >
-                {generatingTopics ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  'Generate Topics'
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 hover:shadow-xl transition-shadow flex flex-col">
-            <CardHeader className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-600" />
-                AI Content Generator
-              </CardTitle>
-              <CardDescription>Generate articles, summaries, and reports from newsletters</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to={createPageUrl("AIContentGenerator")}>
-                <Button className="w-full">Generate Content</Button>
-              </Link>
-            </CardContent>
-          </Card>
+          </div>
         </div>
 
-        {/* Security Notice */}
-        <Card className="bg-red-50 border-red-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-900">
-              <Shield className="w-5 h-5" />
-              Security & Access Control
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-red-800 space-y-2">
-            <p>
-              <strong>Global Prompt Injection Defense:</strong> Active and cannot be disabled from UI. 
-              All AI calls are protected.
-            </p>
-            <p>
-              <strong>Role Management:</strong> Only admins can access this dashboard. Regular users cannot 
-              view or modify global configurations.
-            </p>
-            <p>
-              <strong>Data Integrity:</strong> Changes made here affect all users. Test carefully 
-              before making major modifications.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </RoleGuard>
   );
