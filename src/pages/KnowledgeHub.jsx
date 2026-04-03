@@ -4,11 +4,18 @@ import { createPageUrl } from "@/utils";
 import { useHealthcareIntelligence } from "../components/utils/useHealthcareIntelligence";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Building2, ArrowRight, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, Building2, ArrowRight, Sparkles, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function KnowledgeHub() {
   const { allNewsletters, isLoading, availableThemes, availableCompanies } = useHealthcareIntelligence();
+  const queryClient = useQueryClient();
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['newsletters'] });
+  };
 
   // Calculate theme counts
   const themesWithCounts = React.useMemo(() => {
@@ -56,6 +63,19 @@ export default function KnowledgeHub() {
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
             Explore emerging themes and key players across healthcare intelligence
           </p>
+          <div className="flex items-center justify-center gap-3 mt-4">
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+            {!isLoading && (
+              <span className="text-sm text-slate-500">
+                {allNewsletters.length === 0
+                  ? "No analyzed articles found — try refreshing or check that articles saved correctly"
+                  : `${allNewsletters.length} analyzed article${allNewsletters.length !== 1 ? "s" : ""} · ${themesWithCounts.length} themes · ${companiesWithCounts.length} companies`}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Emerging Themes Section */}
@@ -82,7 +102,11 @@ export default function KnowledgeHub() {
           ) : themesWithCounts.length === 0 ? (
             <Card className="bg-white/60 backdrop-blur-sm border-slate-200">
               <CardContent className="p-8 text-center">
-                <p className="text-slate-500">No themes found. Analyze newsletters to discover emerging themes.</p>
+                <p className="text-slate-500">
+                  {allNewsletters.length === 0
+                    ? "No analyzed articles in the database yet. Use the Refresh button above, or check that articles are saving correctly."
+                    : `${allNewsletters.length} articles found but none have themes extracted. Articles may need re-analysis.`}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -132,7 +156,11 @@ export default function KnowledgeHub() {
           ) : companiesWithCounts.length === 0 ? (
             <Card className="bg-white/60 backdrop-blur-sm border-slate-200">
               <CardContent className="p-8 text-center">
-                <p className="text-slate-500">No companies found. Analyze newsletters to identify key players.</p>
+                <p className="text-slate-500">
+                  {allNewsletters.length === 0
+                    ? "No analyzed articles in the database yet. Use the Refresh button above."
+                    : `${allNewsletters.length} articles found but none list key companies. Articles may need re-analysis.`}
+                </p>
               </CardContent>
             </Card>
           ) : (

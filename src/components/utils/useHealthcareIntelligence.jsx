@@ -49,10 +49,22 @@ export function useHealthcareIntelligence(options = {}) {
         }
       }
       
-      // Use backend function with asServiceRole to read from production DB
-      const response = await base44.functions.invoke('listNewsletters', { query, sort: '-publication_date', limit: maxItems });
-      const data = response?.data ?? response;
-      return data?.newsletters || [];
+      // Primary: backend function with asServiceRole to read all articles
+      try {
+        const response = await base44.functions.invoke('listNewsletters', { query, sort: '-publication_date', limit: maxItems });
+        const data = response?.data ?? response;
+        const newsletters = data?.newsletters || [];
+        if (newsletters.length > 0) return newsletters;
+      } catch (_) {}
+
+      // Fallback: user-client direct query (catches cases where asServiceRole can't see records)
+      try {
+        const fallbackQuery = { is_analyzed: true };
+        if (query.source_name) fallbackQuery.source_name = query.source_name;
+        return await base44.entities.NewsletterItem.filter(fallbackQuery, '-publication_date', maxItems);
+      } catch (_) {}
+
+      return [];
     },
     initialData: [],
   });
