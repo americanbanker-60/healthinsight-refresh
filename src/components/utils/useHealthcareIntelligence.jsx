@@ -49,7 +49,7 @@ export function useHealthcareIntelligence(options = {}) {
         }
       }
       
-      // Primary: backend function with asServiceRole to read all articles
+      // 1. Primary: backend function (asServiceRole sees all users' articles)
       try {
         const response = await base44.functions.invoke('listNewsletters', { query, sort: '-publication_date', limit: maxItems });
         const data = response?.data ?? response;
@@ -57,11 +57,22 @@ export function useHealthcareIntelligence(options = {}) {
         if (newsletters.length > 0) return newsletters;
       } catch (_) {}
 
-      // Fallback: user-client direct query (catches cases where asServiceRole can't see records)
+      // 2. Fallback: user-client direct query (user's own articles)
       try {
         const fallbackQuery = { is_analyzed: true };
         if (query.source_name) fallbackQuery.source_name = query.source_name;
-        return await base44.entities.NewsletterItem.filter(fallbackQuery, '-publication_date', maxItems);
+        const articles = await base44.entities.NewsletterItem.filter(fallbackQuery, '-publication_date', maxItems);
+        if (articles.length > 0) return articles;
+      } catch (_) {}
+
+      // 3. Final fallback: localStorage bridge (articles pending DB sync)
+      try {
+        const localKey = user?.email ? `hi_analyzed_${user.email}` : null;
+        if (localKey) {
+          const local = JSON.parse(localStorage.getItem(localKey) || '[]');
+          const analyzed = local.filter(n => !!n.is_analyzed || n.status === 'completed');
+          if (analyzed.length > 0) return analyzed;
+        }
       } catch (_) {}
 
       return [];

@@ -10,10 +10,16 @@ Deno.serve(async (req) => {
 
     const { query = {}, sort = '-publication_date', limit = 1000 } = await req.json();
 
-    // Always fetch using a reliable sort field. The caller's preferred sort is applied
-    // client-side below. Using '-created_date' avoids failures from unsupported sort
-    // fields like '-date_added_to_app' or empty publication_date values.
-    const all = await base44.asServiceRole.entities.NewsletterItem.list('-created_date', Math.max(limit * 2, 2000));
+    // Fetch all records — try asServiceRole first (sees all users' data),
+    // fall back to user client (sees current user's data) if asServiceRole 403s.
+    let all: any[] = [];
+    try {
+      all = await base44.asServiceRole.entities.NewsletterItem.list('-created_date', Math.max(limit * 2, 2000));
+    } catch (_) {
+      try {
+        all = await base44.entities.NewsletterItem.list('-created_date', Math.max(limit * 2, 2000));
+      } catch (_) {}
+    }
 
     // Apply query filters with support for booleans, $in operator, and range queries
     const matchesFilter = (record, query) => {
