@@ -9,20 +9,7 @@ export default function WalkthroughTooltip({ step, stepNumber, totalSteps, onNex
   const placement = step.placement || "center";
 
   const getPositionClasses = () => {
-    switch (placement) {
-      case "center":
-        return "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl";
-      case "top":
-        return "fixed top-20 left-1/2 transform -translate-x-1/2 w-full max-w-2xl";
-      case "bottom":
-        return "fixed bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-2xl";
-      case "left":
-        return "fixed top-1/2 left-8 transform -translate-y-1/2 w-full max-w-md";
-      case "right":
-        return "fixed top-1/2 right-8 transform -translate-y-1/2 w-full max-w-md";
-      default:
-        return "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl";
-    }
+    return "fixed inset-0 flex items-center justify-center p-4";
   };
 
   return (
@@ -44,9 +31,9 @@ export default function WalkthroughTooltip({ step, stepNumber, totalSteps, onNex
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -20 }}
           transition={{ duration: 0.3 }}
-          className={`${getPositionClasses()} z-[9999] px-4`}
+          className={`${getPositionClasses()} z-[9999]`}
         >
-          <Card className="bg-white shadow-2xl border-2 border-blue-500 flex flex-col" style={{ maxHeight: "calc(100vh - 80px)" }}>
+          <Card className="bg-white shadow-2xl border-2 border-blue-500 flex flex-col w-full max-w-xl" style={{ maxHeight: "calc(100vh - 80px)" }}>
             <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 shrink-0">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
