@@ -16,12 +16,12 @@ Deno.serve(async (req) => {
 
     // Fetch all analyzed articles and existing companies in parallel
     const [allArticles, existingCompanies] = await Promise.all([
-      base44.asServiceRole.entities.NewsletterItem.list('-created_date', 2000),
-      base44.asServiceRole.entities.Company.list()
+      base44.asServiceRole.entities.NewsletterItem.filter({ is_analyzed: true }, '-created_date', 2000),
+      base44.asServiceRole.entities.Company.list('company_name', 2000)
     ]);
 
-    const analyzedArticles = allArticles.filter((n: any) => n.is_analyzed);
-    const existingNames = new Set(existingCompanies.map((c: any) => c.company_name.toLowerCase()));
+    const analyzedArticles = (allArticles || []);
+    const existingNames = new Set((existingCompanies || []).map(c => c.company_name.toLowerCase()));
 
     let companiesCreated = 0;
     let relationsProcessed = 0;
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       if (!article.key_players || !Array.isArray(article.key_players)) continue;
 
       // Create Company records for any new key_players
-      for (const playerName of article.key_players) {
+      for (const playerName of (article.key_players || [])) {
         if (playerName && !existingNames.has(playerName.toLowerCase())) {
           try {
             const created = await base44.asServiceRole.entities.Company.create({
