@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     let items = [];
     try {
       items = await base44.asServiceRole.entities.NewsletterItem.filter(
-        { uploaded_by: user.email }, '-date_added_to_app', 200
+        { uploaded_by: user.email }, '-date_added_to_app', 2000
       );
     } catch (_) {}
 
@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     if (items.length === 0) {
       try {
         items = await base44.asServiceRole.entities.NewsletterItem.filter(
-          { created_by: user.email }, '-date_added_to_app', 200
+          { created_by: user.email }, '-date_added_to_app', 2000
         );
       } catch (_) {}
     }
