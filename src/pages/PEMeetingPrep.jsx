@@ -268,21 +268,26 @@ Use web search to find accurate information about all their healthcare holdings.
         prompt: holdingsPrompt,
         add_context_from_internet: true,
         response_json_schema: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              company_name: { type: "string" },
-              sector: { type: "string" },
-              holding_status: { type: "string" },
-              acquisition_date: { type: "string" },
-              exit_date: { type: "string" }
+          type: "object",
+          properties: {
+            holdings: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  company_name: { type: "string" },
+                  sector: { type: "string" },
+                  holding_status: { type: "string" },
+                  acquisition_date: { type: "string" },
+                  exit_date: { type: "string" }
+                }
+              }
             }
           }
         }
       });
 
-      const holdings = Array.isArray(result) ? result : [];
+      const holdings = Array.isArray(result?.holdings) ? result.holdings : Array.isArray(result) ? result : [];
       setDiscoveredHoldings(holdings);
       
       if (holdings.length > 0) {
