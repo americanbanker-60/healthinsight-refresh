@@ -1,16 +1,20 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { BookMarked, ExternalLink } from "lucide-react";
+import { BookMarked, ExternalLink, ArrowUpDown, Filter } from "lucide-react";
 import { format } from "date-fns";
 
 export default function MyAnalyzedArticlesSection() {
   const { user } = useAuth();
+  const [sortOrder, setSortOrder] = useState("newest");
+  const [sourceFilter, setSourceFilter] = useState("all");
 
   const LOCAL_KEY = user?.email ? `hi_analyzed_${user.email}` : null;
 
@@ -33,7 +37,6 @@ export default function MyAnalyzedArticlesSection() {
   const { data: articles = [] } = useQuery({
     queryKey: ["my-analyzed-articles", user?.email],
     queryFn: async () => {
-      // Primary: backend function (asServiceRole, same env as save)
       try {
         const response = await base44.functions.invoke('getMyNewsletters');
         const data = response?.data ?? response;
@@ -42,8 +45,6 @@ export default function MyAnalyzedArticlesSection() {
         }
       } catch (_) {}
 
-      // Fallback: localStorage bridge written by VariousSources immediately after analysis.
-      // Covers the window between save and when the backend query catches up.
       try {
         if (LOCAL_KEY) {
           const local = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
@@ -59,6 +60,27 @@ export default function MyAnalyzedArticlesSection() {
     refetchOnMount: true,
     initialData: [],
   });
+
+  // Unique sources for filter dropdown
+  const sources = useMemo(() => {
+    const s = new Set(articles.map(a => a.source_name).filter(Boolean));
+    return Array.from(s).sort();
+  }, [articles]);
+
+  // Apply filter + sort
+  const displayedArticles = useMemo(() => {
+    let result = sourceFilter === "all"
+      ? [...articles]
+      : articles.filter(a => a.source_name === sourceFilter);
+
+    result.sort((a, b) => {
+      const dateA = new Date(a.publication_date || a.date_added_to_app || a.created_date || 0);
+      const dateB = new Date(b.publication_date || b.date_added_to_app || b.created_date || 0);
+      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+    });
+
+    return result;
+  }, [articles, sortOrder, sourceFilter]);
 
   const sentimentColors = {
     positive: "bg-green-100 text-green-800",
@@ -92,52 +114,85 @@ export default function MyAnalyzedArticlesSection() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle className="flex items-center gap-2">
             <BookMarked className="w-5 h-5 text-indigo-600" />
             My Analyzed Articles
+            <span className="text-sm font-normal text-slate-500">({displayedArticles.length}{sourceFilter !== "all" ? ` of ${articles.length}` : ""})</span>
           </CardTitle>
-          <span className="text-sm text-slate-500">{articles.length} article{articles.length !== 1 ? "s" : ""}</span>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Source filter */}
+            {sources.length > 0 && (
+              <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                <SelectTrigger className="w-40 h-8 text-xs">
+                  <Filter className="w-3 h-3 mr-1 text-slate-400" />
+                  <SelectValue placeholder="All Sources" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  {sources.map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Sort toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              onClick={() => setSortOrder(o => o === "newest" ? "oldest" : "newest")}
+            >
+              <ArrowUpDown className="w-3 h-3" />
+              {sortOrder === "newest" ? "Newest First" : "Oldest First"}
+            </Button>
+          </div>
         </div>
       </CardHeader>
+
       <CardContent>
         <div className="space-y-3">
-          {articles.map((article) => (
-            <div
-              key={article.id}
-              className="flex items-start justify-between gap-3 p-3 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 transition-all"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-slate-900 truncate">{article.title}</p>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  {article.source_name && (
-                    <span className="text-xs text-slate-500">{article.source_name}</span>
-                  )}
-                  {article.date_added_to_app && (
-                    <span className="text-xs text-slate-400">
-                      · Added {format(new Date(article.date_added_to_app), "MMM d, yyyy")}
-                    </span>
-                  )}
-                  {article.sentiment && (
-                    <Badge className={`text-xs px-1.5 py-0 ${sentimentColors[article.sentiment] || sentimentColors.neutral}`}>
-                      {article.sentiment}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <Link
-                to={`${createPageUrl("NewsletterDetail")}?id=${article.id}`}
-                className="shrink-0 text-indigo-600 hover:text-indigo-800"
-                onClick={() => {
-                  try {
-                    if (article.id) sessionStorage.setItem(`newsletter_cache_${article.id}`, JSON.stringify(article));
-                  } catch (_) {}
-                }}
+          {displayedArticles.map((article) => {
+            const pubDate = article.publication_date || article.date_added_to_app;
+            return (
+              <div
+                key={article.id}
+                className="flex items-start justify-between gap-3 p-3 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 transition-all"
               >
-                <ExternalLink className="w-4 h-4" />
-              </Link>
-            </div>
-          ))}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-slate-900 truncate">{article.title}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {pubDate && (
+                      <span className="text-xs font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">
+                        {format(new Date(pubDate), "MMM d, yyyy")}
+                      </span>
+                    )}
+                    {article.source_name && (
+                      <span className="text-xs text-slate-500">{article.source_name}</span>
+                    )}
+                    {article.sentiment && (
+                      <Badge className={`text-xs px-1.5 py-0 ${sentimentColors[article.sentiment] || sentimentColors.neutral}`}>
+                        {article.sentiment}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <Link
+                  to={`${createPageUrl("NewsletterDetail")}?id=${article.id}`}
+                  className="shrink-0 text-indigo-600 hover:text-indigo-800"
+                  onClick={() => {
+                    try {
+                      if (article.id) sessionStorage.setItem(`newsletter_cache_${article.id}`, JSON.stringify(article));
+                    } catch (_) {}
+                  }}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </Link>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

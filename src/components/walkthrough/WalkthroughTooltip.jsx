@@ -9,20 +9,7 @@ export default function WalkthroughTooltip({ step, stepNumber, totalSteps, onNex
   const placement = step.placement || "center";
 
   const getPositionClasses = () => {
-    switch (placement) {
-      case "center":
-        return "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl";
-      case "top":
-        return "fixed top-20 left-1/2 transform -translate-x-1/2 w-full max-w-2xl";
-      case "bottom":
-        return "fixed bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-2xl";
-      case "left":
-        return "fixed top-1/2 left-8 transform -translate-y-1/2 w-full max-w-md";
-      case "right":
-        return "fixed top-1/2 right-8 transform -translate-y-1/2 w-full max-w-md";
-      default:
-        return "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl";
-    }
+    return "fixed inset-0 flex items-center justify-center p-4";
   };
 
   return (
@@ -44,13 +31,13 @@ export default function WalkthroughTooltip({ step, stepNumber, totalSteps, onNex
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -20 }}
           transition={{ duration: 0.3 }}
-          className={`${getPositionClasses()} z-[9999] px-4`}
+          className={`${getPositionClasses()} z-[9999]`}
         >
-          <Card className="bg-white shadow-2xl border-2 border-blue-500">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+          <Card className="bg-white shadow-2xl border-2 border-blue-500 flex flex-col w-full max-w-xl" style={{ maxHeight: "calc(100vh - 80px)" }}>
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 shrink-0">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shrink-0">
                     <Sparkles className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -64,17 +51,22 @@ export default function WalkthroughTooltip({ step, stepNumber, totalSteps, onNex
                   variant="ghost"
                   size="sm"
                   onClick={onSkip}
-                  className="text-slate-500 hover:text-slate-700"
+                  className="text-slate-500 hover:text-slate-700 shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 pb-4 max-h-[60vh] overflow-y-auto">
-              <div className="text-slate-700 leading-relaxed whitespace-pre-line mb-6">
+
+            {/* Scrollable content */}
+            <div className="overflow-y-auto flex-1 px-6 pt-6 pb-2">
+              <div className="text-slate-700 leading-relaxed whitespace-pre-line">
                 {step.content}
               </div>
+            </div>
 
+            {/* Pinned footer */}
+            <div className="px-6 py-4 border-t border-slate-100 shrink-0 bg-white">
               <div className="flex items-center justify-between gap-3">
                 <Button
                   variant="outline"
@@ -110,7 +102,7 @@ export default function WalkthroughTooltip({ step, stepNumber, totalSteps, onNex
                 </Button>
               </div>
 
-              <div className="text-center mt-4">
+              <div className="text-center mt-3">
                 <button
                   onClick={onSkip}
                   className="text-xs text-slate-500 hover:text-slate-700 transition-colors"
@@ -118,7 +110,7 @@ export default function WalkthroughTooltip({ step, stepNumber, totalSteps, onNex
                   Skip tutorial
                 </button>
               </div>
-            </CardContent>
+            </div>
           </Card>
         </motion.div>
       </AnimatePresence>
