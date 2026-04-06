@@ -1,6 +1,5 @@
 import BulkImportMonitor from './pages/BulkImportMonitor';
 import AdminDashboard from './pages/AdminDashboard';
-import CompaniesDirectory from './pages/CompaniesDirectory';
 import CompanyPage from './pages/CompanyPage';
 import CustomPackDetail from './pages/CustomPackDetail';
 import Dashboard from './pages/Dashboard';
@@ -8,7 +7,6 @@ import DashboardSettings from './pages/DashboardSettings';
 import DeepDiveResults from './pages/DeepDiveResults';
 import DevSuperAgent from './pages/DevSuperAgent';
 import ExploreAllSources from './pages/ExploreAllSources';
-import KnowledgeHub from './pages/KnowledgeHub';
 import MyCustomPacks from './pages/MyCustomPacks';
 import MyLibrary from './pages/MyLibrary';
 import NewsletterDetail from './pages/NewsletterDetail';
@@ -24,7 +22,6 @@ import __Layout from './Layout.jsx';
 export const PAGES = {
     "BulkImportMonitor": BulkImportMonitor,
     "AdminDashboard": AdminDashboard,
-    "CompaniesDirectory": CompaniesDirectory,
     "CompanyPage": CompanyPage,
     "CustomPackDetail": CustomPackDetail,
     "Dashboard": Dashboard,
@@ -32,7 +29,6 @@ export const PAGES = {
     "DeepDiveResults": DeepDiveResults,
     "DevSuperAgent": DevSuperAgent,
     "ExploreAllSources": ExploreAllSources,
-    "KnowledgeHub": KnowledgeHub,
     "MyCustomPacks": MyCustomPacks,
     "MyLibrary": MyLibrary,
     "NewsletterDetail": NewsletterDetail,

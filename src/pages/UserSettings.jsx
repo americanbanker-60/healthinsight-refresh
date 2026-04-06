@@ -163,7 +163,6 @@ export default function UserSettings() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="knowledge_hub">Knowledge Hub</SelectItem>
                   <SelectItem value="explore">Explore All Sources</SelectItem>
                   <SelectItem value="my_library">My Library</SelectItem>
                   <SelectItem value="dashboard">Dashboard</SelectItem>

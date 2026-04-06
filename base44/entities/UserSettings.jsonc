@@ -1,0 +1,116 @@
+{
+  "name": "UserSettings",
+  "type": "object",
+  "properties": {
+    "default_landing_page": {
+      "type": "string",
+      "enum": [
+        "explore",
+        "my_library",
+        "dashboard"
+      ],
+      "default": "dashboard",
+      "description": "Page to load on login"
+    },
+    "default_date_range": {
+      "type": "string",
+      "enum": [
+        "7d",
+        "30d",
+        "90d",
+        "ytd",
+        "all"
+      ],
+      "default": "30d",
+      "description": "Default date range for filters"
+    },
+    "preferred_sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of preferred source names"
+    },
+    "preferred_topics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of preferred topic tags"
+    },
+    "watched_sectors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Healthcare sectors the user actively monitors \u2014 used by AI agents to personalize outreach recommendations"
+    },
+    "target_company_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Company types the user targets for BD outreach (e.g. PE-backed platform, independent practice, health system) \u2014 used by AI agents"
+    },
+    "notifications_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable in-app notifications"
+    },
+    "email_notifications_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable email notifications"
+    },
+    "watch_alert_frequency": {
+      "type": "string",
+      "enum": [
+        "immediate",
+        "daily",
+        "weekly"
+      ],
+      "default": "immediate",
+      "description": "How often to receive watched topic alerts"
+    },
+    "ai_output_verbosity": {
+      "type": "string",
+      "enum": [
+        "concise",
+        "standard",
+        "detailed"
+      ],
+      "default": "standard",
+      "description": "AI summary verbosity level"
+    },
+    "show_advanced_features": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show advanced UI features"
+    },
+    "theme_preference": {
+      "type": "string",
+      "enum": [
+        "light",
+        "dark",
+        "auto"
+      ],
+      "default": "light",
+      "description": "UI theme preference"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

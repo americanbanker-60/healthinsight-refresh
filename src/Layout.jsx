@@ -54,6 +54,7 @@ const navigationGroups = [
         icon: FolderOpen,
         roles: ["admin", "power", "user"],
       },
+
     ]
   },
   {

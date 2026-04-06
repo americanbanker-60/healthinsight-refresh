@@ -15,7 +15,6 @@ import { useUserSettings } from '@/components/settings/UserSettingsManager';
 const { Pages, Layout } = pagesConfig;
 
 const LANDING_PAGE_MAP = {
-  knowledge_hub: 'KnowledgeHub',
   explore: 'ExploreAllSources',
   my_library: 'MyLibrary',
   dashboard: 'Dashboard',
