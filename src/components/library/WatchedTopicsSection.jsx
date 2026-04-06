@@ -40,7 +40,7 @@ export default function WatchedTopicsSection() {
   });
 
   const { data: newsletters = [] } = useQuery({
-    queryKey: ['newsletters'],
+    queryKey: ['newsletters', 'watched-topics'],
     queryFn: () => base44.entities.NewsletterItem.list("-publication_date", 100),
     initialData: [],
   });

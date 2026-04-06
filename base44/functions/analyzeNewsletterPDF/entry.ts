@@ -240,11 +240,11 @@ EXTRACTION RULES — follow these strictly:
       is_analyzed: true
     };
 
-    // Save via asServiceRole — same proven pattern as processBulkImportQueue.
-    // uploaded_by: user.email explicitly set so getMyNewsletters can filter by it.
+    // Save to DB — try user client first (works for user-invoked functions),
+    // fall back to asServiceRole (works for background/scheduled functions).
     let savedRecord = newsletterData;
     try {
-      const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+      const created = await base44.entities.NewsletterItem.create(newsletterData);
       if (created?.id) {
         savedRecord = created;
         base44.asServiceRole.functions.invoke('createNewsletterRelations', {
@@ -252,10 +252,24 @@ EXTRACTION RULES — follow these strictly:
           newsletter_data: created
         }).catch(() => {});
       } else {
-        console.warn('DB save returned no ID');
+        throw new Error('user-client create returned no id');
       }
-    } catch (saveErr) {
-      console.error('DB save failed:', saveErr.message);
+    } catch (e1) {
+      console.warn('User-client save failed, trying asServiceRole:', e1.message);
+      try {
+        const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+        if (created?.id) {
+          savedRecord = created;
+          base44.asServiceRole.functions.invoke('createNewsletterRelations', {
+            newsletter_id: created.id,
+            newsletter_data: created
+          }).catch(() => {});
+        } else {
+          console.warn('asServiceRole save also returned no id — article saved to localStorage only');
+        }
+      } catch (e2) {
+        console.warn('Both save methods failed:', e2.message);
+      }
     }
 
     return Response.json({

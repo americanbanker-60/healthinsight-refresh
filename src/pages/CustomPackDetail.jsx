@@ -48,7 +48,7 @@ export default function CustomPackDetail() {
   });
 
   const { data: newsletters = [] } = useQuery({
-    queryKey: ['newsletters'],
+    queryKey: ['newsletters', 'custom-pack'],
     queryFn: () => base44.entities.NewsletterItem.list("-publication_date", 500),
     initialData: [],
   });

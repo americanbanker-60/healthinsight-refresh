@@ -36,7 +36,7 @@ export default function TrendDiscovery() {
   });
 
   const { data: newsletters = [] } = useQuery({
-    queryKey: ['newsletters'],
+    queryKey: ['newsletters', 'trend-discovery'],
     queryFn: () => base44.entities.NewsletterItem.list("-publication_date", 1000),
     initialData: [],
   });

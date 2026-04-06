@@ -191,7 +191,17 @@ Extract:
           };
 
           console.log(`Creating newsletter: ${newsletterData.title}`);
-          const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+
+          // Try user client first (works for user-invoked functions),
+          // fall back to asServiceRole (works for background/scheduled functions).
+          let created = null;
+          try {
+            created = await base44.entities.NewsletterItem.create(newsletterData);
+            if (!created?.id) throw new Error('user-client create returned no id');
+          } catch (e1) {
+            console.warn(`User-client save failed for ${job.url}, trying asServiceRole:`, e1.message);
+            created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+          }
 
           if (!created || !created.id) {
             throw new Error(`Newsletter.create() returned no ID - record was not saved`);
@@ -201,7 +211,8 @@ Extract:
 
           // Create company/topic relations in background
           base44.asServiceRole.functions.invoke('createNewsletterRelations', {
-            newsletter_id: created.id
+            newsletter_id: created.id,
+            newsletter_data: created
           }).catch(err => console.error('Relation creation failed:', err.message));
 
           await base44.asServiceRole.entities.BulkImportJob.update(job.id, {
