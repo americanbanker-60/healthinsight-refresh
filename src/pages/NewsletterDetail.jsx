@@ -21,7 +21,8 @@ import {
         Download,
         Loader2,
         StickyNote,
-        Check
+        Check,
+        Star
       } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -46,11 +47,16 @@ export default function NewsletterDetail() {
   const [notesSaving, setNotesSaving] = React.useState(false);
   const [notesSaved, setNotesSaved] = React.useState(false);
   const notesTimerRef = React.useRef(null);
+  const [isStarred, setIsStarred] = React.useState(false);
+  const [starSaving, setStarSaving] = React.useState(false);
 
-  // Seed notes from loaded article
+  // Seed notes and starred state from loaded article
   React.useEffect(() => {
     if (newsletter?.user_notes !== undefined) {
       setUserNotes(newsletter.user_notes || "");
+    }
+    if (newsletter?.is_starred !== undefined) {
+      setIsStarred(!!newsletter.is_starred);
     }
   }, [newsletter?.id]);
 
@@ -72,6 +78,20 @@ export default function NewsletterDetail() {
         setNotesSaving(false);
       }
     }, 800);
+  };
+
+  const toggleStar = async () => {
+    const newVal = !isStarred;
+    setIsStarred(newVal);
+    setStarSaving(true);
+    try {
+      await base44.entities.NewsletterItem.update(newsletterId, { is_starred: newVal });
+    } catch (_) {
+      setIsStarred(!newVal);
+      toast.error("Failed to update star");
+    } finally {
+      setStarSaving(false);
+    }
   };
 
   const exportPDF = async () => {
@@ -262,6 +282,18 @@ export default function NewsletterDetail() {
           Back to Dashboard
         </Button>
         <div className="flex gap-2">
+          <Button
+            onClick={toggleStar}
+            disabled={starSaving || !newsletter}
+            variant="outline"
+            className={isStarred
+              ? "bg-amber-50 border-amber-300 hover:bg-amber-100 text-amber-600"
+              : "bg-white border-slate-200 hover:bg-slate-50 text-slate-500"}
+            title={isStarred ? "Remove from starred" : "Star this article"}
+          >
+            <Star className={`w-4 h-4 mr-2 ${isStarred ? "fill-amber-400 text-amber-400" : ""}`} />
+            {isStarred ? "Starred" : "Star"}
+          </Button>
           <Button
             onClick={exportPDF}
             disabled={isExportingPDF || !newsletter}

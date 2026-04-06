@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { X, Eye } from "lucide-react";
+import { X, Eye, Star } from "lucide-react";
 import DateRangePicker from "../components/common/DateRangePicker";
 import SortControl from "../components/common/SortControl";
 import { format, subDays, startOfYear } from "date-fns";
@@ -40,9 +40,14 @@ export default function ExploreAllSources() {
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [topicInput, setTopicInput] = useState("");
   const [selectedNewsletters, setSelectedNewsletters] = useState([]);
+  const [selectedSectors, setSelectedSectors] = useState([]);
+  const [selectedSentiments, setSelectedSentiments] = useState([]);
+  const [localStarred, setLocalStarred] = useState({});
   const [detailNewsletterId, setDetailNewsletterId] = useState(null);
   const [activePack, setActivePack] = useState(null);
   const [sortOrder, setSortOrder] = useState("newest");
+
+  const SENTIMENTS = ["positive", "neutral", "negative", "mixed"];
 
   const { data: newsletters = [], isLoading } = useQuery({
     queryKey: ['all-newsletters'],
@@ -76,6 +81,18 @@ export default function ExploreAllSources() {
   }, [availableSources]);
 
 
+
+  // Seed localStarred from server data
+  React.useEffect(() => {
+    const initial = {};
+    newsletters.forEach(n => { if (n.is_starred) initial[n.id] = true; });
+    setLocalStarred(initial);
+  }, [newsletters.map(n => n.id).join(',')]);
+
+  const availableSectors = useMemo(() => {
+    const s = new Set(newsletters.map(n => n.primary_sector).filter(Boolean));
+    return Array.from(s).sort();
+  }, [newsletters]);
 
   const allTopics = useMemo(() => {
     const topics = new Set();
@@ -136,6 +153,14 @@ export default function ExploreAllSources() {
       });
     }
 
+    if (selectedSectors.length > 0) {
+      results = results.filter(n => selectedSectors.includes(n.primary_sector));
+    }
+
+    if (selectedSentiments.length > 0) {
+      results = results.filter(n => selectedSentiments.includes(n.sentiment));
+    }
+
     if (searchText && searchText.trim()) {
       const keywords = searchText.toLowerCase().split(/\s+/);
       results = results.filter(n => {
@@ -161,7 +186,7 @@ export default function ExploreAllSources() {
       const dateB = new Date(b.publication_date || b.created_date || 0);
       return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
     });
-    }, [newsletters, searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics, availableSources, currentPack, sortOrder]);
+    }, [newsletters, searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics, selectedSectors, selectedSentiments, availableSources, currentPack, sortOrder]);
 
   React.useEffect(() => {
     const logActivity = async () => {
@@ -213,7 +238,34 @@ export default function ExploreAllSources() {
     setCustomEndDate(null);
     setSelectedSources(availableSources);
     setSelectedTopics([]);
+    setSelectedSectors([]);
+    setSelectedSentiments([]);
     setSelectedNewsletters([]);
+  };
+
+  const toggleSector = (sector) => {
+    setSelectedSectors(prev =>
+      prev.includes(sector) ? prev.filter(s => s !== sector) : [...prev, sector]
+    );
+  };
+
+  const toggleSentiment = (sentiment) => {
+    setSelectedSentiments(prev =>
+      prev.includes(sentiment) ? prev.filter(s => s !== sentiment) : [...prev, sentiment]
+    );
+  };
+
+  const toggleStar = async (article, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newVal = !localStarred[article.id];
+    setLocalStarred(prev => ({ ...prev, [article.id]: newVal }));
+    try {
+      await base44.entities.NewsletterItem.update(article.id, { is_starred: newVal });
+      queryClient.invalidateQueries({ queryKey: ['all-newsletters'] });
+    } catch (_) {
+      setLocalStarred(prev => ({ ...prev, [article.id]: !newVal }));
+    }
   };
 
   const toggleNewsletterSelection = (id) => {
@@ -289,7 +341,7 @@ export default function ExploreAllSources() {
                 availableCompanies={Array.from(new Set(newsletters.flatMap(n => n.key_players || [])))}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
                 <div>
                   <Label className="text-sm font-semibold mb-2 block">Date Range</Label>
                   <div className="space-y-2">
@@ -375,6 +427,44 @@ export default function ExploreAllSources() {
                     </div>
                   </div>
                 </div>
+
+                {availableSectors.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-semibold mb-2 block">Sector</Label>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {availableSectors.map(sector => (
+                        <div key={sector} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`sector-${sector}`}
+                            checked={selectedSectors.includes(sector)}
+                            onCheckedChange={() => toggleSector(sector)}
+                          />
+                          <Label htmlFor={`sector-${sector}`} className="cursor-pointer text-sm">
+                            {sector}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-sm font-semibold mb-2 block">Sentiment</Label>
+                  <div className="space-y-2">
+                    {SENTIMENTS.map(s => (
+                      <div key={s} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`sentiment-${s}`}
+                          checked={selectedSentiments.includes(s)}
+                          onCheckedChange={() => toggleSentiment(s)}
+                        />
+                        <Label htmlFor={`sentiment-${s}`} className="cursor-pointer text-sm capitalize">
+                          {s}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-3">
@@ -425,10 +515,17 @@ export default function ExploreAllSources() {
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-2">
                             <h3 className="text-lg font-semibold text-slate-900 flex-1">{newsletter.title}</h3>
-                            <div className="flex gap-2">
+                            <div className="flex items-center gap-1">
                               {currentPack?.pinned_newsletter_ids?.includes(newsletter.id) && (
                                 <Badge className="bg-blue-100 text-blue-700 border-blue-300">Pinned</Badge>
                               )}
+                              <button
+                                onClick={(e) => toggleStar(newsletter, e)}
+                                className={`p-1.5 rounded transition-colors ${localStarred[newsletter.id] ? "text-amber-400 hover:text-amber-500" : "text-slate-300 hover:text-amber-300"}`}
+                                title={localStarred[newsletter.id] ? "Unstar" : "Star this article"}
+                              >
+                                <Star className={`w-4 h-4 ${localStarred[newsletter.id] ? "fill-amber-400" : ""}`} />
+                              </button>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -439,11 +536,14 @@ export default function ExploreAllSources() {
                               </Button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3 text-sm text-slate-600 mb-3">
+                          <div className="flex items-center gap-3 text-sm text-slate-600 mb-3 flex-wrap">
                             <Badge variant="outline">{newsletter.source_name}</Badge>
                             <span>{format(pubDate, "MMM d, yyyy")}</span>
+                            {newsletter.primary_sector && (
+                              <Badge variant="outline" className="text-xs">{newsletter.primary_sector}</Badge>
+                            )}
                             {newsletter.sentiment && (
-                              <Badge className="bg-slate-100 text-slate-700">{newsletter.sentiment}</Badge>
+                              <Badge className="bg-slate-100 text-slate-700 capitalize">{newsletter.sentiment}</Badge>
                             )}
                           </div>
                           <p className="text-slate-700 text-sm leading-relaxed">{getSnippet(newsletter)}</p>
