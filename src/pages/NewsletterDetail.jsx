@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { 
-        ArrowLeft, 
-        ExternalLink, 
-        Calendar, 
-        TrendingUp, 
+import {
+        ArrowLeft,
+        ExternalLink,
+        Calendar,
+        TrendingUp,
         Lightbulb,
         Briefcase,
         DollarSign,
@@ -19,8 +19,11 @@ import {
         CheckSquare,
         Mail,
         Download,
-        Loader2
+        Loader2,
+        StickyNote,
+        Check
       } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -39,6 +42,37 @@ export default function NewsletterDetail() {
   const [recipientEmail, setRecipientEmail] = React.useState("");
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
   const [isExportingPDF, setIsExportingPDF] = React.useState(false);
+  const [userNotes, setUserNotes] = React.useState("");
+  const [notesSaving, setNotesSaving] = React.useState(false);
+  const [notesSaved, setNotesSaved] = React.useState(false);
+  const notesTimerRef = React.useRef(null);
+
+  // Seed notes from loaded article
+  React.useEffect(() => {
+    if (newsletter?.user_notes !== undefined) {
+      setUserNotes(newsletter.user_notes || "");
+    }
+  }, [newsletter?.id]);
+
+  const handleNotesChange = (e) => {
+    const value = e.target.value;
+    setUserNotes(value);
+    setNotesSaved(false);
+    clearTimeout(notesTimerRef.current);
+    notesTimerRef.current = setTimeout(async () => {
+      if (!newsletterId) return;
+      setNotesSaving(true);
+      try {
+        await base44.entities.NewsletterItem.update(newsletterId, { user_notes: value });
+        setNotesSaved(true);
+        setTimeout(() => setNotesSaved(false), 2000);
+      } catch (_) {
+        toast.error("Failed to save note");
+      } finally {
+        setNotesSaving(false);
+      }
+    }, 800);
+  };
 
   const exportPDF = async () => {
     setIsExportingPDF(true);
@@ -322,6 +356,35 @@ export default function NewsletterDetail() {
         </div>
 
       </div>
+
+      {/* My Notes */}
+      <Card className="bg-amber-50/60 border-amber-200/60 shadow-sm mb-6">
+        <CardHeader className="pb-2 pt-5 px-6">
+          <CardTitle className="flex items-center justify-between text-base">
+            <div className="flex items-center gap-2 text-amber-800">
+              <StickyNote className="w-4 h-4" />
+              My Notes
+            </div>
+            <span className="text-xs font-normal text-amber-600">
+              {notesSaving ? (
+                <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" />Saving…</span>
+              ) : notesSaved ? (
+                <span className="flex items-center gap-1 text-green-600"><Check className="w-3 h-3" />Saved</span>
+              ) : (
+                "Auto-saves as you type"
+              )}
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-6 pb-5">
+          <Textarea
+            placeholder="Add your own notes, observations, or follow-up actions for this article…"
+            value={userNotes}
+            onChange={handleNotesChange}
+            className="min-h-[120px] bg-white/70 border-amber-200 focus:border-amber-400 resize-y text-slate-700 placeholder:text-slate-400"
+          />
+        </CardContent>
+      </Card>
 
       {newsletter.key_statistics && newsletter.key_statistics.length > 0 && (
         <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-slate-200/60 mb-6">

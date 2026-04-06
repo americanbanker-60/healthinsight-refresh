@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Brain, LayoutDashboard, Plus, TrendingUp, Settings, BookOpen, Library, Compass, Lightbulb, Building2, FolderOpen, Globe, Briefcase, ChevronDown, FileUp, Terminal, RefreshCw, Zap, LogOut } from "lucide-react";
+import { Brain, LayoutDashboard, TrendingUp, Settings, BookOpen, Library, FolderOpen, Briefcase, ChevronDown, FileUp, Terminal, RefreshCw, Zap, LogOut } from "lucide-react";
 import { WalkthroughProvider, useWalkthrough } from "@/components/walkthrough/WalkthroughManager";
 import { useUserRole } from "@/components/auth/RoleGuard";
 import { AdminGuard } from "@/components/auth/AdminGuard";
@@ -57,14 +57,8 @@ const navigationGroups = [
     ]
   },
   {
-    label: "Discovery & Learning",
+    label: "Articles",
     items: [
-      {
-        title: "Knowledge Hub",
-        url: createPageUrl("KnowledgeHub"),
-        icon: Compass,
-        roles: ["admin", "power", "user"],
-      },
       {
         title: "Add to Library",
         url: createPageUrl("VariousSources"),
@@ -77,16 +71,10 @@ const navigationGroups = [
         icon: TrendingUp,
         roles: ["admin", "power", "user"],
       },
-      {
-        title: "Companies",
-        url: createPageUrl("CompaniesDirectory"),
-        icon: Building2,
-        roles: ["admin", "power", "user"],
-      },
     ]
   },
   {
-    label: "Meeting Prep",
+    label: "Business Development",
     items: [
       {
         title: "PE Meeting Prep",
@@ -140,7 +128,6 @@ const navigationGroups = [
         icon: Shield,
         roles: ["admin"],
       },
-
       {
         title: "System Documentation",
         url: createPageUrl("SystemDocumentation"),
