@@ -17,6 +17,8 @@ import SystemDocumentation from './pages/SystemDocumentation';
 import TopicPage from './pages/TopicPage';
 import UserSettings from './pages/UserSettings';
 import VariousSources from './pages/VariousSources';
+import ManageSources from './pages/ManageSources';
+import BDOpportunities from './pages/BDOpportunities';
 import __Layout from './Layout.jsx';
 
 export const PAGES = {
@@ -39,6 +41,8 @@ export const PAGES = {
     "TopicPage": TopicPage,
     "UserSettings": UserSettings,
     "VariousSources": VariousSources,
+    "ManageSources": ManageSources,
+    "BDOpportunities": BDOpportunities,
 }
 
 export const pagesConfig = {

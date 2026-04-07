@@ -9,7 +9,6 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import BDOpportunitiesPage from '@/pages/BDOpportunities';
 import { useUserSettings } from '@/components/settings/UserSettingsManager';
 
 const { Pages, Layout } = pagesConfig;
@@ -65,7 +64,6 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
-      <Route path="/BDOpportunities" element={<LayoutWrapper currentPageName="BDOpportunities"><BDOpportunitiesPage /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

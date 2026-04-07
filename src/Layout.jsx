@@ -130,6 +130,12 @@ const navigationGroups = [
         roles: ["admin"],
       },
       {
+        title: "Manage Sources",
+        url: createPageUrl("ManageSources"),
+        icon: RefreshCw,
+        roles: ["admin"],
+      },
+      {
         title: "System Documentation",
         url: createPageUrl("SystemDocumentation"),
         icon: BookOpen,
