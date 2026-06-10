@@ -1,0 +1,63 @@
+{
+  "name": "AIConfig",
+  "type": "object",
+  "properties": {
+    "config_key": {
+      "type": "string",
+      "enum": [
+        "formatting_rules",
+        "short_form_system_prompt"
+      ],
+      "description": "Configuration key identifier \u2014 indexed for fast orchestrator lookups"
+    },
+    "content": {
+      "type": "string",
+      "description": "Configuration content (prompt text, rules, etc.)"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this configuration is for"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this config is active"
+    },
+    "schema_definition": {
+      "type": "string",
+      "description": "JSON schema (stored as serialized string) used to validate LLM output for this config key"
+    }
+  },
+  "required": [
+    "config_key",
+    "content"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": {
+          "$in": [
+            "admin",
+            "power",
+            "user"
+          ]
+        }
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

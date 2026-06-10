@@ -1,0 +1,67 @@
+{
+  "name": "Company",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "description": "Company name (e.g., Epic Systems, UnitedHealth Group)"
+    },
+    "website_url": {
+      "type": "string",
+      "description": "Company website URL"
+    },
+    "known_aliases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Alternative names or abbreviations (e.g., UHG for UnitedHealth Group)"
+    },
+    "primary_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords to match in content"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL to company logo image"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief company description"
+    }
+  },
+  "required": [
+    "company_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": {
+          "$in": [
+            "admin",
+            "power",
+            "user"
+          ]
+        }
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

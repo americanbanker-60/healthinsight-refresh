@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
     const rawResult = await base44.integrations.Core.InvokeLLM({
       prompt,
       add_context_from_internet: useFallback,
-      model: useFallback ? 'gemini_3_flash' : 'claude_sonnet_4_6',
+      model: 'gemini_3_flash',
       response_json_schema: {
         type: "object",
         properties: {

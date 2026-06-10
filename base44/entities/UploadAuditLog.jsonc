@@ -1,0 +1,80 @@
+{
+  "name": "UploadAuditLog",
+  "type": "object",
+  "properties": {
+    "uploaded_by": {
+      "type": "string",
+      "description": "Email of the user who uploaded"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "url",
+        "pdf",
+        "bulk_url",
+        "bulk_pdf"
+      ],
+      "description": "How the content was uploaded"
+    },
+    "url": {
+      "type": "string",
+      "description": "URL that was uploaded (for single URL uploads)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the resulting newsletter item"
+    },
+    "newsletter_id": {
+      "type": "string",
+      "description": "ID of the created NewsletterItem record"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "duplicate",
+        "failed"
+      ],
+      "description": "Result of the upload"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error message if status is failed"
+    },
+    "bulk_session_id": {
+      "type": "string",
+      "description": "Groups bulk upload rows together under a single session"
+    },
+    "bulk_total": {
+      "type": "number",
+      "description": "Total URLs in this bulk session"
+    }
+  },
+  "required": [
+    "uploaded_by",
+    "source_type",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "power",
+        "standard"
+      ],
+      "default": "standard",
+      "description": "User role for access control"
+    },
+    "dashboard_config": {
+      "type": "object",
+      "description": "Dashboard display preferences"
+    }
+  },
+  "required": [
+    "dashboard_config"
+  ]
+}

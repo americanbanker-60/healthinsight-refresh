@@ -1,0 +1,67 @@
+{
+  "name": "AIContentPreference",
+  "type": "object",
+  "properties": {
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "summary",
+        "trends",
+        "article",
+        "report"
+      ],
+      "description": "Type of content generated"
+    },
+    "sources_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Source names used in generation"
+    },
+    "categories_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Categories selected"
+    },
+    "action_taken": {
+      "type": "string",
+      "enum": [
+        "saved",
+        "edited",
+        "discarded",
+        "downloaded",
+        "copied"
+      ],
+      "description": "What user did with generated content"
+    },
+    "content_preview": {
+      "type": "string",
+      "description": "First 500 chars of generated content"
+    },
+    "rating": {
+      "type": "number",
+      "description": "Optional user rating 1-5"
+    }
+  },
+  "required": [
+    "content_type",
+    "action_taken"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "UserCustomPackItem",
+  "type": "object",
+  "properties": {
+    "custom_pack_id": {
+      "type": "string",
+      "description": "ID of the custom pack this item belongs to"
+    },
+    "item_id": {
+      "type": "string",
+      "description": "ID of the newsletter item"
+    },
+    "order_index": {
+      "type": "number",
+      "description": "Order of the item in the pack"
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional notes for this item"
+    }
+  },
+  "required": [
+    "custom_pack_id",
+    "item_id"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

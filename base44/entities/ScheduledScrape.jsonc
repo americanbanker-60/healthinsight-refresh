@@ -1,0 +1,71 @@
+{
+  "name": "ScheduledScrape",
+  "type": "object",
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "description": "ID of the source to scrape"
+    },
+    "source_name": {
+      "type": "string",
+      "description": "Name of the source"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "hourly",
+        "daily",
+        "weekly",
+        "monthly"
+      ],
+      "default": "daily",
+      "description": "How often to scrape"
+    },
+    "next_run": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the next scrape should run"
+    },
+    "last_run": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the last scrape ran"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this schedule is active"
+    },
+    "last_result": {
+      "type": "object",
+      "description": "Result of the last scrape run"
+    }
+  },
+  "required": [
+    "source_id",
+    "source_name",
+    "frequency"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

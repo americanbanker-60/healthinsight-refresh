@@ -1,0 +1,96 @@
+{
+  "name": "LearningPack",
+  "type": "object",
+  "properties": {
+    "pack_title": {
+      "type": "string",
+      "description": "Title of the learning pack"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of what this pack covers"
+    },
+    "keywords": {
+      "type": "string",
+      "description": "Keywords for filtering content"
+    },
+    "date_range_type": {
+      "type": "string",
+      "enum": [
+        "7d",
+        "30d",
+        "90d",
+        "ytd",
+        "all"
+      ],
+      "default": "30d",
+      "description": "Default date range for the pack"
+    },
+    "sources_selected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Selected source names"
+    },
+    "topics_selected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Selected topics"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Emoji icon"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Care Models",
+        "Payor Topics",
+        "Technology",
+        "Provider Operations",
+        "Policy & Regulation",
+        "General"
+      ],
+      "default": "General",
+      "description": "Pack category"
+    },
+    "sort_order": {
+      "type": "number",
+      "description": "Display order priority"
+    }
+  },
+  "required": [
+    "pack_title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": {
+          "$in": [
+            "admin",
+            "power",
+            "user"
+          ]
+        }
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

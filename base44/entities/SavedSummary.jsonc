@@ -1,0 +1,43 @@
+{
+  "name": "SavedSummary",
+  "type": "object",
+  "properties": {
+    "summary_title": {
+      "type": "string",
+      "description": "Title for the saved summary"
+    },
+    "summary_body": {
+      "type": "string",
+      "description": "Full markdown summary content"
+    },
+    "sources_included": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of newsletter sources or IDs included in summary"
+    },
+    "search_context": {
+      "type": "string",
+      "description": "Optional search query or context that generated this summary"
+    }
+  },
+  "required": [
+    "summary_title",
+    "summary_body"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

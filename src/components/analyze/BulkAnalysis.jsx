@@ -332,11 +332,19 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
     reader.onload = async (e) => {
       const text = e.target?.result;
       if (typeof text === 'string') {
-        // Parse URLs from file (one per line)
-        const urls = text
-          .split('\n')
-          .map(line => line.trim())
-          .filter(line => line && line.startsWith('http'));
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        const urls = [];
+
+        for (const line of lines) {
+          // Skip header rows
+          if (line.toLowerCase().includes('url') && !line.startsWith('http')) continue;
+
+          // Try to find a URL anywhere in the line (handles multi-column CSVs)
+          const urlMatch = line.match(/https?:\/\/[^\s,"']+/);
+          if (urlMatch) {
+            urls.push(urlMatch[0]);
+          }
+        }
         
         if (urls.length > 0) {
           setManualUrls(urls.join('\n'));
@@ -440,6 +448,9 @@ export default function BulkAnalysis({ sourceName, onComplete }) {
     setProcessedNewsletters([]);
 
     for (let i = 0; i < urls.length; i++) {
+      // Small delay between requests to avoid rate limits
+      if (i > 0) await new Promise(r => setTimeout(r, 500));
+
       try {
         // Check database first to avoid duplicates
         const existing = await base44.entities.NewsletterItem.filter({ source_url: urls[i] });
@@ -878,7 +889,7 @@ Format as markdown with clear sections.`,
                   <input
                     id="file-upload"
                     type="file"
-                    accept=".txt,.csv"
+                    accept=".txt,.csv,.xlsx,.xls"
                     onChange={handleFileUpload}
                     className="hidden"
                   />

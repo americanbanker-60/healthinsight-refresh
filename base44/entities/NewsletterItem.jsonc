@@ -1,0 +1,323 @@
+{
+  "name": "NewsletterItem",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Newsletter title"
+    },
+    "source_name": {
+      "type": "string",
+      "description": "Name of the newsletter source"
+    },
+    "source_url": {
+      "type": "string",
+      "description": "Original newsletter URL or file path"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "URL",
+        "PDF"
+      ],
+      "default": "URL",
+      "description": "Type of source - URL or PDF upload"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "URL",
+        "PDF"
+      ],
+      "description": "Content type - URL or PDF"
+    },
+    "raw_input": {
+      "type": "string",
+      "description": "Original source data (HTML content for URLs, extracted text for PDFs)"
+    },
+    "publication_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Actual publication date extracted from the source article"
+    },
+    "date_added_to_app": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this newsletter was added to the app"
+    },
+    "publication_date_confidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "unknown"
+      ],
+      "description": "Confidence level in the extracted publication date"
+    },
+    "publication_date_source": {
+      "type": "string",
+      "description": "Where the publication date was extracted from"
+    },
+    "publication_date_notes": {
+      "type": "string",
+      "description": "Any issues or notes about publication date extraction"
+    },
+    "tldr": {
+      "type": "string",
+      "description": "Brief 2-3 sentence TLDR summary"
+    },
+    "key_takeaways": {
+      "type": "array",
+      "description": "Main insights and takeaways",
+      "items": {
+        "type": "string"
+      }
+    },
+    "key_statistics": {
+      "type": "array",
+      "description": "Important numbers, metrics, and data points",
+      "items": {
+        "type": "object",
+        "properties": {
+          "figure": {
+            "type": "string"
+          },
+          "context": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "recommended_actions": {
+      "type": "array",
+      "description": "Actionable next steps for healthcare executives",
+      "items": {
+        "type": "string"
+      }
+    },
+    "themes": {
+      "type": "array",
+      "description": "Major themes identified",
+      "items": {
+        "type": "object",
+        "properties": {
+          "theme": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ma_activities": {
+      "type": "array",
+      "description": "Mergers and acquisitions mentioned",
+      "items": {
+        "type": "object",
+        "properties": {
+          "acquirer": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "deal_value": {
+            "type": "string"
+          },
+          "deal_structure": {
+            "type": "string"
+          },
+          "implied_multiple": {
+            "type": "string"
+          },
+          "strategic_rationale": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "funding_rounds": {
+      "type": "array",
+      "description": "Funding activities mentioned",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "round_type": {
+            "type": "string"
+          },
+          "lead_investor": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "key_players": {
+      "type": "array",
+      "description": "Important companies or organizations mentioned",
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary": {
+      "type": "string",
+      "description": "Executive summary of the newsletter"
+    },
+    "sentiment": {
+      "type": "string",
+      "enum": [
+        "positive",
+        "neutral",
+        "negative",
+        "mixed"
+      ],
+      "description": "Overall market sentiment"
+    },
+    "market_sentiment": {
+      "type": "string",
+      "enum": [
+        "bullish",
+        "bearish",
+        "neutral",
+        "mixed"
+      ],
+      "description": "Market sentiment for investment decisions"
+    },
+    "deal_value": {
+      "type": "string",
+      "description": "Total deal value if M&A transaction"
+    },
+    "primary_sector": {
+      "type": "string",
+      "enum": [
+        "Urgent Care",
+        "Behavioral Health",
+        "Imaging",
+        "ASC",
+        "Physical Therapy",
+        "Dental",
+        "Home Health",
+        "Anesthesia",
+        "MSO",
+        "Telehealth",
+        "Healthcare IT",
+        "Pharmacy",
+        "Other"
+      ],
+      "description": "Primary healthcare sector mentioned"
+    },
+    "cross_reference_signals": {
+      "type": "array",
+      "description": "AI-generated signals cross-referencing this article against existing DB content",
+      "items": {
+        "type": "string"
+      }
+    },
+    "is_analyzed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this newsletter has been fully analyzed and indexed"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "processing",
+        "completed",
+        "failed"
+      ],
+      "default": "processing",
+      "description": "Processing status of the newsletter \u2014 set to completed only after all relations are linked"
+    },
+    "processing_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "completed",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "Lease-based processing status for concurrent-safe background job execution"
+    },
+    "processing_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when a worker leased this item for processing (used to detect stale leases)"
+    },
+    "processing_error": {
+      "type": "string",
+      "description": "Error message if processing_status is 'failed', for audit log visibility"
+    },
+    "processing_completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when processing finished (succeeded or failed)"
+    },
+    "error_log": {
+      "type": "string",
+      "description": "Full stack trace or LLM failure details for debugging failed processing runs"
+    },
+    "last_processed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent processing attempt, succeeded or failed"
+    },
+    "smart_digest_bullets": {
+      "type": "array",
+      "description": "3 AI-generated executive summary bullets for the Smart Digest feature",
+      "items": {
+        "type": "string"
+      }
+    },
+    "smart_digest_generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the Smart Digest was last generated"
+    }
+  },
+  "required": [
+    "title",
+    "source_url"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": {
+          "$in": [
+            "admin",
+            "power",
+            "user"
+          ]
+        }
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

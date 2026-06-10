@@ -1,0 +1,89 @@
+{
+  "name": "ScrapeJob",
+  "type": "object",
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "description": "ID of the source being scraped"
+    },
+    "source_name": {
+      "type": "string",
+      "description": "Name of the source (for quick reference)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "Current status of the scrape job"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the scrape job started"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the scrape job completed"
+    },
+    "newsletters_found": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of newsletters found"
+    },
+    "newsletters_created": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of new newsletters created"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error message if the job failed"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata like topics, companies created"
+    },
+    "triggered_by": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "scheduled",
+        "bulk"
+      ],
+      "default": "manual",
+      "description": "How this job was triggered"
+    }
+  },
+  "required": [
+    "source_id",
+    "source_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "name": "PEMeetingBrief",
+  "type": "object",
+  "properties": {
+    "counterparty_name": {
+      "type": "string",
+      "description": "Name of the company, sponsor, or counterparty"
+    },
+    "counterparty_type": {
+      "type": "string",
+      "enum": [
+        "Company",
+        "Sponsor / PE",
+        "Lender",
+        "Strategic",
+        "Other"
+      ],
+      "description": "Type of counterparty"
+    },
+    "primary_url": {
+      "type": "string",
+      "description": "Primary website URL"
+    },
+    "additional_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Additional URLs for research"
+    },
+    "sectors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Healthcare sector tags"
+    },
+    "role_perspective": {
+      "type": "string",
+      "enum": [
+        "PE Sponsor",
+        "Growth Equity",
+        "Lender",
+        "Investment Bank (Sell-side)",
+        "Investment Bank (Buy-side)",
+        "Strategic Corporate",
+        "Other"
+      ],
+      "description": "Our role in the meeting"
+    },
+    "meeting_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Scheduled meeting date and time"
+    },
+    "meeting_context_notes": {
+      "type": "string",
+      "description": "Context and objectives for the meeting"
+    },
+    "brief_markdown": {
+      "type": "string",
+      "description": "The full generated brief in markdown"
+    },
+    "sources_list": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Sources reviewed for the brief"
+    },
+    "uploaded_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs of uploaded supporting documents"
+    }
+  },
+  "required": [
+    "counterparty_name",
+    "counterparty_type",
+    "primary_url",
+    "brief_markdown"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

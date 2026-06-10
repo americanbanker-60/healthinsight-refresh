@@ -1,0 +1,35 @@
+{
+  "name": "UserWalkthroughProgress",
+  "type": "object",
+  "properties": {
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has completed the walkthrough"
+    },
+    "skipped": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user skipped the walkthrough"
+    },
+    "last_step_completed": {
+      "type": "number",
+      "description": "Index of the last step the user completed"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

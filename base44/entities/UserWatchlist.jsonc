@@ -1,0 +1,61 @@
+{
+  "name": "UserWatchlist",
+  "type": "object",
+  "properties": {
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords to watch for in newsletters"
+    },
+    "companies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Company names to watch for"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Specific sources to monitor (optional)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this watchlist is active"
+    },
+    "last_sent_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Last date a brief was sent"
+    },
+    "email_frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly"
+      ],
+      "default": "daily",
+      "description": "How often to receive briefs"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

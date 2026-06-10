@@ -1,0 +1,87 @@
+{
+  "name": "AITrendSuggestion",
+  "type": "object",
+  "properties": {
+    "suggestion_type": {
+      "type": "string",
+      "enum": [
+        "learning_pack",
+        "topic"
+      ],
+      "description": "Whether this is a suggested Learning Pack or Topic"
+    },
+    "title": {
+      "type": "string",
+      "description": "Suggested title for the pack or topic"
+    },
+    "description": {
+      "type": "string",
+      "description": "AI-generated description of why this is emerging"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords identified by AI"
+    },
+    "confidence_score": {
+      "type": "number",
+      "description": "AI confidence score 0-100"
+    },
+    "supporting_evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Newsletter IDs that support this trend"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "reviewed",
+        "accepted",
+        "dismissed"
+      ],
+      "default": "new",
+      "description": "Review status"
+    },
+    "icon_suggestion": {
+      "type": "string",
+      "description": "Suggested emoji icon"
+    },
+    "category": {
+      "type": "string",
+      "description": "Suggested category"
+    }
+  },
+  "required": [
+    "suggestion_type",
+    "title",
+    "description",
+    "keywords"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

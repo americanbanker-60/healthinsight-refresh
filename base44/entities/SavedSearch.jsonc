@@ -1,0 +1,67 @@
+{
+  "name": "SavedSearch",
+  "type": "object",
+  "properties": {
+    "search_name": {
+      "type": "string",
+      "description": "User-provided label for the search"
+    },
+    "keywords": {
+      "type": "string",
+      "description": "Search keywords"
+    },
+    "date_range_type": {
+      "type": "string",
+      "enum": [
+        "7d",
+        "30d",
+        "90d",
+        "ytd",
+        "custom"
+      ],
+      "default": "30d",
+      "description": "Date range preset type"
+    },
+    "custom_start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Custom start date if date_range_type is custom"
+    },
+    "custom_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Custom end date if date_range_type is custom"
+    },
+    "sources_selected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Selected source names"
+    },
+    "topics_selected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Selected topics"
+    }
+  },
+  "required": [
+    "search_name"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

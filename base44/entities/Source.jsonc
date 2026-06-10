@@ -1,0 +1,68 @@
+{
+  "name": "Source",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Source name (e.g., Elion Health)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the source"
+    },
+    "url": {
+      "type": "string",
+      "description": "Source website or newsletter URL"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Investment Banking",
+        "Technology",
+        "Finance",
+        "Operations",
+        "Policy",
+        "General",
+        "Other"
+      ],
+      "default": "General",
+      "description": "Source category for organization"
+    },
+    "is_deleted": {
+      "type": "boolean",
+      "default": false,
+      "description": "Soft delete flag"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": {
+          "$in": [
+            "admin",
+            "power",
+            "user"
+          ]
+        }
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

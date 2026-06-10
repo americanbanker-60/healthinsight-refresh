@@ -1,0 +1,54 @@
+{
+  "name": "UserSearchActivity",
+  "type": "object",
+  "properties": {
+    "keywords": {
+      "type": "string",
+      "description": "Search keywords used"
+    },
+    "sources_selected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of source names selected in the search"
+    },
+    "topics_selected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of topics selected in the search"
+    },
+    "date_range_type": {
+      "type": "string",
+      "description": "Date range type used (7d, 30d, 90d, ytd, custom)"
+    },
+    "results_count": {
+      "type": "number",
+      "description": "Number of results returned"
+    },
+    "executed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the search was executed"
+    }
+  },
+  "required": [
+    "executed_at"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

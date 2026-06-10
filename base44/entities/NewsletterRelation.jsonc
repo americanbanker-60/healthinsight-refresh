@@ -1,0 +1,74 @@
+{
+  "name": "NewsletterRelation",
+  "type": "object",
+  "properties": {
+    "newsletter_id": {
+      "type": "string",
+      "description": "ID of the newsletter"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "company",
+        "topic"
+      ],
+      "description": "Type of entity this newsletter is related to"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "ID of the company or topic"
+    },
+    "entity_name": {
+      "type": "string",
+      "description": "Name of the company or topic for quick reference"
+    },
+    "relevance_score": {
+      "type": "number",
+      "description": "Relevance score (1-10) for ranking"
+    },
+    "match_type": {
+      "type": "string",
+      "enum": [
+        "exact",
+        "alias",
+        "keyword",
+        "theme"
+      ],
+      "description": "How this relation was matched"
+    }
+  },
+  "required": [
+    "newsletter_id",
+    "entity_type",
+    "entity_id",
+    "entity_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": {
+          "$in": [
+            "admin",
+            "power",
+            "user"
+          ]
+        }
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

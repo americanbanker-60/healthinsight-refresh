@@ -1,0 +1,31 @@
+{
+  "name": "UserCustomPack",
+  "type": "object",
+  "properties": {
+    "pack_title": {
+      "type": "string",
+      "description": "Title of the custom pack"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description of the pack"
+    }
+  },
+  "required": [
+    "pack_title"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

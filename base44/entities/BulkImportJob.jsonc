@@ -1,0 +1,79 @@
+{
+  "name": "BulkImportJob",
+  "type": "object",
+  "properties": {
+    "batch_id": {
+      "type": "string",
+      "description": "Groups URLs from the same CSV upload"
+    },
+    "batch_name": {
+      "type": "string",
+      "description": "CSV filename or user label"
+    },
+    "url": {
+      "type": "string",
+      "description": "Newsletter URL to process"
+    },
+    "source_name": {
+      "type": "string",
+      "description": "Optional source name override"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "done",
+        "failed",
+        "skipped",
+        "perma-failed"
+      ],
+      "default": "pending",
+      "description": "Processing status"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error details if failed"
+    },
+    "result_title": {
+      "type": "string",
+      "description": "Title of the created newsletter"
+    },
+    "processing_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the job started processing, used for stuck detection"
+    },
+    "retry_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times this job has been retried after failure"
+    }
+  },
+  "required": [
+    "batch_id",
+    "url"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
