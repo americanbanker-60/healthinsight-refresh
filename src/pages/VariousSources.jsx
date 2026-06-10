@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, AlertCircle, Sparkles, Globe, CheckCircle2, Link as LinkIcon, FileUp, File, Upload, FileText, Link2, Users, SkipForward, FolderOpen } from "lucide-react";
+import { Loader2, AlertCircle, Sparkles, Globe, CheckCircle2, Link as LinkIcon, FileUp, File, Upload, FileText, Link2, Users, SkipForward, FolderOpen, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -33,7 +33,6 @@ export default function VariousSources() {
   // Bulk tab
   const [sourceName, setSourceName] = useState("");
   const [urlInput, setUrlInput] = useState("");
-  const [urlItems, setUrlItems] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
   const [processingPdf, setProcessingPdf] = useState(false);
   const [pdfResults, setPdfResults] = useState([]);
@@ -152,51 +151,45 @@ export default function VariousSources() {
     reader.readAsText(f);
   };
 
-  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-  const analyzeWithRetry = async (url, sourceName, maxRetries = 2) => {
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        const response = await base44.functions.invoke('analyzeNewsletterUrl', { url, sourceName: sourceName || undefined });
-        const d = response?.data ?? response;
-        if (!d?.success) throw new Error(d?.error || "Analysis failed");
-        return d;
-      } catch (err) {
-        if (attempt < maxRetries) {
-          // Exponential backoff: 3s, then 6s
-          await sleep(3000 * (attempt + 1));
-        } else {
-          throw err;
-        }
-      }
-    }
-  };
-
   const handleBulkUrlSubmit = async () => {
     const urlList = parseUrls(urlInput);
     if (urlList.length === 0) { toast.error("Please enter at least one valid URL starting with http"); return; }
-    const initialItems = urlList.map(u => ({ url: u, status: "pending", title: null, errorMsg: null }));
-    setUrlItems(initialItems); setIsRunning(true);
-    const items = [...initialItems];
-    for (let i = 0; i < items.length; i++) {
-      items[i] = { ...items[i], status: "processing" }; setUrlItems([...items]);
-      try {
-        const d = await analyzeWithRetry(items[i].url, sourceName.trim());
-        pushToLocalStorage(d.analysis);
-        items[i] = { ...items[i], status: d.isDuplicate ? "duplicate" : "success", title: d.analysis?.title || items[i].url };
-      } catch (err) {
-        items[i] = { ...items[i], status: "error", errorMsg: err.message };
-      }
-      setUrlItems([...items]);
-      // Throttle: wait 1.5s between each request to avoid LLM rate limits
-      if (i < items.length - 1) await sleep(1500);
+    setIsRunning(true);
+    try {
+      // Check for duplicates upfront before queuing
+      const existing = await base44.entities.NewsletterItem.list('-created_date', 1000);
+      const existingUrls = new Set(existing.map(n => (n.source_url || '').trim().toLowerCase().replace(/\/+$/, '')));
+
+      const batchId = `batch_${Date.now()}`;
+      const batchName = sourceName.trim() || `Import ${new Date().toLocaleDateString()} — ${urlList.length} URLs`;
+
+      const jobs = urlList.map(u => {
+        const normalized = u.trim().toLowerCase().replace(/\/+$/, '');
+        return {
+          batch_id: batchId,
+          batch_name: batchName,
+          url: u,
+          source_name: sourceName.trim() || undefined,
+          status: existingUrls.has(normalized) ? 'skipped' : 'pending',
+        };
+      });
+
+      // Bulk create all jobs
+      await base44.entities.BulkImportJob.bulkCreate(jobs);
+
+      const queued = jobs.filter(j => j.status === 'pending').length;
+      const dupes = jobs.filter(j => j.status === 'skipped').length;
+
+      setUrlInput("");
+      toast.success(
+        `${queued} URL${queued !== 1 ? 's' : ''} queued for processing${dupes > 0 ? ` · ${dupes} duplicate${dupes !== 1 ? 's' : ''} skipped` : ''}. Track progress in Bulk Import Monitor.`
+      );
+      queryClient.invalidateQueries({ queryKey: ['bulkImportJobs'] });
+    } catch (err) {
+      toast.error(`Failed to queue jobs: ${err.message}`);
+    } finally {
+      setIsRunning(false);
     }
-    setIsRunning(false); setUrlInput("");
-    queryClient.invalidateQueries({ queryKey: ['newsletters'] });
-    queryClient.invalidateQueries({ queryKey: ['all-newsletters'] });
-    queryClient.invalidateQueries({ queryKey: ['my-analyzed-articles'] });
-    const added = items.filter(i => i.status === "success").length;
-    if (added > 0) toast.success(`${added} article${added !== 1 ? "s" : ""} added to the shared library`);
   };
 
   const handleBulkPdfUpload = async (event) => {
@@ -232,8 +225,6 @@ export default function VariousSources() {
   }
 
   const urlCount = parseUrls(urlInput).length;
-  const isDone = urlItems.length > 0 && !isRunning;
-  const addedCount = urlItems.filter(i => i.status === "success").length;
 
   const isPreviewSandbox = window.location.hostname.includes('preview-sandbox');
 
@@ -369,44 +360,16 @@ export default function VariousSources() {
             </CardContent>
           </Card>
 
-          {urlItems.length > 0 && (
-            <Card className="border-slate-200">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Processing Progress</CardTitle>
-                  {isDone && addedCount > 0 && (
-                    <Link to={createPageUrl("ExploreAllSources")}>
-                      <Button size="sm" variant="outline" className="text-xs h-7">View in Explorer →</Button>
-                    </Link>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {(() => {
-                  const total = urlItems.length;
-                  const done = urlItems.filter(i => ["success","duplicate","error"].includes(i.status)).length;
-                  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-                  return (
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-semibold text-slate-700">{done < total ? `Processing ${done + (urlItems.filter(i=>i.status==="processing").length > 0 ? 1 : 0)} of ${total}...` : `Finished — ${total} processed`}</span>
-                        <span className="text-slate-500 font-mono">{pct}%</span>
-                      </div>
-                      <Progress value={pct} className="h-2" />
-                      <div className="flex gap-3 flex-wrap text-xs">
-                        <span className="flex items-center gap-1 text-green-700 font-medium"><CheckCircle2 className="w-3.5 h-3.5" />{urlItems.filter(i=>i.status==="success").length} added</span>
-                        {urlItems.filter(i=>i.status==="duplicate").length > 0 && <span className="flex items-center gap-1 text-amber-600 font-medium"><SkipForward className="w-3.5 h-3.5" />{urlItems.filter(i=>i.status==="duplicate").length} skipped</span>}
-                        {urlItems.filter(i=>i.status==="error").length > 0 && <span className="flex items-center gap-1 text-red-600 font-medium"><AlertCircle className="w-3.5 h-3.5" />{urlItems.filter(i=>i.status==="error").length} failed</span>}
-                      </div>
-                    </div>
-                  );
-                })()}
-                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                  {urlItems.map((item, i) => <UrlRow key={i} item={item} />)}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <div className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-xl p-4">
+            <RefreshCw className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-slate-800">Jobs processed in the background</p>
+              <p className="text-xs text-slate-500 mt-0.5">After submitting, URLs are queued and analyzed automatically — no need to keep this tab open.</p>
+            </div>
+            <Link to={createPageUrl("BulkImportMonitor")}>
+              <Button size="sm" variant="outline" className="text-xs h-7 shrink-0">View Monitor →</Button>
+            </Link>
+          </div>
 
           <Card className="border-slate-200">
             <CardHeader className="pb-3">

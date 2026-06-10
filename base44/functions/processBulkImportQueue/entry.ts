@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const BATCH_SIZE = 3;
 const CONCURRENCY = 1;
-const DELAY_BETWEEN_JOBS_MS = 200;
+const DELAY_BETWEEN_JOBS_MS = 3000; // 3s between LLM calls to avoid rate limits
 const MAX_RETRIES = 3;
 const STUCK_CUTOFF_MS = 10 * 60 * 1000; // 10 minutes
 const HTML_TRUNCATE_CHARS = 15000;
