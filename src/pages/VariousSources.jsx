@@ -117,6 +117,13 @@ export default function VariousSources() {
   const handleCsvUpload = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
+
+    if (f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls')) {
+      toast.error('Please save your Excel file as CSV first (File → Save As → CSV), then upload it.');
+      e.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result;
@@ -124,15 +131,21 @@ export default function VariousSources() {
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
       const urls = [];
       for (const line of lines) {
-        if (line.toLowerCase().includes('url') && !line.startsWith('http')) continue; // skip header
-        const match = line.match(/https?:\/\/[^\s,"']+/);
-        if (match) urls.push(match[0]);
+        // Try every comma/tab-separated cell for a URL (handles multi-column CSVs)
+        const cells = line.split(/[,\t]/);
+        for (const cell of cells) {
+          const cleaned = cell.trim().replace(/^["']|["']$/g, ''); // strip quotes
+          if (/^https?:\/\/.+/.test(cleaned)) {
+            urls.push(cleaned);
+            break; // only take first URL per row
+          }
+        }
       }
       if (urls.length > 0) {
         setUrlInput(prev => prev ? prev + '\n' + urls.join('\n') : urls.join('\n'));
         toast.success(`Loaded ${urls.length} URLs from file`);
       } else {
-        toast.error('No valid URLs found in file');
+        toast.error('No valid URLs found in file. Make sure URLs start with http:// or https://');
       }
       e.target.value = '';
     };
@@ -327,7 +340,7 @@ export default function VariousSources() {
                   onClick={() => document.getElementById('csv-upload-input')?.click()} disabled={isRunning}>
                   <FolderOpen className="w-3.5 h-3.5" />Upload CSV / Excel
                 </Button>
-                <input id="csv-upload-input" type="file" accept=".csv,.txt,.xlsx,.xls" onChange={handleCsvUpload} className="hidden" />
+                <input id="csv-upload-input" type="file" accept=".csv,.txt" onChange={handleCsvUpload} className="hidden" />
                 {urlCount > 0 && !isRunning && <p className="text-xs text-slate-500 ml-auto">{urlCount} unique URL{urlCount !== 1 ? "s" : ""} detected</p>}
               </div>
               <Button onClick={handleBulkUrlSubmit} disabled={isRunning || !urlInput.trim()} className="w-full bg-slate-800 hover:bg-slate-900">
