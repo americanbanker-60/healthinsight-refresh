@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, AlertCircle, Sparkles, Globe, CheckCircle2, Link as LinkIcon, FileUp, File, Upload, FileText, Link2, Users, SkipForward } from "lucide-react";
+import { Loader2, AlertCircle, Sparkles, Globe, CheckCircle2, Link as LinkIcon, FileUp, File, Upload, FileText, Link2, Users, SkipForward, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -112,6 +112,31 @@ export default function VariousSources() {
   const parseUrls = (raw) => {
     const seen = new Set();
     return raw.split('\n').map(u => u.trim()).filter(u => u.startsWith('http')).filter(u => { if (seen.has(u)) return false; seen.add(u); return true; });
+  };
+
+  const handleCsvUpload = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result;
+      if (typeof text !== 'string') return;
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const urls = [];
+      for (const line of lines) {
+        if (line.toLowerCase().includes('url') && !line.startsWith('http')) continue; // skip header
+        const match = line.match(/https?:\/\/[^\s,"']+/);
+        if (match) urls.push(match[0]);
+      }
+      if (urls.length > 0) {
+        setUrlInput(prev => prev ? prev + '\n' + urls.join('\n') : urls.join('\n'));
+        toast.success(`Loaded ${urls.length} URLs from file`);
+      } else {
+        toast.error('No valid URLs found in file');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(f);
   };
 
   const handleBulkUrlSubmit = async () => {
@@ -297,7 +322,14 @@ export default function VariousSources() {
             <CardContent className="space-y-3">
               <Textarea placeholder={"https://rockhealthfhc.com/newsletter/jan-2024\nhttps://hospitalogy.com/p/article-title"}
                 value={urlInput} onChange={e => setUrlInput(e.target.value)} rows={5} className="font-mono text-sm" disabled={isRunning} />
-              {urlCount > 0 && !isRunning && <p className="text-xs text-slate-500">{urlCount} unique URL{urlCount !== 1 ? "s" : ""} detected</p>}
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" className="text-xs gap-1.5 border-slate-300"
+                  onClick={() => document.getElementById('csv-upload-input')?.click()} disabled={isRunning}>
+                  <FolderOpen className="w-3.5 h-3.5" />Upload CSV / Excel
+                </Button>
+                <input id="csv-upload-input" type="file" accept=".csv,.txt,.xlsx,.xls" onChange={handleCsvUpload} className="hidden" />
+                {urlCount > 0 && !isRunning && <p className="text-xs text-slate-500 ml-auto">{urlCount} unique URL{urlCount !== 1 ? "s" : ""} detected</p>}
+              </div>
               <Button onClick={handleBulkUrlSubmit} disabled={isRunning || !urlInput.trim()} className="w-full bg-slate-800 hover:bg-slate-900">
                 {isRunning ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing URLs...</> : <><Upload className="w-4 h-4 mr-2" />Analyze & Add to Library</>}
               </Button>
