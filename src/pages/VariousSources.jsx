@@ -152,6 +152,26 @@ export default function VariousSources() {
     reader.readAsText(f);
   };
 
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const analyzeWithRetry = async (url, sourceName, maxRetries = 2) => {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await base44.functions.invoke('analyzeNewsletterUrl', { url, sourceName: sourceName || undefined });
+        const d = response?.data ?? response;
+        if (!d?.success) throw new Error(d?.error || "Analysis failed");
+        return d;
+      } catch (err) {
+        if (attempt < maxRetries) {
+          // Exponential backoff: 3s, then 6s
+          await sleep(3000 * (attempt + 1));
+        } else {
+          throw err;
+        }
+      }
+    }
+  };
+
   const handleBulkUrlSubmit = async () => {
     const urlList = parseUrls(urlInput);
     if (urlList.length === 0) { toast.error("Please enter at least one valid URL starting with http"); return; }
@@ -161,15 +181,15 @@ export default function VariousSources() {
     for (let i = 0; i < items.length; i++) {
       items[i] = { ...items[i], status: "processing" }; setUrlItems([...items]);
       try {
-        const response = await base44.functions.invoke('analyzeNewsletterUrl', { url: items[i].url, sourceName: sourceName.trim() || undefined });
-        const d = response?.data ?? response;
-        if (!d?.success) throw new Error(d?.error || "Analysis failed");
+        const d = await analyzeWithRetry(items[i].url, sourceName.trim());
         pushToLocalStorage(d.analysis);
         items[i] = { ...items[i], status: d.isDuplicate ? "duplicate" : "success", title: d.analysis?.title || items[i].url };
       } catch (err) {
         items[i] = { ...items[i], status: "error", errorMsg: err.message };
       }
       setUrlItems([...items]);
+      // Throttle: wait 1.5s between each request to avoid LLM rate limits
+      if (i < items.length - 1) await sleep(1500);
     }
     setIsRunning(false); setUrlInput("");
     queryClient.invalidateQueries({ queryKey: ['newsletters'] });
