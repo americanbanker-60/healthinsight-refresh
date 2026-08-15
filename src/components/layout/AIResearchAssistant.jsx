@@ -14,11 +14,6 @@ const PAGE_SUGGESTIONS = {
     "Which sectors have the most activity this month?",
     "Give me a quick market pulse summary",
   ],
-  KnowledgeHub: [
-    "What emerging themes should I be tracking?",
-    "Who are the most active acquirers right now?",
-    "Summarize the biggest deals in my library",
-  ],
   PEMeetingPrep: [
     "What should I know before a behavioral health PE meeting?",
     "What are current healthcare services deal multiples?",
@@ -28,10 +23,6 @@ const PAGE_SUGGESTIONS = {
     "What are analysts saying about value-based care?",
     "Which companies have raised funding recently?",
     "Summarize the ASC sector outlook",
-  ],
-  CompaniesDirectory: [
-    "Who are the most mentioned acquirers in healthcare?",
-    "Which companies are involved in the most deals?",
   ],
   MyLibrary: [
     "What topics should I be watching based on recent trends?",

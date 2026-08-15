@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 import {
         ArrowLeft,
         ExternalLink,
@@ -275,11 +274,11 @@ export default function NewsletterDetail() {
       <div className="flex items-center justify-between mb-6">
         <Button
           variant="ghost"
-          onClick={() => navigate(createPageUrl("Dashboard"))}
+          onClick={() => navigate(-1)}
           className="hover:bg-slate-100"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
+          Back
         </Button>
         <div className="flex gap-2">
           <Button

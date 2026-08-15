@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Plus, FileText, Settings, HelpCircle, Loader2 } from "lucide-react";
 import KeyFeaturesModal from "../components/dashboard/KeyFeaturesModal";
@@ -29,6 +29,7 @@ const defaultUserConfig = {
 };
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState("all");
   const [showFeaturesModal, setShowFeaturesModal] = React.useState(false);
 
@@ -153,7 +154,7 @@ export default function Dashboard() {
               description="Start analyzing healthcare newsletters to build your intelligence library"
               actionLabel="Analyze First Newsletter"
               actionIcon={Plus}
-              onAction={() => window.location.href = createPageUrl("VariousSources")}
+              onAction={() => navigate(createPageUrl("VariousSources"))}
             />
           ) : (
             <>
