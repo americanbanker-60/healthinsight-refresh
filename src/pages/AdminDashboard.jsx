@@ -23,16 +23,20 @@ export default function AdminDashboard() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["adminStats"],
     queryFn: async () => {
-      const [newsletters, companies, sources, users] = await Promise.all([
-        base44.entities.NewsletterItem.list("-created_date", 10000),
+      // NewsletterItem totals come from getAdminStats (server-side) so the browser
+      // no longer pulls thousands of full article documents just to count them.
+      // Companies/Sources/Users remain small client-side reads, unchanged.
+      const [companies, sources, users, nlResponse] = await Promise.all([
         base44.entities.Company.list(),
         base44.entities.Source.list(),
         base44.entities.User.list(),
+        base44.functions.invoke("getAdminStats", {}),
       ]);
-      const analyzed = (newsletters || []).filter(n => n.is_analyzed).length;
+      const nlData = nlResponse?.data ?? nlResponse;
+      const nlStats = nlData?.stats || { articles: 0, analyzed: 0 };
       return {
-        articles: (newsletters || []).length,
-        analyzed,
+        articles: nlStats.articles,
+        analyzed: nlStats.analyzed,
         companies: companies.length,
         sources: sources.filter(s => !s.is_deleted).length,
         users: users.length,
