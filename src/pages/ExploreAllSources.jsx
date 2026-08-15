@@ -80,6 +80,15 @@ export default function ExploreAllSources() {
     }
   }, [availableSources]);
 
+  // Load the active pack from the URL (?pack_id=&title=) so Deep Dive and
+  // pack-scoped summary generation are enabled when entering from a pack page.
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const packId = params.get('pack_id');
+    const packTitle = params.get('title');
+    setActivePack(packId ? { id: packId, title: packTitle || 'Pack' } : null);
+  }, []);
+
 
 
   // Seed localStarred from server data
@@ -190,21 +199,38 @@ export default function ExploreAllSources() {
     });
     }, [newsletters, searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics, selectedSectors, selectedSentiments, availableSources, currentPack, sortOrder]);
 
+  const lastLoggedRef = React.useRef(null);
+
   React.useEffect(() => {
+    // Only log a meaningful, stable search state — never every keystroke or
+    // filter toggle. Requires a real query and dedupes identical states.
+    const hasQuery =
+      searchText.trim().length >= 3 ||
+      selectedTopics.length > 0 ||
+      selectedSources.length < availableSources.length;
+    if (!hasQuery) return;
+
+    const signature = JSON.stringify({
+      keywords: searchText.trim().toLowerCase(),
+      sources: [...selectedSources].sort(),
+      topics: [...selectedTopics].sort(),
+      dateRangeType: dateRangePreset,
+    });
+    if (lastLoggedRef.current === signature) return;
+    lastLoggedRef.current = signature;
+
     const logActivity = async () => {
-      if (searchText || selectedTopics.length > 0 || selectedSources.length < availableSources.length) {
-        try {
-          await base44.entities.UserSearchActivity.create({
-            keywords: searchText,
-            sources_selected: selectedSources,
-            topics_selected: selectedTopics,
-            date_range_type: dateRangePreset,
-            results_count: filteredResults.length,
-            executed_at: new Date().toISOString()
-          });
-        } catch (error) {
-          console.error("Failed to log search activity:", error);
-        }
+      try {
+        await base44.entities.UserSearchActivity.create({
+          keywords: searchText,
+          sources_selected: selectedSources,
+          topics_selected: selectedTopics,
+          date_range_type: dateRangePreset,
+          results_count: filteredResults.length,
+          executed_at: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error("Failed to log search activity:", error);
       }
     };
     

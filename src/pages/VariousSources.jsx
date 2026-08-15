@@ -113,19 +113,13 @@ export default function VariousSources() {
     return raw.split('\n').map(u => u.trim()).filter(u => u.startsWith('http')).filter(u => { if (seen.has(u)) return false; seen.add(u); return true; });
   };
 
-  const handleCsvUpload = (e) => {
+  const handleCsvUpload = async (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
 
-    if (f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls')) {
-      toast.error('Please save your Excel file as CSV first (File → Save As → CSV), then upload it.');
-      e.target.value = '';
-      return;
-    }
+    const isExcel = /\.xlsx?$/i.test(f.name);
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result;
+    const processText = (text) => {
       if (typeof text !== 'string') return;
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
       const urls = [];
@@ -142,13 +136,39 @@ export default function VariousSources() {
       }
       if (urls.length > 0) {
         setUrlInput(prev => prev ? prev + '\n' + urls.join('\n') : urls.join('\n'));
-        toast.success(`Loaded ${urls.length} URLs from file`);
+        toast.success(`Loaded ${urls.length} URL${urls.length !== 1 ? 's' : ''} from file`);
       } else {
         toast.error('No valid URLs found in file. Make sure URLs start with http:// or https://');
       }
-      e.target.value = '';
     };
-    reader.readAsText(f);
+
+    try {
+      if (isExcel) {
+        // Excel is a binary (zip) format the browser can't read as text, so
+        // parse it through the platform's file-extraction integration.
+        const upload = await base44.integrations.Core.UploadFile({ file: f });
+        const extracted = await base44.integrations.Core.ExtractDataFromUploadedFile({
+          file_url: upload.file_url,
+          json_schema: {
+            type: "object",
+            properties: {
+              rows: { type: "array", items: { type: "object", additionalProperties: true } }
+            }
+          }
+        });
+        const rows = Array.isArray(extracted?.output) ? extracted.output : [];
+        const text = rows.map(row => Object.values(row || {}).map(v => String(v ?? '')).join('\t')).join('\n');
+        processText(text);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (ev) => processText(ev.target?.result);
+        reader.readAsText(f);
+      }
+    } catch (err) {
+      toast.error(`Failed to read file: ${err.message || err}`);
+    } finally {
+      e.target.value = '';
+    }
   };
 
   const handleBulkUrlSubmit = async () => {
@@ -342,7 +362,7 @@ export default function VariousSources() {
                   onClick={() => document.getElementById('csv-upload-input')?.click()} disabled={isRunning}>
                   <FolderOpen className="w-3.5 h-3.5" />Upload CSV / Excel
                 </Button>
-                <input id="csv-upload-input" type="file" accept=".csv,.txt" onChange={handleCsvUpload} className="hidden" />
+                <input id="csv-upload-input" type="file" accept=".csv,.txt,.xlsx,.xls" onChange={handleCsvUpload} className="hidden" />
                 {urlCount > 0 && !isRunning && <p className="text-xs text-slate-500 ml-auto">{urlCount} unique URL{urlCount !== 1 ? "s" : ""} detected</p>}
               </div>
               <Button onClick={handleBulkUrlSubmit} disabled={isRunning || !urlInput.trim()} className="w-full bg-slate-800 hover:bg-slate-900">
