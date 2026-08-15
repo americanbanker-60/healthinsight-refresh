@@ -51,7 +51,6 @@ export default function NewsletterCard({ newsletter, index, variant = "full" }) 
               <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors flex-1">
                 {newsletter.title}
               </h3>
-              <NewsletterMetadata newsletter={newsletter} className="text-xs" />
             </div>
             
             <NewsletterMetadata newsletter={newsletter} className="text-xs mb-2" />

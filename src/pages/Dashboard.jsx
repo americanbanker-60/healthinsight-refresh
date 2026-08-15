@@ -56,10 +56,6 @@ export default function Dashboard() {
 
   const handleSourceSelect = (sourceName) => {
     setActiveTab(sourceName);
-    setPersistentFilters(prev => ({
-      ...prev,
-      sources: [sourceName]
-    }));
   };
 
   return (

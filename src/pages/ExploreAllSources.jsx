@@ -28,6 +28,8 @@ const dateRangePresets = [
   { label: "Custom", value: "custom" }
 ];
 
+const PAGE_SIZE = 20;
+
 export default function ExploreAllSources() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -46,6 +48,7 @@ export default function ExploreAllSources() {
   const [detailNewsletterId, setDetailNewsletterId] = useState(null);
   const [activePack, setActivePack] = useState(null);
   const [sortOrder, setSortOrder] = useState("newest");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const SENTIMENTS = ["positive", "neutral", "negative", "mixed"];
 
@@ -198,6 +201,11 @@ export default function ExploreAllSources() {
       return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
     });
     }, [newsletters, searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics, selectedSectors, selectedSentiments, availableSources, currentPack, sortOrder]);
+
+  // Reset pagination whenever the filter inputs change so users start at the top of fresh results.
+  React.useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [searchText, dateRangePreset, customStartDate, customEndDate, selectedSources, selectedTopics, selectedSectors, selectedSentiments, sortOrder]);
 
   const lastLoggedRef = React.useRef(null);
 
@@ -526,7 +534,7 @@ export default function ExploreAllSources() {
                 </Card>
               ))
             ) : (
-              filteredResults.map(newsletter => {
+              filteredResults.slice(0, visibleCount).map(newsletter => {
                 const pubDate = newsletter.publication_date
                   ? new Date(newsletter.publication_date)
                   : new Date(newsletter.created_date || Date.now());
@@ -590,6 +598,13 @@ export default function ExploreAllSources() {
                   </Card>
                 );
               })
+            )}
+            {filteredResults.length > visibleCount && (
+              <div className="text-center pt-2">
+                <Button variant="outline" onClick={() => setVisibleCount(c => c + PAGE_SIZE)}>
+                  Load More
+                </Button>
+              </div>
             )}
           </div>
         </div>
