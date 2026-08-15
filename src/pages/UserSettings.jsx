@@ -67,6 +67,7 @@ export default function UserSettings() {
   const roleLabels = {
     admin: { label: "Administrator", color: "bg-red-100 text-red-800 border-red-200" },
     power: { label: "Power User", color: "bg-purple-100 text-purple-800 border-purple-200" },
+    user: { label: "Standard User", color: "bg-blue-100 text-blue-800 border-blue-200" },
     standard: { label: "Standard User", color: "bg-blue-100 text-blue-800 border-blue-200" }
   };
 

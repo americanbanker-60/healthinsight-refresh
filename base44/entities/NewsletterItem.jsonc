@@ -231,6 +231,15 @@
       "default": false,
       "description": "Whether this newsletter has been fully analyzed and indexed"
     },
+    "is_starred": {
+      "type": "boolean",
+      "default": false,
+      "description": "Per-user star/flag toggle for an article"
+    },
+    "user_notes": {
+      "type": "string",
+      "description": "Per-user private notes attached to an article"
+    },
     "status": {
       "type": "string",
       "enum": [
