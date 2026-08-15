@@ -44,7 +44,7 @@ export function useUserSettings() {
 
 export function getDefaultSettings() {
   return {
-    default_landing_page: "knowledge_hub",
+    default_landing_page: "dashboard",
     default_date_range: "30d",
     preferred_sources: [],
     preferred_topics: [],

@@ -10,6 +10,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { useUserSettings } from '@/components/settings/UserSettingsManager';
+import { RoleGuard } from '@/components/auth/RoleGuard';
 
 const { Pages, Layout } = pagesConfig;
 
@@ -18,6 +19,15 @@ const LANDING_PAGE_MAP = {
   my_library: 'MyLibrary',
   dashboard: 'Dashboard',
 };
+
+// Pages that require an admin role even when reached by direct URL.
+// AdminDashboard guards itself internally; these do not.
+const ADMIN_PAGES = new Set([
+  'ManageSources',
+  'BulkImportMonitor',
+  'DevSuperAgent',
+  'SystemDocumentation',
+]);
 
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
@@ -59,7 +69,9 @@ const AuthenticatedApp = () => {
           path={`/${path}`}
           element={
             <LayoutWrapper currentPageName={path}>
-              <Page />
+              {ADMIN_PAGES.has(path)
+                ? <RoleGuard allowedRoles={["admin"]}><Page /></RoleGuard>
+                : <Page />}
             </LayoutWrapper>
           }
         />

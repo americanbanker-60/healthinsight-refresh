@@ -135,10 +135,12 @@ export default function ExploreAllSources() {
       : [];
 
     const { start, end } = getDateRange();
-    if (start && end) {
+    if (start || end) {
       results = results.filter(n => {
         const pubDate = n.publication_date ? new Date(n.publication_date) : new Date(n.created_date);
-        return pubDate >= start && pubDate <= end;
+        if (start && pubDate < start) return false;
+        if (end && pubDate > end) return false;
+        return true;
       });
     }
 
