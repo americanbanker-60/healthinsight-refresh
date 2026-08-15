@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import ImportStatusDashboard from "@/components/admin/ImportStatusDashboard";
 
 const STATUS_CONFIG = {
   pending:      { icon: Clock,        color: "text-slate-500",  bg: "bg-slate-100 text-slate-700 border-slate-300",   label: "Pending" },
@@ -168,32 +169,14 @@ export default function BulkImportMonitor() {
 
   const batches = groupByBatch(jobs);
 
-  const totalStats = {
-    done: jobs.filter(j => j.status === "done").length,
-    failed: jobs.filter(j => j.status === "failed" || j.status === "perma-failed").length,
-    pending: jobs.filter(j => j.status === "pending" || j.status === "processing").length,
-  };
-
   return (
     <div className="p-6 md:p-10 max-w-4xl mx-auto">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-slate-900">Bulk Import Monitor</h1>
         <p className="text-slate-500 mt-1">Track the status of all bulk article import jobs</p>
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        {[
-          { label: "Completed", value: totalStats.done, color: "text-green-600", bg: "bg-green-50 border-green-200" },
-          { label: "In Queue", value: totalStats.pending, color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
-          { label: "Failed", value: totalStats.failed, color: "text-red-600", bg: "bg-red-50 border-red-200" },
-        ].map(stat => (
-          <div key={stat.label} className={`rounded-xl border p-4 ${stat.bg}`}>
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-            <p className="text-sm text-slate-600 mt-0.5">{stat.label}</p>
-          </div>
-        ))}
-      </div>
+      <ImportStatusDashboard jobs={jobs} />
 
       {isLoading ? (
         <div className="space-y-3">
