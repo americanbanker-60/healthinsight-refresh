@@ -50,16 +50,6 @@ export default function NewsletterDetail() {
   const [isStarred, setIsStarred] = React.useState(false);
   const [starSaving, setStarSaving] = React.useState(false);
 
-  // Seed notes and starred state from loaded article
-  React.useEffect(() => {
-    if (newsletter?.user_notes !== undefined) {
-      setUserNotes(newsletter.user_notes || "");
-    }
-    if (newsletter?.is_starred !== undefined) {
-      setIsStarred(!!newsletter.is_starred);
-    }
-  }, [newsletter?.id]);
-
   const handleNotesChange = (e) => {
     const value = e.target.value;
     setUserNotes(value);
@@ -160,6 +150,16 @@ export default function NewsletterDetail() {
     retry: 6,
     retryDelay: (attempt) => Math.min(2000 * (attempt + 1), 8000),
   });
+
+  // Seed notes and starred state from loaded article
+  React.useEffect(() => {
+    if (newsletter?.user_notes !== undefined) {
+      setUserNotes(newsletter.user_notes || "");
+    }
+    if (newsletter?.is_starred !== undefined) {
+      setIsStarred(!!newsletter.is_starred);
+    }
+  }, [newsletter?.id]);
 
   // Clear sessionStorage before refetching so we always get fresh server data
   const handleRefresh = () => {
