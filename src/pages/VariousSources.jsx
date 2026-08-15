@@ -156,33 +156,24 @@ export default function VariousSources() {
     if (urlList.length === 0) { toast.error("Please enter at least one valid URL starting with http"); return; }
     setIsRunning(true);
     try {
-      // Check for duplicates upfront before queuing
-      const existing = await base44.entities.NewsletterItem.list('-created_date', 1000);
-      const existingUrls = new Set(existing.map(n => (n.source_url || '').trim().toLowerCase().replace(/\/+$/, '')));
-
       const batchId = `batch_${Date.now()}`;
       const batchName = sourceName.trim() || `Import ${new Date().toLocaleDateString()} — ${urlList.length} URLs`;
 
-      const jobs = urlList.map(u => {
-        const normalized = u.trim().toLowerCase().replace(/\/+$/, '');
-        return {
-          batch_id: batchId,
-          batch_name: batchName,
-          url: u,
-          source_name: sourceName.trim() || undefined,
-          status: existingUrls.has(normalized) ? 'skipped' : 'pending',
-        };
-      });
+      // Queue every URL as pending — the backend processor handles analysis and
+      // duplicate detection (marks dupes 'skipped'). No large client fetch = no timeout.
+      const jobs = urlList.map(u => ({
+        batch_id: batchId,
+        batch_name: batchName,
+        url: u,
+        source_name: sourceName.trim() || undefined,
+        status: 'pending',
+      }));
 
-      // Bulk create all jobs
       await base44.entities.BulkImportJob.bulkCreate(jobs);
-
-      const queued = jobs.filter(j => j.status === 'pending').length;
-      const dupes = jobs.filter(j => j.status === 'skipped').length;
 
       setUrlInput("");
       toast.success(
-        `${queued} URL${queued !== 1 ? 's' : ''} queued for processing${dupes > 0 ? ` · ${dupes} duplicate${dupes !== 1 ? 's' : ''} skipped` : ''}. Track progress in Bulk Import Monitor.`
+        `${jobs.length} URL${jobs.length !== 1 ? 's' : ''} queued for background processing. Duplicates are detected automatically. Track progress in Bulk Import Monitor.`
       );
       queryClient.invalidateQueries({ queryKey: ['bulkImportJobs'] });
     } catch (err) {
