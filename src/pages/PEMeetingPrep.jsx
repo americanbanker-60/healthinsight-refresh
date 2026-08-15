@@ -327,11 +327,9 @@ Use web search to find accurate information about all their healthcare holdings.
       const newsletterIds = [...new Set(relevantRelations.map(r => r.newsletter_id))];
       
       // Fetch newsletter details
-      const newsletters = await base44.entities.NewsletterItem.filter(
-        { id: { $in: newsletterIds } },
-        "-publication_date",
-        100
-      );
+      const newsletters = (await Promise.all(
+        newsletterIds.map(id => base44.entities.NewsletterItem.get(id).catch(() => null))
+      )).filter(Boolean);
       
       // Map newsletters with their related company
       const intelligence = newsletters.map(n => {
@@ -572,7 +570,7 @@ Research the company using available web search if URLs provided, or use the req
       });
 
       setViewingId(saved.id);
-      queryClient.invalidateQueries(['peMeetingBriefs']);
+      queryClient.invalidateQueries({ queryKey: ['peMeetingBriefs'] });
       toast.success("Brief generated successfully!");
       
     } catch (err) {

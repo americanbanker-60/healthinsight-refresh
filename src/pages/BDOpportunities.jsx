@@ -20,7 +20,7 @@ const STATUS_COLORS = {
 
 const STATUS_OPTIONS = ["new", "in_progress", "contacted", "closed"];
 
-function OpportunityCard({ opp, onDelete, onUpdate }) {
+function OpportunityCard({ opp, onDelete, onUpdate, isUpdating }) {
   const [expanded, setExpanded] = useState(false);
   const [notes, setNotes] = useState(opp.notes || "");
   const [showGenerator, setShowGenerator] = useState(false);
@@ -94,7 +94,10 @@ function OpportunityCard({ opp, onDelete, onUpdate }) {
                     <button
                       key={s}
                       onClick={() => updateStatus(s)}
+                      disabled={isUpdating}
                       className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                        isUpdating ? "opacity-50 cursor-not-allowed " : ""
+                      }${
                         opp.status === s
                           ? STATUS_COLORS[s]
                           : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
@@ -241,6 +244,7 @@ export default function BDOpportunities() {
                       opp={opp}
                       onDelete={(id) => deleteMutation.mutate(id)}
                       onUpdate={(id, data) => updateMutation.mutate({ id, data })}
+                      isUpdating={updateMutation.isPending}
                     />
                   ))}
                 </div>
