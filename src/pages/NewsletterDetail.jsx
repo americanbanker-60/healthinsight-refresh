@@ -103,6 +103,9 @@ export default function NewsletterDetail() {
         newsletterData: newsletter
       });
       const { pdfBase64, filename } = response?.data ?? response;
+      if (!pdfBase64 || typeof pdfBase64 !== 'string') {
+        throw new Error('No PDF data returned from server');
+      }
       // Strip the data URI prefix to get raw base64
       const base64Data = pdfBase64.split(',')[1];
       const byteCharacters = atob(base64Data);
@@ -119,8 +122,9 @@ export default function NewsletterDetail() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      toast.success(`PDF downloaded${filename ? `: ${filename}` : ''}`);
     } catch (err) {
-      toast.error('PDF export failed: ' + err.message);
+      toast.error('PDF export failed: ' + (err?.message || 'Unknown error'));
     } finally {
       setIsExportingPDF(false);
     }
