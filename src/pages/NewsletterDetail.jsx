@@ -58,7 +58,13 @@ export default function NewsletterDetail() {
       if (!newsletterId) return;
       setNotesSaving(true);
       try {
-        await base44.entities.NewsletterItem.update(newsletterId, { user_notes: value });
+        // Route through the updateNewsletterItem backend function (service-role) —
+        // NewsletterItem.update is admin-only under RLS, so a direct client update
+        // 403s for regular users.
+        await base44.functions.invoke('updateNewsletterItem', {
+          newsletter_id: newsletterId,
+          data: { user_notes: value },
+        });
         setNotesSaved(true);
         setTimeout(() => setNotesSaved(false), 2000);
       } catch (_) {
@@ -74,7 +80,13 @@ export default function NewsletterDetail() {
     setIsStarred(newVal);
     setStarSaving(true);
     try {
-      await base44.entities.NewsletterItem.update(newsletterId, { is_starred: newVal });
+      // Route through the updateNewsletterItem backend function (service-role) —
+      // NewsletterItem.update is admin-only under RLS, so a direct client update
+      // 403s for regular users.
+      await base44.functions.invoke('updateNewsletterItem', {
+        newsletter_id: newsletterId,
+        data: { is_starred: newVal },
+      });
     } catch (_) {
       setIsStarred(!newVal);
       toast.error("Failed to update star");
