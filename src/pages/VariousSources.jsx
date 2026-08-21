@@ -9,12 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, AlertCircle, Sparkles, Globe, CheckCircle2, Link as LinkIcon, FileUp, File, Upload, FileText, Link2, Users, SkipForward, FolderOpen, RefreshCw } from "lucide-react";
+import { Loader2, AlertCircle, Sparkles, Globe, CheckCircle2, Link as LinkIcon, FileUp, File, Upload, FileText, Link2, Users, SkipForward, FolderOpen, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import AnalysisResult from "@/components/source/AnalysisResult";
 import UrlRow, { STATUS } from "@/components/source/UrlRow";
+import DiscoverFromSource from "@/components/source/DiscoverFromSource";
 
 // ─── Main Page ────────────────────────────────────────────────────
 export default function VariousSources() {
@@ -265,9 +266,10 @@ export default function VariousSources() {
       </div>
 
       <Tabs defaultValue="single">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="single" className="gap-2"><Sparkles className="w-4 h-4" />Single Article</TabsTrigger>
           <TabsTrigger value="bulk" className="gap-2"><Upload className="w-4 h-4" />Bulk Import</TabsTrigger>
+          <TabsTrigger value="discover" className="gap-2"><Search className="w-4 h-4" />Discover from Source</TabsTrigger>
         </TabsList>
 
         {/* ── Single article tab ── */}
@@ -406,6 +408,11 @@ export default function VariousSources() {
               ))}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── Discover from source tab ── */}
+        <TabsContent value="discover">
+          <DiscoverFromSource />
         </TabsContent>
       </Tabs>
     </div>
