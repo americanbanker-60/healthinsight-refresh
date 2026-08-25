@@ -140,7 +140,7 @@ export default function BulkImportMonitor() {
 
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["bulkImportJobs"],
-    queryFn: () => base44.entities.BulkImportJob.list("-created_date", 500),
+    queryFn: () => base44.entities.BulkImportJob.list("-created_date", 1000),
     refetchInterval: 10000,
   });
 
