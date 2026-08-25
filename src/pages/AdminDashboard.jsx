@@ -160,6 +160,13 @@ export default function AdminDashboard() {
               </Button>
             </Link>
 
+            <Link to={createPageUrl("TeamManagement")}>
+              <Button variant="outline" className="w-full justify-start gap-2">
+                <Users className="w-4 h-4 text-orange-600" />
+                Team Management
+              </Button>
+            </Link>
+
             <Link to={createPageUrl("DashboardSettings")}>
               <Button variant="outline" className="w-full justify-start gap-2">
                 <Settings className="w-4 h-4 text-slate-500" />

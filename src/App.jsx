@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { useUserSettings } from '@/components/settings/UserSettingsManager';
 import { RoleGuard } from '@/components/auth/RoleGuard';
+import TeamManagement from './pages/TeamManagement';
 
 const { Pages, Layout } = pagesConfig;
 
@@ -27,6 +28,7 @@ const ADMIN_PAGES = new Set([
   'BulkImportMonitor',
   'DevSuperAgent',
   'SystemDocumentation',
+  'TeamManagement',
 ]);
 
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -76,6 +78,14 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+      <Route
+        path="/TeamManagement"
+        element={
+          <LayoutWrapper currentPageName="TeamManagement">
+            <RoleGuard allowedRoles={["admin"]}><TeamManagement /></RoleGuard>
+          </LayoutWrapper>
+        }
+      />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

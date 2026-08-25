@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Brain, LayoutDashboard, TrendingUp, Settings, BookOpen, Library, FolderOpen, Briefcase, ChevronDown, FileUp, Terminal, RefreshCw, Zap, LogOut } from "lucide-react";
+import { Brain, LayoutDashboard, TrendingUp, Settings, BookOpen, Library, FolderOpen, Briefcase, ChevronDown, FileUp, Terminal, RefreshCw, Zap, LogOut, Users } from "lucide-react";
 import { WalkthroughProvider, useWalkthrough } from "@/components/walkthrough/WalkthroughManager";
 import { useUserRole } from "@/components/auth/RoleGuard";
 import { AdminGuard } from "@/components/auth/AdminGuard";
@@ -127,6 +127,12 @@ const navigationGroups = [
         title: "Admin Dashboard",
         url: createPageUrl("AdminDashboard"),
         icon: Shield,
+        roles: ["admin"],
+      },
+      {
+        title: "Team Management",
+        url: createPageUrl("TeamManagement"),
+        icon: Users,
         roles: ["admin"],
       },
       {
