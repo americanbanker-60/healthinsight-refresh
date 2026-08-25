@@ -1,5 +1,36 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+// Build an alias->canonical map from all Topics (topic_name + keywords are aliases).
+async function buildThemeAliasMap(base44) {
+  try {
+    const topics = await base44.asServiceRole.entities.Topic.list('-created_date', 1000);
+    const map = new Map();
+    for (const t of (topics || [])) {
+      const canonical = (t.topic_name || '').trim();
+      if (!canonical) continue;
+      const aliases = [canonical, ...(t.keywords || [])]
+        .map(a => (a || '').toString().toLowerCase().trim())
+        .filter(Boolean);
+      for (const a of [...new Set(aliases)]) {
+        if (!map.has(a)) map.set(a, canonical);
+      }
+    }
+    return map;
+  } catch (e) {
+    console.warn('Theme alias map build failed (non-fatal):', e.message);
+    return new Map();
+  }
+}
+
+function canonicalizeThemeLabel(label, aliasMap) {
+  const n = (label || '').toString().toLowerCase().trim();
+  if (!n) return null;
+  if (aliasMap.has(n)) return aliasMap.get(n);
+  const stripped = n.replace(/[.,;:!?]+$/, '');
+  if (aliasMap.has(stripped)) return aliasMap.get(stripped);
+  return null;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -79,6 +110,11 @@ Deno.serve(async (req) => {
       console.warn('Cross-reference context fetch failed (non-fatal):', ctxErr.message);
     }
 
+    const themeAliasMap = await buildThemeAliasMap(base44);
+    const canonicalThemeList = themeAliasMap.size > 0
+      ? [...new Set([...themeAliasMap.values()])].slice(0, 120)
+      : null;
+
     const prompt = `You are a senior healthcare private equity analyst. Your job is to extract sharp, investment-grade intelligence from this healthcare PDF document — NOT generic summaries. Every insight must be specific, opinionated, and actionable for a PE investor.
 
 Today's date: ${today}
@@ -108,7 +144,7 @@ EXTRACTION RULES — follow these strictly:
 
 **key_statistics**: Every number, multiple, percentage, dollar figure mentioned. Include context for each.
 
-**themes**: 3-5 specific themes. theme = concise label (e.g., "MSO Platform Build-Up"). description = 1-2 sentences on what's specifically happening.
+**themes**: 3-5 specific themes. ${canonicalThemeList ? `theme field = a CANONICAL label from this controlled vocabulary (use the exact label): ${canonicalThemeList.join(', ')}. Only use a label outside this list if the theme genuinely fits none of them. ` : ''}theme = concise label (e.g., "MSO Platform Build-Up"). description = 1-2 sentences on what's specifically happening.
 
 **key_players**: All companies, PE firms, payors, health systems, named executives mentioned.
 
@@ -199,9 +235,18 @@ EXTRACTION RULES — follow these strictly:
     // Normalize arrays — same pattern as processBulkImportQueue.
     // Build field-by-field (never spread ...result) to avoid passing unknown fields
     // like cross_reference_signals that cause asServiceRole.create() to fail silently.
-    const normalizedThemes = (result.themes || []).map(t =>
+    const rawThemes = (result.themes || []).map(t =>
       typeof t === 'string' ? { theme: t, description: '' } : t
     );
+    const seenThemes = new Set();
+    const normalizedThemes = [];
+    for (const t of rawThemes) {
+      const canonical = canonicalizeThemeLabel(t.theme, themeAliasMap) || t.theme;
+      const key = canonical.toLowerCase().trim();
+      if (seenThemes.has(key)) continue;
+      seenThemes.add(key);
+      normalizedThemes.push({ theme: canonical, description: t.description || '' });
+    }
     const normalizedStats = (result.key_statistics || []).map(s =>
       typeof s === 'string' ? { figure: s, context: '' } : s
     );
