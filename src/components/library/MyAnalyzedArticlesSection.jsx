@@ -252,7 +252,8 @@ export default function MyAnalyzedArticlesSection() {
         ) : (
           <div className="space-y-2">
             {displayedArticles.map((article) => {
-              const pubDate = article.publication_date || article.date_added_to_app;
+              const pubRaw = article.publication_date || article.date_added_to_app;
+              const pubDate = pubRaw ? new Date(pubRaw) : null;
               const isStarred = !!localStarred[article.id];
               return (
                 <div
@@ -272,9 +273,9 @@ export default function MyAnalyzedArticlesSection() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm text-slate-900 truncate">{article.title}</p>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      {pubDate && (
+                      {pubDate && !isNaN(pubDate.getTime()) && (
                         <span className="text-xs font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">
-                          {format(new Date(pubDate), "MMM d, yyyy")}
+                          {format(pubDate, "MMM d, yyyy")}
                         </span>
                       )}
                       {article.source_name && (
