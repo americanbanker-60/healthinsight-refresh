@@ -12,16 +12,17 @@ export default function NewsletterMetadata({
   showLink = false, 
   className = "" 
 }) {
-  const pubDate = newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime())
-    ? new Date(newsletter.publication_date)
-    : new Date(newsletter.created_date);
+  const rawDate = newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime())
+    ? newsletter.publication_date
+    : newsletter.created_date;
+  const pubDate = rawDate && !isNaN(new Date(rawDate).getTime()) ? new Date(rawDate) : null;
 
   return (
     <div className={`flex flex-wrap items-center gap-3 text-sm ${className}`}>
       <Badge variant="outline">{newsletter.source_name}</Badge>
       <div className="flex items-center gap-1 text-slate-600">
         <Calendar className="w-4 h-4" />
-        <span>{format(pubDate, "MMM d, yyyy")}</span>
+        <span>{pubDate ? format(pubDate, "MMM d, yyyy") : "—"}</span>
       </div>
       <SentimentBadge sentiment={newsletter.sentiment} />
       {showLink && newsletter.source_url && (

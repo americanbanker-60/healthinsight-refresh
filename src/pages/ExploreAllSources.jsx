@@ -535,9 +535,10 @@ export default function ExploreAllSources() {
               ))
             ) : (
               filteredResults.slice(0, visibleCount).map(newsletter => {
-                const pubDate = newsletter.publication_date
-                  ? new Date(newsletter.publication_date)
-                  : new Date(newsletter.created_date || Date.now());
+                const rawPub = newsletter.publication_date && !isNaN(new Date(newsletter.publication_date).getTime())
+                  ? newsletter.publication_date
+                  : newsletter.created_date;
+                const pubDate = rawPub && !isNaN(new Date(rawPub).getTime()) ? new Date(rawPub) : null;
                 
                 return (
                   <Card key={newsletter.id} className="bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow border-slate-200/60">
@@ -574,7 +575,7 @@ export default function ExploreAllSources() {
                           </div>
                           <div className="flex items-center gap-3 text-sm text-slate-600 mb-3 flex-wrap">
                             <Badge variant="outline">{newsletter.source_name}</Badge>
-                            <span>{format(pubDate, "MMM d, yyyy")}</span>
+                            <span>{pubDate ? format(pubDate, "MMM d, yyyy") : "—"}</span>
                             {newsletter.primary_sector && (
                               <Badge variant="outline" className="text-xs">{newsletter.primary_sector}</Badge>
                             )}
