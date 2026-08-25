@@ -80,12 +80,13 @@ Deno.serve(async (req) => {
     const normalizeUrl = (u) => u.trim().toLowerCase().replace(/\/+$/, '');
     const normalizedUrl = normalizeUrl(url);
 
-    // Duplicate check — non-blocking try-catch so a transient 403 doesn't kill the request
+    // Duplicate check — GLOBAL (not per-user) so the same URL can't be re-imported
+    // by a different user or via bulk import. Non-blocking try-catch so a transient
+    // 403 doesn't kill the request.
     let existingCheck = [];
     try {
       existingCheck = await base44.asServiceRole.entities.NewsletterItem.filter({
-        source_url: normalizedUrl,
-        uploaded_by: user.email
+        source_url: normalizedUrl
       });
     } catch (_) {}
     if (existingCheck.length > 0) {

@@ -68,8 +68,13 @@ Deno.serve(async (req) => {
       const chunk = pendingJobs.slice(i, i + CONCURRENCY);
       await Promise.all(chunk.map(async (job) => {
         try {
-          // Check for existing newsletter with this URL
-          const existing = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: job.url });
+          // Normalize the URL the same way analyzeNewsletterUrl does, so the same
+          // article imported via single-upload and via bulk (different casing /
+          // trailing slash) is recognized as a duplicate.
+          const normalizedJobUrl = (job.url || '').trim().toLowerCase().replace(/\/+$/, '');
+
+          // Check for existing newsletter with this URL (global, not per-user)
+          const existing = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedJobUrl });
           if (existing.length > 0) {
             await base44.asServiceRole.entities.BulkImportJob.update(job.id, {
               status: 'skipped',
@@ -167,7 +172,7 @@ Extract:
           // IMPORTANT: Do NOT store raw_input (large HTML blob causes create to fail silently)
           const newsletterData = {
             title: result.title || 'Untitled',
-            source_url: job.url,
+            source_url: normalizedJobUrl,
             source_name: job.source_name || result.source_name || domain,
             source_type: 'URL',
             content_type: 'URL',
