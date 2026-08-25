@@ -7,39 +7,24 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
 export default function StatsOverview({ newsletters, isLoading, visibleStats = ["newsletters", "ma_deals", "funding", "themes"] }) {
-  // Fetch ALL analyzed newsletters for accurate counts (not limited by display pagination)
-  const { data: allNewsletters = [], isLoading: isLoadingStats } = useQuery({
-    queryKey: ['allNewslettersForStats'],
-    queryFn: () => base44.entities.NewsletterItem.list('-publication_date', 10000),
-    staleTime: 30 * 1000,
+  // Fetch aggregate stats server-side. The previous approach listed every full
+  // NewsletterItem document in the browser just to count fields — that transfer
+  // was far too large and failed, leaving all cards stuck at 0.
+  const { data: statsData, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getDashboardStats', {});
+      const data = res?.data ?? res;
+      return data?.stats || { articles: 0, analyzed: 0, ma_deals: 0, funding_rounds: 0, unique_themes: 0 };
+    },
+    staleTime: 60 * 1000,
   });
 
-  // Count newsletters that have been processed (have content regardless of is_analyzed flag)
-  const processedNewsletters = allNewsletters.filter(n =>
-    n.is_analyzed || n.summary || n.tldr || (n.key_takeaways && n.key_takeaways.length > 0)
-  );
-  const totalNewsletters = processedNewsletters.length;
-  const totalMADeals = allNewsletters.reduce((sum, n) => sum + (n.ma_activities?.length || 0), 0);
-  const totalFunding = allNewsletters.reduce((sum, n) => sum + (n.funding_rounds?.length || 0), 0);
-  
-  // Count unique themes across all newsletters (not total theme occurrences)
-  const uniqueThemes = React.useMemo(() => {
-    const themesSet = new Set();
-    processedNewsletters.forEach(n => {
-      if (n.themes) {
-        n.themes.forEach(t => {
-          if (t.theme) themesSet.add(t.theme);
-        });
-      }
-    });
-    return themesSet.size;
-  }, [allNewsletters]);
-
   const stats = [
-    { label: "Newsletters Analyzed", value: totalNewsletters, icon: FileText, color: "blue" },
-    { label: "M&A Deals Tracked", value: totalMADeals, icon: Briefcase, color: "green" },
-    { label: "Funding Rounds", value: totalFunding, icon: DollarSign, color: "emerald" },
-    { label: "Unique Themes", value: uniqueThemes, icon: TrendingUp, color: "purple" },
+    { label: "Newsletters Analyzed", value: statsData?.analyzed ?? 0, icon: FileText, color: "blue" },
+    { label: "M&A Deals Tracked", value: statsData?.ma_deals ?? 0, icon: Briefcase, color: "green" },
+    { label: "Funding Rounds", value: statsData?.funding_rounds ?? 0, icon: DollarSign, color: "emerald" },
+    { label: "Unique Themes", value: statsData?.unique_themes ?? 0, icon: TrendingUp, color: "purple" },
   ];
 
   const colorClasses = {
@@ -70,7 +55,7 @@ export default function StatsOverview({ newsletters, isLoading, visibleStats = [
                   </div>
                 </div>
                 <p className="text-sm font-medium text-slate-600 mb-1">{stat.label}</p>
-                {isLoading ? (
+                {isLoading || isLoadingStats ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
                   <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
