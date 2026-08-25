@@ -58,7 +58,7 @@ export default function StatsOverview({ newsletters, isLoading, visibleStats = [
                 {isLoading || isLoadingStats ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
+                  <p className="text-3xl font-bold text-slate-900">{stat.value.toLocaleString()}</p>
                 )}
               </CardContent>
             </Card>
