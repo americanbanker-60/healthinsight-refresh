@@ -37,18 +37,21 @@ Deno.serve(async (req) => {
       .sort((a, b) => b[1] - a[1])
       .map(([k, c]) => ({ key: k, label: unmappedDisplay[k], count: c }));
 
-    // Cap to keep the LLM pass bounded; multi-count labels first, then top singletons.
+    // Bounded per run: 500 labels (one LLM call). Multi-count labels first, then singletons.
+    // Re-running the function resumes from where the last run left off (classified labels are
+    // persisted as Topic aliases, so they're treated as "already mapped" on the next run).
+    const PER_RUN = 500;
     const multi = ranked.filter(r => r.count >= 2);
     const singles = ranked.filter(r => r.count === 1);
-    const toClassify = [...multi, ...singles.slice(0, Math.max(0, 4500 - multi.length))];
-    console.log(`Unmapped distinct labels: ${ranked.length}; classifying ${toClassify.length}`);
+    const toClassify = [...multi, ...singles.slice(0, Math.max(0, PER_RUN - multi.length))];
+    console.log(`Unmapped distinct labels: ${ranked.length}; classifying ${toClassify.length} this run`);
 
-    // 2. Classify in batches of 1000 against the existing canonical list.
+    // 2. Single LLM call: classify this run's labels against the existing canonical list.
     const classification = {}; // norm(label) -> canonical
     const canonicalIndex = canonicalList.map((c, i) => `${i + 1}. ${c}`).join('\n');
 
-    for (let i = 0; i < toClassify.length; i += 1000) {
-      const batch = toClassify.slice(i, i + 1000);
+    for (let i = 0; i < toClassify.length; i += PER_RUN) {
+      const batch = toClassify.slice(i, i + PER_RUN);
       const batchInput = batch.map((r, idx) => `${idx + 1}. ${r.label}`).join('\n');
       try {
         const res = await base44.integrations.Core.InvokeLLM({
@@ -116,23 +119,25 @@ The assignments array must have exactly ${batch.length} entries, in the same ord
       }
     }
 
-    // 4. Rebuild alias map and re-rewrite articles.
+    // 4. Re-rewrite ONLY articles touched by this run's new classifications (resumable).
     const freshTopics = await base44.asServiceRole.entities.Topic.list('-created_date', 1000);
     const freshAliasMap = buildAliasMap(freshTopics);
 
+    // Set of normalized raw labels that gained a mapping this run.
+    const newlyMapped = new Set(Object.keys(classification));
+
     const updates = [];
-    let stillUnmapped = 0;
     for (const n of items) {
       if (!n.themes || n.themes.length === 0) continue;
+      const touched = n.themes.some(t => newlyMapped.has(norm(t?.theme || '')));
+      if (!touched) continue; // skip articles unaffected by this run
       const mapped = new Map();
       for (const t of n.themes) {
         const rawLabel = (t?.theme || '').toString().trim();
         if (!rawLabel) continue;
         const canonical = canonicalize(rawLabel, freshAliasMap) || rawLabel;
-        if (canonical === rawLabel) stillUnmapped++;
         const key = canonical.toLowerCase().trim();
         if (mapped.has(key)) {
-          // keep longest description
           const existing = mapped.get(key);
           if ((t.description || '').length > existing.length) mapped.set(key, t.description || '');
         } else {
@@ -161,7 +166,7 @@ The assignments array must have exactly ${batch.length} entries, in the same ord
       labels_classified: Object.keys(classification).length,
       topics_enriched: Object.keys(newAliasesByTopic).length,
       articles_updated: updatedCount,
-      still_unmapped_instances: stillUnmapped,
+      remaining_unmapped: ranked.length - toClassify.length,
       alias_map_size: freshAliasMap.size
     });
   } catch (error) {
