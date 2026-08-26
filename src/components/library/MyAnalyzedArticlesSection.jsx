@@ -10,8 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BookMarked, ExternalLink, ArrowUpDown, Filter, Search, Star, StickyNote, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import { format } from "date-fns";
+import { useUserRole } from "@/components/auth/RoleGuard";
 import ThemeFilterSidebar from "./ThemeFilterSidebar";
+import BulkActionsBar from "./BulkActionsBar";
 
 const SECTORS = [
   "Urgent Care","Behavioral Health","Imaging","ASC","Physical Therapy",
@@ -28,6 +32,7 @@ const sentimentColors = {
 
 export default function MyAnalyzedArticlesSection() {
   const { user } = useAuth();
+  const { isAdmin } = useUserRole();
   const queryClient = useQueryClient();
 
   const [searchText, setSearchText]     = useState("");
@@ -37,6 +42,11 @@ export default function MyAnalyzedArticlesSection() {
   const [starredOnly, setStarredOnly]   = useState(false);
   const [themeFilter, setThemeFilter]   = useState("all"); // canonical theme name or "all"
   const [localStarred, setLocalStarred] = useState({});   // id → bool (optimistic)
+
+  // Bulk selection + archive view (admin-only actions per NewsletterItem RLS)
+  const [selectedIds, setSelectedIds]   = useState(() => new Set());
+  const [showArchived, setShowArchived] = useState(false);
+  const [bulkBusy, setBulkBusy]         = useState(false);
 
   const LOCAL_KEY = user?.email ? `hi_analyzed_${user.email}` : null;
 
@@ -99,6 +109,16 @@ export default function MyAnalyzedArticlesSection() {
     }
   };
 
+  // Canonical Topic names (controlled vocabulary) for the tag-with-theme dropdown
+  const { data: topicNames = [] } = useQuery({
+    queryKey: ["topic-names-for-tagging"],
+    queryFn: async () => {
+      const list = await base44.entities.Topic.list("sort_order", 500);
+      return (list || []).map(t => t.topic_name).filter(Boolean).sort();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const sources = useMemo(() => {
     const s = new Set(articles.map(a => a.source_name).filter(Boolean));
     return Array.from(s).sort();
@@ -135,6 +155,10 @@ export default function MyAnalyzedArticlesSection() {
       );
     }
 
+    // Hide archived unless explicitly viewing the archive
+    if (!showArchived) result = result.filter(a => !a.is_archived);
+    else               result = result.filter(a => a.is_archived);
+
     if (sourceFilter !== "all") result = result.filter(a => a.source_name === sourceFilter);
     if (sectorFilter !== "all") result = result.filter(a => a.primary_sector === sectorFilter);
     if (themeFilter !== "all")  result = result.filter(a => (a.themes || []).some(t => t?.theme === themeFilter));
@@ -147,7 +171,7 @@ export default function MyAnalyzedArticlesSection() {
     });
 
     return result;
-  }, [articles, searchText, sortOrder, sourceFilter, sectorFilter, themeFilter, starredOnly, localStarred]);
+  }, [articles, searchText, sortOrder, sourceFilter, sectorFilter, themeFilter, starredOnly, localStarred, showArchived]);
 
   const hasActiveFilters = searchText || sourceFilter !== "all" || sectorFilter !== "all" || themeFilter !== "all" || starredOnly;
 
@@ -157,6 +181,84 @@ export default function MyAnalyzedArticlesSection() {
     setSectorFilter("all");
     setThemeFilter("all");
     setStarredOnly(false);
+  };
+
+  // ---- Bulk selection ----
+  const toggleSelect = (id) => setSelectedIds(prev => {
+    const n = new Set(prev);
+    n.has(id) ? n.delete(id) : n.add(id);
+    return n;
+  });
+
+  const allVisibleSelected = displayedArticles.length > 0 && displayedArticles.every(a => selectedIds.has(a.id));
+  const toggleSelectAll = () => setSelectedIds(prev => {
+    const n = new Set(prev);
+    if (displayedArticles.every(a => n.has(a.id))) {
+      displayedArticles.forEach(a => n.delete(a.id));
+    } else {
+      displayedArticles.forEach(a => n.add(a.id));
+    }
+    return n;
+  });
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const refreshAfterBulk = () => {
+    clearSelection();
+    queryClient.invalidateQueries({ queryKey: ["my-analyzed-articles"] });
+  };
+
+  const bulkArchive = async (value) => {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) return;
+    setBulkBusy(true);
+    try {
+      await base44.entities.NewsletterItem.bulkUpdate(ids.map(id => ({ id, is_archived: value })));
+      toast.success(value ? `Archived ${ids.length} article${ids.length > 1 ? "s" : ""}` : `Restored ${ids.length} article${ids.length > 1 ? "s" : ""}`);
+      refreshAfterBulk();
+    } catch (e) {
+      toast.error("Bulk archive failed: " + (e?.message || "unknown error"));
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const bulkTag = async (themeName) => {
+    const selected = articles.filter(a => selectedIds.has(a.id));
+    if (!selected.length) return;
+    setBulkBusy(true);
+    try {
+      const updates = selected.map(a => {
+        const existing = a.themes || [];
+        if (existing.some(t => t?.theme === themeName)) return null;
+        return { id: a.id, themes: [...existing, { theme: themeName, description: "" }] };
+      }).filter(Boolean);
+      if (updates.length === 0) {
+        toast.info(`All selected already tagged with "${themeName}"`);
+      } else {
+        await base44.entities.NewsletterItem.bulkUpdate(updates);
+        toast.success(`Tagged ${updates.length} article${updates.length > 1 ? "s" : ""} with "${themeName}"`);
+      }
+      refreshAfterBulk();
+    } catch (e) {
+      toast.error("Bulk tag failed: " + (e?.message || "unknown error"));
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const bulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) return;
+    setBulkBusy(true);
+    try {
+      await base44.entities.NewsletterItem.deleteMany({ id: { $in: ids } });
+      toast.success(`Deleted ${ids.length} article${ids.length > 1 ? "s" : ""}`);
+      refreshAfterBulk();
+    } catch (e) {
+      toast.error("Bulk delete failed: " + (e?.message || "unknown error"));
+    } finally {
+      setBulkBusy(false);
+    }
   };
 
   if (articles.length === 0) {
@@ -270,9 +372,26 @@ export default function MyAnalyzedArticlesSection() {
             onSelect={setThemeFilter}
           />
           <div className="flex-1 min-w-0">
+            {isAdmin && (
+              <BulkActionsBar
+                selectedCount={selectedIds.size}
+                visibleCount={displayedArticles.length}
+                allVisibleSelected={allVisibleSelected}
+                onToggleSelectAll={toggleSelectAll}
+                onClear={clearSelection}
+                topics={topicNames}
+                onTag={bulkTag}
+                onArchive={() => bulkArchive(true)}
+                onUnarchive={() => bulkArchive(false)}
+                onDelete={bulkDelete}
+                showArchived={showArchived}
+                onToggleShowArchived={() => { setShowArchived(v => !v); clearSelection(); }}
+                busy={bulkBusy}
+              />
+            )}
             {displayedArticles.length === 0 ? (
               <div className="text-center py-8 text-slate-500 text-sm">
-                No articles match your filters.
+                {showArchived ? "No archived articles." : "No articles match your filters."}
               </div>
             ) : (
               <div className="space-y-2">
@@ -283,8 +402,21 @@ export default function MyAnalyzedArticlesSection() {
                   return (
                     <div
                       key={article.id}
-                      className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 transition-all"
+                      className={`flex items-center gap-2 p-3 rounded-lg border transition-all ${
+                        selectedIds.has(article.id)
+                          ? "border-indigo-400 bg-indigo-50/60"
+                          : "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40"
+                      }`}
                     >
+                      {/* Bulk select checkbox (admin only) */}
+                      {isAdmin && (
+                        <Checkbox
+                          checked={selectedIds.has(article.id)}
+                          onCheckedChange={() => toggleSelect(article.id)}
+                          aria-label={`Select ${article.title}`}
+                          className="shrink-0"
+                        />
+                      )}
                       {/* Star button */}
                       <button
                         onClick={(e) => toggleStar(article, e)}
