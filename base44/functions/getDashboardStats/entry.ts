@@ -1,5 +1,28 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
+// Inlined theme-taxonomy helpers (functions can't import from shared/).
+const norm = (s) => (s || '').toString().toLowerCase().trim();
+const dedupeArr = (arr) => [...new Set((arr || []).map(norm).filter(Boolean))];
+function buildAliasMap(topics) {
+  const map = new Map();
+  for (const t of (topics || [])) {
+    const canonical = (t.topic_name || '').trim();
+    if (!canonical) continue;
+    for (const a of dedupeArr([canonical, ...(t.keywords || [])])) {
+      if (!map.has(a)) map.set(a, canonical);
+    }
+  }
+  return map;
+}
+function canonicalize(label, aliasMap) {
+  const n = norm(label);
+  if (!n) return null;
+  if (aliasMap.has(n)) return aliasMap.get(n);
+  const stripped = n.replace(/[.,;:!?]+$/, '');
+  if (aliasMap.has(stripped)) return aliasMap.get(stripped);
+  return null;
+}
+
 // Returns aggregate NewsletterItem stats (analyzed count, M&A deals, funding
 // rounds, unique themes) for the Dashboard's top metric cards.
 //
@@ -44,6 +67,39 @@ export default async function(req) {
       }
     });
 
+    // Normalized theme distribution using the Topic-controlled vocabulary.
+    // Build the alias map once, then count every theme instance against it so
+    // long-tail aliases roll up to their canonical topic.
+    let theme_distribution = [];
+    try {
+      const topics = await base44.asServiceRole.entities.Topic.list('-sort_order', 1000);
+      const aliasMap = buildAliasMap(topics);
+      const counts = new Map();
+      let mapped = 0;
+      let unmapped = 0;
+      list.forEach(n => {
+        (n.themes || []).forEach(t => {
+          const label = t?.theme;
+          if (!label) return;
+          const canonical = canonicalize(label, aliasMap);
+          if (canonical) {
+            counts.set(canonical, (counts.get(canonical) || 0) + 1);
+            mapped++;
+          } else {
+            // Keep truly unmapped labels visible too, but normalized for grouping.
+            const n2 = norm(label);
+            if (n2) {
+              counts.set(label, (counts.get(label) || 0) + 1);
+              unmapped++;
+            }
+          }
+        });
+      });
+      theme_distribution = [...counts.entries()]
+        .map(([name, value]) => ({ name, value, mapped: aliasMap.has(norm(name)) }))
+        .sort((a, b) => b.value - a.value);
+    } catch (_) {}
+
     return Response.json({
       success: true,
       stats: {
@@ -52,6 +108,7 @@ export default async function(req) {
         ma_deals,
         funding_rounds,
         unique_themes: themesSet.size,
+        theme_distribution,
       },
     });
   } catch (error) {

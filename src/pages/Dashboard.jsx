@@ -11,6 +11,7 @@ import PersistentFilters from "../components/filters/PersistentFilters";
 import TrendChart from "../components/dashboard/TrendChart";
 import TrendDiscovery from "../components/trends/TrendDiscovery";
 import SourceDistribution from "../components/dashboard/SourceDistribution";
+import ThemeDistribution from "../components/dashboard/ThemeDistribution";
 import FeaturedTopicsSection from "../components/dashboard/FeaturedTopicsSection";
 import { GridCardSkeleton } from "../components/common/CardSkeleton";
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +110,10 @@ export default function Dashboard() {
       <TrendDiscovery />
 
       <FeaturedTopicsSection />
+
+      {newsletters.length > 0 && (
+        <ThemeDistribution />
+      )}
 
       {newsletters.length > 0 && (
         <SourceDistribution onSourceSelect={handleSourceSelect} />
