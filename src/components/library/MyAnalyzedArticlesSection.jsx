@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { BookMarked, ExternalLink, ArrowUpDown, Filter, Search, Star, StickyNote, X } from "lucide-react";
 import { format } from "date-fns";
+import ThemeFilterSidebar from "./ThemeFilterSidebar";
 
 const SECTORS = [
   "Urgent Care","Behavioral Health","Imaging","ASC","Physical Therapy",
@@ -34,6 +35,7 @@ export default function MyAnalyzedArticlesSection() {
   const [sourceFilter, setSourceFilter] = useState("all");
   const [sectorFilter, setSectorFilter] = useState("all");
   const [starredOnly, setStarredOnly]   = useState(false);
+  const [themeFilter, setThemeFilter]   = useState("all"); // canonical theme name or "all"
   const [localStarred, setLocalStarred] = useState({});   // id → bool (optimistic)
 
   const LOCAL_KEY = user?.email ? `hi_analyzed_${user.email}` : null;
@@ -107,6 +109,20 @@ export default function MyAnalyzedArticlesSection() {
     return Array.from(s).sort();
   }, [articles]);
 
+  // Canonical themes (controlled vocabulary from Topic entity) intersected
+  // with themes actually present in the user's articles, with counts.
+  const themeOptions = useMemo(() => {
+    const counts = {};
+    articles.forEach(a => {
+      (a.themes || []).forEach(t => {
+        const name = t?.theme;
+        if (name) counts[name] = (counts[name] || 0) + 1;
+      });
+    });
+    const names = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+    return names.map(name => ({ name, count: counts[name] }));
+  }, [articles]);
+
   const displayedArticles = useMemo(() => {
     let result = [...articles];
 
@@ -121,6 +137,7 @@ export default function MyAnalyzedArticlesSection() {
 
     if (sourceFilter !== "all") result = result.filter(a => a.source_name === sourceFilter);
     if (sectorFilter !== "all") result = result.filter(a => a.primary_sector === sectorFilter);
+    if (themeFilter !== "all")  result = result.filter(a => (a.themes || []).some(t => t?.theme === themeFilter));
     if (starredOnly)            result = result.filter(a => localStarred[a.id]);
 
     result.sort((a, b) => {
@@ -130,14 +147,15 @@ export default function MyAnalyzedArticlesSection() {
     });
 
     return result;
-  }, [articles, searchText, sortOrder, sourceFilter, sectorFilter, starredOnly, localStarred]);
+  }, [articles, searchText, sortOrder, sourceFilter, sectorFilter, themeFilter, starredOnly, localStarred]);
 
-  const hasActiveFilters = searchText || sourceFilter !== "all" || sectorFilter !== "all" || starredOnly;
+  const hasActiveFilters = searchText || sourceFilter !== "all" || sectorFilter !== "all" || themeFilter !== "all" || starredOnly;
 
   const clearFilters = () => {
     setSearchText("");
     setSourceFilter("all");
     setSectorFilter("all");
+    setThemeFilter("all");
     setStarredOnly(false);
   };
 
