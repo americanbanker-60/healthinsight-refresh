@@ -263,75 +263,84 @@ export default function MyAnalyzedArticlesSection() {
       </CardHeader>
 
       <CardContent>
-        {displayedArticles.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 text-sm">
-            No articles match your filters.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {displayedArticles.map((article) => {
-              const pubRaw = article.publication_date || article.date_added_to_app;
-              const pubDate = pubRaw ? new Date(pubRaw) : null;
-              const isStarred = !!localStarred[article.id];
-              return (
-                <div
-                  key={article.id}
-                  className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 transition-all"
-                >
-                  {/* Star button */}
-                  <button
-                    onClick={(e) => toggleStar(article, e)}
-                    className={`shrink-0 p-1 rounded transition-colors ${isStarred ? "text-amber-400 hover:text-amber-500" : "text-slate-300 hover:text-amber-300"}`}
-                    title={isStarred ? "Unstar" : "Star this article"}
-                  >
-                    <Star className={`w-4 h-4 ${isStarred ? "fill-amber-400" : ""}`} />
-                  </button>
+        <div className="flex flex-col lg:flex-row gap-4">
+          <ThemeFilterSidebar
+            themes={themeOptions}
+            selected={themeFilter}
+            onSelect={setThemeFilter}
+          />
+          <div className="flex-1 min-w-0">
+            {displayedArticles.length === 0 ? (
+              <div className="text-center py-8 text-slate-500 text-sm">
+                No articles match your filters.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {displayedArticles.map((article) => {
+                  const pubRaw = article.publication_date || article.date_added_to_app;
+                  const pubDate = pubRaw ? new Date(pubRaw) : null;
+                  const isStarred = !!localStarred[article.id];
+                  return (
+                    <div
+                      key={article.id}
+                      className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 transition-all"
+                    >
+                      {/* Star button */}
+                      <button
+                        onClick={(e) => toggleStar(article, e)}
+                        className={`shrink-0 p-1 rounded transition-colors ${isStarred ? "text-amber-400 hover:text-amber-500" : "text-slate-300 hover:text-amber-300"}`}
+                        title={isStarred ? "Unstar" : "Star this article"}
+                      >
+                        <Star className={`w-4 h-4 ${isStarred ? "fill-amber-400" : ""}`} />
+                      </button>
 
-                  {/* Article info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-slate-900 truncate">{article.title}</p>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      {pubDate && !isNaN(pubDate.getTime()) && (
-                        <span className="text-xs font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">
-                          {format(pubDate, "MMM d, yyyy")}
-                        </span>
-                      )}
-                      {article.source_name && (
-                        <span className="text-xs text-slate-500">{article.source_name}</span>
-                      )}
-                      {article.primary_sector && (
-                        <Badge variant="outline" className="text-xs px-1.5 py-0">{article.primary_sector}</Badge>
-                      )}
-                      {article.sentiment && (
-                        <Badge className={`text-xs px-1.5 py-0 ${sentimentColors[article.sentiment] || sentimentColors.neutral}`}>
-                          {article.sentiment}
-                        </Badge>
-                      )}
-                      {article.user_notes && (
-                        <span title="Has notes" className="text-amber-400">
-                          <StickyNote className="w-3 h-3 inline" />
-                        </span>
-                      )}
+                      {/* Article info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-slate-900 truncate">{article.title}</p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          {pubDate && !isNaN(pubDate.getTime()) && (
+                            <span className="text-xs font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">
+                              {format(pubDate, "MMM d, yyyy")}
+                            </span>
+                          )}
+                          {article.source_name && (
+                            <span className="text-xs text-slate-500">{article.source_name}</span>
+                          )}
+                          {article.primary_sector && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0">{article.primary_sector}</Badge>
+                          )}
+                          {article.sentiment && (
+                            <Badge className={`text-xs px-1.5 py-0 ${sentimentColors[article.sentiment] || sentimentColors.neutral}`}>
+                              {article.sentiment}
+                            </Badge>
+                          )}
+                          {article.user_notes && (
+                            <span title="Has notes" className="text-amber-400">
+                              <StickyNote className="w-3 h-3 inline" />
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Open link */}
+                      <Link
+                        to={`${createPageUrl("NewsletterDetail")}?id=${article.id}`}
+                        className="shrink-0 text-indigo-600 hover:text-indigo-800 p-1"
+                        onClick={() => {
+                          try {
+                            if (article.id) sessionStorage.setItem(`newsletter_cache_${article.id}`, JSON.stringify(article));
+                          } catch (_) {}
+                        }}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Link>
                     </div>
-                  </div>
-
-                  {/* Open link */}
-                  <Link
-                    to={`${createPageUrl("NewsletterDetail")}?id=${article.id}`}
-                    className="shrink-0 text-indigo-600 hover:text-indigo-800 p-1"
-                    onClick={() => {
-                      try {
-                        if (article.id) sessionStorage.setItem(`newsletter_cache_${article.id}`, JSON.stringify(article));
-                      } catch (_) {}
-                    }}
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </Link>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
