@@ -37,21 +37,22 @@ Deno.serve(async (req) => {
       .sort((a, b) => b[1] - a[1])
       .map(([k, c]) => ({ key: k, label: unmappedDisplay[k], count: c }));
 
-    // Bounded per run: 500 labels (one LLM call). Multi-count labels first, then singletons.
-    // Re-running the function resumes from where the last run left off (classified labels are
-    // persisted as Topic aliases, so they're treated as "already mapped" on the next run).
-    const PER_RUN = 500;
+    // Bounded per run: up to 500 labels, split into 250-label LLM calls (each stays under the
+    // 120s proxy read timeout). Re-running resumes where the last run left off (classified
+    // labels persist as Topic aliases, treated as "already mapped" on the next run).
+    const RUN_CAP = 500;
+    const LLM_BATCH = 250;
     const multi = ranked.filter(r => r.count >= 2);
     const singles = ranked.filter(r => r.count === 1);
-    const toClassify = [...multi, ...singles.slice(0, Math.max(0, PER_RUN - multi.length))];
+    const toClassify = [...multi, ...singles.slice(0, Math.max(0, RUN_CAP - multi.length))];
     console.log(`Unmapped distinct labels: ${ranked.length}; classifying ${toClassify.length} this run`);
 
-    // 2. Single LLM call: classify this run's labels against the existing canonical list.
+    // 2. Classify in 250-label LLM calls against the existing canonical list.
     const classification = {}; // norm(label) -> canonical
     const canonicalIndex = canonicalList.map((c, i) => `${i + 1}. ${c}`).join('\n');
 
-    for (let i = 0; i < toClassify.length; i += PER_RUN) {
-      const batch = toClassify.slice(i, i + PER_RUN);
+    for (let i = 0; i < toClassify.length; i += LLM_BATCH) {
+      const batch = toClassify.slice(i, i + LLM_BATCH);
       const batchInput = batch.map((r, idx) => `${idx + 1}. ${r.label}`).join('\n');
       try {
         const res = await base44.integrations.Core.InvokeLLM({
