@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell } from "recharts";
-import { Layers, MousePointerClick } from "lucide-react";
+import { Layers, MousePointerClick, Star, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -10,17 +10,43 @@ import { createPageUrl } from "@/utils";
 
 const TOP_N = 12;
 const BAR_COLOR = "#6366f1";
-const BAR_COLOR_HOVER = "#4f46e5";
+
+function truncate(str, n) {
+  const s = (str || "").toString();
+  return s.length > n ? s.slice(0, n).trim() + "…" : s;
+}
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
-  const { name, value } = payload[0].payload;
+  const { name, value, articles, snippetsLoaded } = payload[0].payload;
   return (
-    <div className="bg-white/95 border border-slate-200 rounded-lg px-3 py-2 shadow-md">
-      <p className="text-sm font-medium text-slate-900">{name}</p>
-      <p className="text-xs text-slate-600">{value} mentions</p>
-      <p className="text-[11px] text-indigo-600 mt-1 flex items-center gap-1">
-        <MousePointerClick className="w-3 h-3" /> Click to view articles
+    <div className="bg-white/95 border border-slate-200 rounded-lg px-3 py-2 shadow-md max-w-[300px]">
+      <p className="text-sm font-semibold text-slate-900">{name}</p>
+      <p className="text-xs text-slate-600 mb-1">{value} mentions</p>
+      {articles && articles.length > 0 ? (
+        <div className="mt-2 space-y-1.5 border-t border-slate-100 pt-2">
+          <p className="text-[10px] uppercase tracking-wide text-slate-400 font-medium flex items-center gap-1">
+            <FileText className="w-3 h-3" /> Top articles
+          </p>
+          {articles.map((a) => (
+            <div key={a.id} className="flex gap-1.5">
+              {a.is_starred && <Star className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0 mt-0.5" />}
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-800 leading-tight">{truncate(a.title, 70)}</p>
+                {a.tldr && (
+                  <p className="text-[11px] text-slate-500 leading-snug mt-0.5">{truncate(a.tldr, 110)}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-[11px] text-slate-400 mt-1">
+          {snippetsLoaded ? "No tagged articles found" : "Loading snippets…"}
+        </p>
+      )}
+      <p className="text-[11px] text-indigo-600 mt-1.5 flex items-center gap-1 border-t border-slate-100 pt-1.5">
+        <MousePointerClick className="w-3 h-3" /> Click to view all articles
       </p>
     </div>
   );
@@ -33,13 +59,29 @@ export default function ThemeDistribution() {
     queryKey: ['themeDistribution'],
     queryFn: async () => {
       const res = await base44.functions.invoke('getDashboardStats', {});
-      const data = res?.data ?? res;
-      return data?.stats?.theme_distribution || [];
+      const d = res?.data ?? res;
+      return d?.stats?.theme_distribution || [];
     },
     staleTime: 60 * 1000,
   });
 
-  const top = (data || []).slice(0, TOP_N);
+  const { data: snippetsMap } = useQuery({
+    queryKey: ['themeSnippets'],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getThemeSnippets', {});
+      const d = res?.data ?? res;
+      return d?.snippets || {};
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const snippetsLoaded = snippetsMap !== undefined;
+  const rawTop = (data || []).slice(0, TOP_N);
+  const top = rawTop.map(t => ({
+    ...t,
+    articles: snippetsMap?.[t.name] || [],
+    snippetsLoaded,
+  }));
   const totalMentions = (data || []).reduce((s, t) => s + (t.value || 0), 0);
 
   const handleBarClick = (entry) => {
@@ -57,7 +99,7 @@ export default function ThemeDistribution() {
           Theme Distribution
           <span className="text-xs font-normal text-slate-400 flex items-center gap-1 ml-2">
             <MousePointerClick className="w-3.5 h-3.5" />
-            Click a theme to view articles
+            Hover for previews · click to view articles
           </span>
         </CardTitle>
         <CardDescription>

@@ -1,27 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-
-// Inlined theme-taxonomy helpers (functions can't import from shared/).
-const norm = (s) => (s || '').toString().toLowerCase().trim();
-const dedupeArr = (arr) => [...new Set((arr || []).map(norm).filter(Boolean))];
-function buildAliasMap(topics) {
-  const map = new Map();
-  for (const t of (topics || [])) {
-    const canonical = (t.topic_name || '').trim();
-    if (!canonical) continue;
-    for (const a of dedupeArr([canonical, ...(t.keywords || [])])) {
-      if (!map.has(a)) map.set(a, canonical);
-    }
-  }
-  return map;
-}
-function canonicalize(label, aliasMap) {
-  const n = norm(label);
-  if (!n) return null;
-  if (aliasMap.has(n)) return aliasMap.get(n);
-  const stripped = n.replace(/[.,;:!?]+$/, '');
-  if (aliasMap.has(stripped)) return aliasMap.get(stripped);
-  return null;
-}
+import { norm, buildAliasMap, canonicalize } from '../../shared/themeTaxonomy.ts';
 
 // Returns aggregate NewsletterItem stats (analyzed count, M&A deals, funding
 // rounds, unique themes) for the Dashboard's top metric cards.
