@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { normalizeUrl, safeFetch, extractText } from '../../shared/safeFetch.ts';
 
 // Build an alias->canonical map from all Topics (topic_name + keywords are aliases).
 async function buildThemeAliasMap(base44) {
@@ -110,8 +111,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'URL required' }, { status: 400 });
     }
 
-    // Normalize URL
-    const normalizeUrl = (u) => u.trim().toLowerCase().replace(/\/+$/, '');
+    // Normalize URL (shared helper — validates scheme, lowercases host, strips trailing slashes, drops hash)
     const normalizedUrl = normalizeUrl(url);
 
     // Duplicate check — GLOBAL (not per-user) so the same URL can't be re-imported
@@ -135,29 +135,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch webpage
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    // Fetch webpage via shared safeFetch (scheme/SSRF validation, redirect cap, 2MB body cap)
     let textContent = null;
     let useFallback = false;
 
     try {
-      const htmlResponse = await fetch(normalizedUrl, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (!htmlResponse.ok) {
-        useFallback = true;
-      } else {
-        const rawHtml = await htmlResponse.text();
-        textContent = rawHtml
-          .replace(/<script[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[\s\S]*?<\/style>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/\s{2,}/g, ' ')
-          .trim();
-        if (textContent.length < 200) useFallback = true;
-      }
+      const { text: rawHtml } = await safeFetch(normalizedUrl);
+      textContent = extractText(rawHtml);
+      if (textContent.length < 200) useFallback = true;
     } catch (fetchErr) {
-      clearTimeout(timeoutId);
+      console.warn('safeFetch failed, using fallback:', fetchErr.message);
       useFallback = true;
     }
 
@@ -324,9 +311,9 @@ Deno.serve(async (req) => {
       source_type: 'URL',
       content_type: 'URL',
       publication_date: result.publication_date || null,
-      publication_date_confidence: result.publication_date_confidence || 'medium',
+      publication_date_confidence: useFallback ? 'low' : (result.publication_date_confidence || 'medium'),
       publication_date_source: result.publication_date_source || 'AI extraction',
-      publication_date_notes: useFallback ? 'Fallback internet browsing used' : 'Direct URL upload',
+      publication_date_notes: useFallback ? 'Content fetched via LLM browsing; verify manually' : 'Direct URL upload',
       tldr: result.tldr || null,
       key_takeaways: result.key_takeaways || [],
       key_statistics: normalizedStats,
@@ -342,40 +329,28 @@ Deno.serve(async (req) => {
       date_added_to_app: new Date().toISOString(),
       uploaded_by: user.email,
       status: 'completed',
-      is_analyzed: true
+      processing_status: 'completed',
+      is_analyzed: true,
+      cross_reference_signals: result.cross_reference_signals || []
     };
 
-    // Save to DB — try user client first (works for user-invoked functions),
-    // fall back to asServiceRole (works for background/scheduled functions).
-    let savedRecord = newsletterData;
+    // Save to DB via asServiceRole only (NewsletterItem.create is admin-only under RLS).
+    let savedRecord;
     try {
-      const created = await base44.entities.NewsletterItem.create(newsletterData);
-      if (created?.id) {
-        savedRecord = created;
-        base44.asServiceRole.functions.invoke('createNewsletterRelations', {
-          newsletter_id: created.id,
-          newsletter_data: created
-        }).catch(() => {});
-      } else {
-        throw new Error('user-client create returned no id');
-      }
-    } catch (e1) {
-      console.warn('User-client save failed, trying asServiceRole:', e1.message);
-      try {
-        const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
-        if (created?.id) {
-          savedRecord = created;
-          base44.asServiceRole.functions.invoke('createNewsletterRelations', {
-            newsletter_id: created.id,
-            newsletter_data: created
-          }).catch(() => {});
-        } else {
-          console.warn('asServiceRole save also returned no id — article saved to localStorage only');
-        }
-      } catch (e2) {
-        console.warn('Both save methods failed:', e2.message);
-      }
+      savedRecord = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+    } catch (e) {
+      console.error('Save failed:', e.message);
+      return Response.json({ success: false, error: 'save_failed' }, { status: 500 });
     }
+    if (!savedRecord?.id) {
+      console.warn('asServiceRole.create returned no id — record was not saved');
+      return Response.json({ success: false, error: 'save_failed' }, { status: 500 });
+    }
+
+    base44.asServiceRole.functions.invoke('createNewsletterRelations', {
+      newsletter_id: savedRecord.id,
+      newsletter_data: savedRecord
+    }).catch(() => {});
 
     return Response.json({
       success: true,

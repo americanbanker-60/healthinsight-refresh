@@ -282,40 +282,28 @@ EXTRACTION RULES — follow these strictly:
       date_added_to_app: new Date().toISOString(),
       uploaded_by: user.email,
       status: 'completed',
-      is_analyzed: true
+      processing_status: 'completed',
+      is_analyzed: true,
+      cross_reference_signals: result.cross_reference_signals || []
     };
 
-    // Save to DB — try user client first (works for user-invoked functions),
-    // fall back to asServiceRole (works for background/scheduled functions).
-    let savedRecord = newsletterData;
+    // Save to DB via asServiceRole only (NewsletterItem.create is admin-only under RLS).
+    let savedRecord;
     try {
-      const created = await base44.entities.NewsletterItem.create(newsletterData);
-      if (created?.id) {
-        savedRecord = created;
-        base44.asServiceRole.functions.invoke('createNewsletterRelations', {
-          newsletter_id: created.id,
-          newsletter_data: created
-        }).catch(() => {});
-      } else {
-        throw new Error('user-client create returned no id');
-      }
-    } catch (e1) {
-      console.warn('User-client save failed, trying asServiceRole:', e1.message);
-      try {
-        const created = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
-        if (created?.id) {
-          savedRecord = created;
-          base44.asServiceRole.functions.invoke('createNewsletterRelations', {
-            newsletter_id: created.id,
-            newsletter_data: created
-          }).catch(() => {});
-        } else {
-          console.warn('asServiceRole save also returned no id — article saved to localStorage only');
-        }
-      } catch (e2) {
-        console.warn('Both save methods failed:', e2.message);
-      }
+      savedRecord = await base44.asServiceRole.entities.NewsletterItem.create(newsletterData);
+    } catch (e) {
+      console.error('Save failed:', e.message);
+      return Response.json({ success: false, error: 'save_failed' }, { status: 500 });
     }
+    if (!savedRecord?.id) {
+      console.warn('asServiceRole.create returned no id — record was not saved');
+      return Response.json({ success: false, error: 'save_failed' }, { status: 500 });
+    }
+
+    base44.asServiceRole.functions.invoke('createNewsletterRelations', {
+      newsletter_id: savedRecord.id,
+      newsletter_data: savedRecord
+    }).catch(() => {});
 
     return Response.json({
       success: true,

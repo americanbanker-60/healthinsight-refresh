@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { normalizeUrl, safeFetch, extractText } from '../../shared/safeFetch.ts';
 
 const BATCH_SIZE = 3;
 const CONCURRENCY = 1;
@@ -71,7 +72,7 @@ Deno.serve(async (req) => {
           // Normalize the URL the same way analyzeNewsletterUrl does, so the same
           // article imported via single-upload and via bulk (different casing /
           // trailing slash) is recognized as a duplicate.
-          const normalizedJobUrl = (job.url || '').trim().toLowerCase().replace(/\/+$/, '');
+          const normalizedJobUrl = normalizeUrl(job.url);
 
           // Check for existing newsletter with this URL (global, not per-user)
           const existing = await base44.asServiceRole.entities.NewsletterItem.filter({ source_url: normalizedJobUrl });
@@ -84,17 +85,9 @@ Deno.serve(async (req) => {
             return;
           }
 
-          // Fetch the URL
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000);
-          const htmlResponse = await fetch(job.url, {
-            signal: controller.signal,
-            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HealthInsightBot/1.0)' }
-          });
-          clearTimeout(timeoutId);
-
-          if (!htmlResponse.ok) throw new Error(`HTTP ${htmlResponse.status} ${htmlResponse.statusText}`);
-          const htmlContent = await htmlResponse.text();
+          // Fetch the URL via shared safeFetch (SSRF validation, redirect cap, 2MB body cap)
+          const { text: rawHtml } = await safeFetch(normalizedJobUrl);
+          const htmlContent = extractText(rawHtml);
 
           const urlObj = new URL(job.url);
           const domain = urlObj.hostname.replace('www.', '');
