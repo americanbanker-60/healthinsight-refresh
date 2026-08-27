@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Archive, ArchiveRestore, Trash2, Tag, X, Loader2 } from "lucide-react";
+import { AdminOnlyButton } from "@/components/admin/AdminOnlyButton";
 
 /**
  * Bulk action bar shown above the article list when the user is an admin.
@@ -42,27 +43,29 @@ export default function BulkActionsBar({
             {selectedCount} selected
           </Badge>
 
-          <div className="flex items-center gap-1.5">
-            <Select value={tagTheme} onValueChange={setTagTheme}>
-              <SelectTrigger className="h-8 w-44 text-xs bg-white">
-                <Tag className="w-3 h-3 mr-1 text-indigo-500" />
-                <SelectValue placeholder="Tag theme…" />
-              </SelectTrigger>
-              <SelectContent>
-                {topics.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              size="sm"
-              className="h-8 text-xs"
-              disabled={!tagTheme || busy}
-              onClick={() => { onTag(tagTheme); setTagTheme(""); }}
-            >
-              Apply
-            </Button>
-          </div>
+          <AdminOnlyButton>
+            <div className="flex items-center gap-1.5">
+              <Select value={tagTheme} onValueChange={setTagTheme}>
+                <SelectTrigger className="h-8 w-44 text-xs bg-white">
+                  <Tag className="w-3 h-3 mr-1 text-indigo-500" />
+                  <SelectValue placeholder="Tag theme…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {topics.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                className="h-8 text-xs"
+                disabled={!tagTheme || busy}
+                onClick={() => { onTag(tagTheme); setTagTheme(""); }}
+              >
+                Apply
+              </Button>
+            </div>
+          </AdminOnlyButton>
 
           {showArchived ? (
             <Button
@@ -84,27 +87,29 @@ export default function BulkActionsBar({
             </Button>
           )}
 
-          {confirmDelete ? (
-            <span className="flex items-center gap-1.5">
-              <span className="text-xs text-red-600 font-medium">Delete {selectedCount}?</span>
-              <Button variant="destructive" size="sm" className="h-8 text-xs" disabled={busy} onClick={onDelete}>
-                Confirm
+          <AdminOnlyButton>
+            {confirmDelete ? (
+              <span className="flex items-center gap-1.5">
+                <span className="text-xs text-red-600 font-medium">Delete {selectedCount}?</span>
+                <Button variant="destructive" size="sm" className="h-8 text-xs" disabled={busy} onClick={onDelete}>
+                  Confirm
+                </Button>
+                <Button variant="ghost" size="sm" className="h-8 text-xs" disabled={busy} onClick={() => setConfirmDelete(false)}>
+                  Cancel
+                </Button>
+              </span>
+            ) : (
+              <Button
+                variant="outline" size="sm"
+                className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                disabled={busy}
+                onClick={() => setConfirmDelete(true)}
+              >
+                <Trash2 className="w-3 h-3 mr-1" />
+                Delete
               </Button>
-              <Button variant="ghost" size="sm" className="h-8 text-xs" disabled={busy} onClick={() => setConfirmDelete(false)}>
-                Cancel
-              </Button>
-            </span>
-          ) : (
-            <Button
-              variant="outline" size="sm"
-              className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-              disabled={busy}
-              onClick={() => setConfirmDelete(true)}
-            >
-              <Trash2 className="w-3 h-3 mr-1" />
-              Delete
-            </Button>
-          )}
+            )}
+          </AdminOnlyButton>
 
           <Button variant="ghost" size="sm" className="h-8 text-xs ml-auto" onClick={onClear}>
             <X className="w-3 h-3 mr-1" />

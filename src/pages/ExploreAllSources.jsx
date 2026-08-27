@@ -18,6 +18,7 @@ import NewsletterDetailModal from "../components/explore/NewsletterDetailModal";
 import SummaryBuilder from "../components/explore/SummaryBuilder";
 import SmartSearchInput from "../components/search/SmartSearchInput";
 import SavedSearchesPanel from "../components/explore/SavedSearchesPanel";
+import { useUserArticleStates } from "@/hooks/useUserArticleStates";
 
 const dateRangePresets = [
   { label: "All time", value: "all" },
@@ -49,6 +50,7 @@ export default function ExploreAllSources() {
   const [activePack, setActivePack] = useState(null);
   const [sortOrder, setSortOrder] = useState("newest");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const { map: stateMap, upsertState } = useUserArticleStates();
 
   const SENTIMENTS = ["positive", "neutral", "negative", "mixed"];
 
@@ -97,9 +99,9 @@ export default function ExploreAllSources() {
   // Seed localStarred from server data
   React.useEffect(() => {
     const initial = {};
-    newsletters.forEach(n => { if (n.is_starred) initial[n.id] = true; });
+    newsletters.forEach(n => { if (stateMap.get(n.id)?.is_starred) initial[n.id] = true; });
     setLocalStarred(initial);
-  }, [newsletters.map(n => n.id).join(',')]);
+  }, [newsletters.map(n => n.id).join(','), stateMap]);
 
   const availableSectors = useMemo(() => {
     const s = new Set(newsletters.map(n => n.primary_sector).filter(Boolean));
@@ -297,8 +299,7 @@ export default function ExploreAllSources() {
     const newVal = !localStarred[article.id];
     setLocalStarred(prev => ({ ...prev, [article.id]: newVal }));
     try {
-      await base44.entities.NewsletterItem.update(article.id, { is_starred: newVal });
-      queryClient.invalidateQueries({ queryKey: ['all-newsletters'] });
+      await upsertState(article.id, { is_starred: newVal });
     } catch (_) {
       setLocalStarred(prev => ({ ...prev, [article.id]: !newVal }));
     }

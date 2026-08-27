@@ -13,7 +13,7 @@ import { BookMarked, ExternalLink, ArrowUpDown, Filter, Search, Star, StickyNote
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { useUserRole } from "@/components/auth/RoleGuard";
+import { useUserArticleStates } from "@/hooks/useUserArticleStates";
 import ThemeFilterSidebar from "./ThemeFilterSidebar";
 import BulkActionsBar from "./BulkActionsBar";
 
@@ -32,8 +32,8 @@ const sentimentColors = {
 
 export default function MyAnalyzedArticlesSection() {
   const { user } = useAuth();
-  const { isAdmin } = useUserRole();
   const queryClient = useQueryClient();
+  const { map: stateMap, upsertState, bulkUpsert } = useUserArticleStates();
 
   const [searchText, setSearchText]     = useState("");
   const [sortOrder, setSortOrder]       = useState("newest");
@@ -92,9 +92,9 @@ export default function MyAnalyzedArticlesSection() {
   // Seed local starred state from server data
   React.useEffect(() => {
     const initial = {};
-    articles.forEach(a => { if (a.is_starred) initial[a.id] = true; });
+    articles.forEach(a => { if (stateMap.get(a.id)?.is_starred) initial[a.id] = true; });
     setLocalStarred(initial);
-  }, [articles.map(a => a.id).join(",")]);
+  }, [articles.map(a => a.id).join(","), stateMap]);
 
   const toggleStar = async (article, e) => {
     e.preventDefault();
@@ -102,8 +102,7 @@ export default function MyAnalyzedArticlesSection() {
     const newVal = !localStarred[article.id];
     setLocalStarred(prev => ({ ...prev, [article.id]: newVal }));
     try {
-      await base44.entities.NewsletterItem.update(article.id, { is_starred: newVal });
-      queryClient.invalidateQueries({ queryKey: ["my-analyzed-articles"] });
+      await upsertState(article.id, { is_starred: newVal });
     } catch (_) {
       setLocalStarred(prev => ({ ...prev, [article.id]: !newVal }));
     }
@@ -156,8 +155,8 @@ export default function MyAnalyzedArticlesSection() {
     }
 
     // Hide archived unless explicitly viewing the archive
-    if (!showArchived) result = result.filter(a => !a.is_archived);
-    else               result = result.filter(a => a.is_archived);
+    if (!showArchived) result = result.filter(a => !stateMap.get(a.id)?.is_archived);
+    else               result = result.filter(a => stateMap.get(a.id)?.is_archived);
 
     if (sourceFilter !== "all") result = result.filter(a => a.source_name === sourceFilter);
     if (sectorFilter !== "all") result = result.filter(a => a.primary_sector === sectorFilter);
@@ -212,7 +211,7 @@ export default function MyAnalyzedArticlesSection() {
     if (!ids.length) return;
     setBulkBusy(true);
     try {
-      await base44.entities.NewsletterItem.bulkUpdate(ids.map(id => ({ id, is_archived: value })));
+      await bulkUpsert(ids, { is_archived: value });
       toast.success(value ? `Archived ${ids.length} article${ids.length > 1 ? "s" : ""}` : `Restored ${ids.length} article${ids.length > 1 ? "s" : ""}`);
       refreshAfterBulk();
     } catch (e) {
@@ -372,23 +371,21 @@ export default function MyAnalyzedArticlesSection() {
             onSelect={setThemeFilter}
           />
           <div className="flex-1 min-w-0">
-            {isAdmin && (
-              <BulkActionsBar
-                selectedCount={selectedIds.size}
-                visibleCount={displayedArticles.length}
-                allVisibleSelected={allVisibleSelected}
-                onToggleSelectAll={toggleSelectAll}
-                onClear={clearSelection}
-                topics={topicNames}
-                onTag={bulkTag}
-                onArchive={() => bulkArchive(true)}
-                onUnarchive={() => bulkArchive(false)}
-                onDelete={bulkDelete}
-                showArchived={showArchived}
-                onToggleShowArchived={() => { setShowArchived(v => !v); clearSelection(); }}
-                busy={bulkBusy}
-              />
-            )}
+            <BulkActionsBar
+              selectedCount={selectedIds.size}
+              visibleCount={displayedArticles.length}
+              allVisibleSelected={allVisibleSelected}
+              onToggleSelectAll={toggleSelectAll}
+              onClear={clearSelection}
+              topics={topicNames}
+              onTag={bulkTag}
+              onArchive={() => bulkArchive(true)}
+              onUnarchive={() => bulkArchive(false)}
+              onDelete={bulkDelete}
+              showArchived={showArchived}
+              onToggleShowArchived={() => { setShowArchived(v => !v); clearSelection(); }}
+              busy={bulkBusy}
+            />
             {displayedArticles.length === 0 ? (
               <div className="text-center py-8 text-slate-500 text-sm">
                 {showArchived ? "No archived articles." : "No articles match your filters."}
@@ -408,15 +405,13 @@ export default function MyAnalyzedArticlesSection() {
                           : "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40"
                       }`}
                     >
-                      {/* Bulk select checkbox (admin only) */}
-                      {isAdmin && (
-                        <Checkbox
-                          checked={selectedIds.has(article.id)}
-                          onCheckedChange={() => toggleSelect(article.id)}
-                          aria-label={`Select ${article.title}`}
-                          className="shrink-0"
-                        />
-                      )}
+                      {/* Bulk select checkbox */}
+                      <Checkbox
+                        checked={selectedIds.has(article.id)}
+                        onCheckedChange={() => toggleSelect(article.id)}
+                        aria-label={`Select ${article.title}`}
+                        className="shrink-0"
+                      />
                       {/* Star button */}
                       <button
                         onClick={(e) => toggleStar(article, e)}
@@ -446,7 +441,7 @@ export default function MyAnalyzedArticlesSection() {
                               {article.sentiment}
                             </Badge>
                           )}
-                          {article.user_notes && (
+                          {stateMap.get(article.id)?.notes && (
                             <span title="Has notes" className="text-amber-400">
                               <StickyNote className="w-3 h-3 inline" />
                             </span>

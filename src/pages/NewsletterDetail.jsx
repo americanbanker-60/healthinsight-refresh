@@ -33,6 +33,7 @@ import EnhanceSummaryButton from "../components/newsletter/EnhanceSummaryButton"
 import SummaryParagraphs from "../components/newsletter/SummaryParagraphs";
 import EditableNewsletterSection from "../components/newsletter/EditableNewsletterSection";
 import BDActionPrompt, { BDInsightBadge } from "../components/bd/BDActionPrompt";
+import { useUserArticleStates } from "@/hooks/useUserArticleStates";
 
 export default function NewsletterDetail() {
   const navigate = useNavigate();
@@ -48,6 +49,7 @@ export default function NewsletterDetail() {
   const notesTimerRef = React.useRef(null);
   const [isStarred, setIsStarred] = React.useState(false);
   const [starSaving, setStarSaving] = React.useState(false);
+  const { map: stateMap, upsertState } = useUserArticleStates();
 
   const handleNotesChange = (e) => {
     const value = e.target.value;
@@ -61,10 +63,7 @@ export default function NewsletterDetail() {
         // Route through the updateNewsletterItem backend function (service-role) —
         // NewsletterItem.update is admin-only under RLS, so a direct client update
         // 403s for regular users.
-        await base44.functions.invoke('updateNewsletterItem', {
-          newsletter_id: newsletterId,
-          data: { user_notes: value },
-        });
+        await upsertState(newsletterId, { notes: value });
         setNotesSaved(true);
         setTimeout(() => setNotesSaved(false), 2000);
       } catch (_) {
@@ -83,10 +82,7 @@ export default function NewsletterDetail() {
       // Route through the updateNewsletterItem backend function (service-role) —
       // NewsletterItem.update is admin-only under RLS, so a direct client update
       // 403s for regular users.
-      await base44.functions.invoke('updateNewsletterItem', {
-        newsletter_id: newsletterId,
-        data: { is_starred: newVal },
-      });
+      await upsertState(newsletterId, { is_starred: newVal });
     } catch (_) {
       setIsStarred(!newVal);
       toast.error("Failed to update star");
@@ -166,15 +162,12 @@ export default function NewsletterDetail() {
     retryDelay: (attempt) => Math.min(2000 * (attempt + 1), 8000),
   });
 
-  // Seed notes and starred state from loaded article
+  // Seed notes and starred state from the per-user UserArticleState map
   React.useEffect(() => {
-    if (newsletter?.user_notes !== undefined) {
-      setUserNotes(newsletter.user_notes || "");
-    }
-    if (newsletter?.is_starred !== undefined) {
-      setIsStarred(!!newsletter.is_starred);
-    }
-  }, [newsletter?.id]);
+    const st = stateMap.get(newsletterId);
+    setUserNotes(st?.notes || "");
+    setIsStarred(!!st?.is_starred);
+  }, [newsletterId, stateMap]);
 
   // Clear sessionStorage before refetching so we always get fresh server data
   const handleRefresh = () => {
