@@ -1,0 +1,41 @@
+{
+  "name": "UserArticleState",
+  "type": "object",
+  "properties": {
+    "newsletter_id": {
+      "type": "string",
+      "description": "ID of the NewsletterItem this per-user state belongs to"
+    },
+    "is_starred": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has starred this article"
+    },
+    "is_archived": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has archived this article from their active library view"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Per-user private notes attached to this article"
+    }
+  },
+  "required": [
+    "newsletter_id"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

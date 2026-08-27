@@ -1,0 +1,101 @@
+{
+  "name": "DashboardStatsSnapshot",
+  "type": "object",
+  "properties": {
+    "articles": {
+      "type": "number",
+      "description": "Total article count"
+    },
+    "analyzed": {
+      "type": "number",
+      "description": "Count of analyzed articles"
+    },
+    "ma_deals": {
+      "type": "number",
+      "description": "Count of M&A deal activities"
+    },
+    "funding_rounds": {
+      "type": "number",
+      "description": "Count of funding rounds"
+    },
+    "unique_themes": {
+      "type": "number",
+      "description": "Count of unique canonical themes"
+    },
+    "theme_distribution": {
+      "type": "array",
+      "description": "Theme frequency distribution",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "mapped": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "source_distribution": {
+      "type": "array",
+      "description": "Article counts per source",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "computed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this snapshot was computed"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "power"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

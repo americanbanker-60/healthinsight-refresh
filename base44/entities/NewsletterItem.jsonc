@@ -226,24 +226,14 @@
         "type": "string"
       }
     },
+    "uploaded_by": {
+      "type": "string",
+      "description": "Email of the user who first analyzed this article"
+    },
     "is_analyzed": {
       "type": "boolean",
       "default": false,
       "description": "Whether this newsletter has been fully analyzed and indexed"
-    },
-    "is_starred": {
-      "type": "boolean",
-      "default": false,
-      "description": "Per-user star/flag toggle for an article"
-    },
-    "is_archived": {
-      "type": "boolean",
-      "default": false,
-      "description": "Soft-archive flag \u2014 archived articles are hidden from the active library view but retained"
-    },
-    "user_notes": {
-      "type": "string",
-      "description": "Per-user private notes attached to an article"
     },
     "status": {
       "type": "string",
@@ -300,6 +290,16 @@
       "type": "string",
       "format": "date-time",
       "description": "When the Smart Digest was last generated"
+    },
+    "smart_digest_sentiment": {
+      "type": "string",
+      "enum": [
+        "bullish",
+        "bearish",
+        "neutral",
+        "mixed"
+      ],
+      "description": "Sentiment of the generated Smart Digest, separate from article market_sentiment"
     }
   },
   "required": [

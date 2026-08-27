@@ -7,9 +7,9 @@
       "enum": [
         "admin",
         "power",
-        "standard"
+        "user"
       ],
-      "default": "standard",
+      "default": "user",
       "description": "User role for access control"
     },
     "dashboard_config": {
@@ -17,7 +17,5 @@
       "description": "Dashboard display preferences"
     }
   },
-  "required": [
-    "dashboard_config"
-  ]
+  "required": []
 }
