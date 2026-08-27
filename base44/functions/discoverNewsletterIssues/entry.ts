@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { requireUser, requireAdmin } from '../../shared/auth.ts';
 
 // Two-phase newsletter discovery + batch import:
 //   action: "discover" → AI scans a source/archive/index page and returns the
@@ -11,13 +12,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await req.json();
     const { action, sourceUrl, urls, sourceName } = body || {};
 
     if (action === 'discover') {
+      await requireUser(base44);
       if (!sourceUrl) return Response.json({ error: 'sourceUrl is required' }, { status: 400 });
 
       const aiResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
@@ -60,6 +59,7 @@ Rules:
     }
 
     if (action === 'import') {
+      await requireAdmin(base44);
       if (!Array.isArray(urls) || urls.length === 0) {
         return Response.json({ error: 'urls array is required' }, { status: 400 });
       }
@@ -80,6 +80,7 @@ Rules:
 
     return Response.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
+    if (error instanceof Response) return error;
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

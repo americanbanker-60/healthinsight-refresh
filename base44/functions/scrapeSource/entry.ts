@@ -1,9 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
+  const base44 = createClientFromRequest(req);
+  let source_id = null;
   try {
-    const base44 = createClientFromRequest(req);
-    
     // Check if there's an authenticated user, otherwise allow service role calls
     let user = null;
     try {
@@ -17,7 +17,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 401 });
     }
 
-    const { source_id } = await req.json();
+    const body = await req.json();
+    source_id = body?.source_id;
 
     if (!source_id) {
       return Response.json({ error: 'source_id is required' }, { status: 400 });
@@ -372,7 +373,6 @@ Return:
     
     // Try to update any running ScrapeJob to failed status
     try {
-      const { source_id } = await req.json();
       if (source_id) {
         const runningJobs = await base44.asServiceRole.entities.ScrapeJob.filter(
           { source_id, status: 'running' },

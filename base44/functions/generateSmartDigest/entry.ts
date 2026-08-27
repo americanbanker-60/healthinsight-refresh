@@ -82,7 +82,7 @@ Return JSON only:
   // Save back to the newsletter
   await base44.asServiceRole.entities.NewsletterItem.update(newsletterId, {
     smart_digest_bullets: bullets,
-    market_sentiment: dealSentiment,
+    smart_digest_sentiment: dealSentiment,
     smart_digest_generated_at: new Date().toISOString()
   });
 

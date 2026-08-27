@@ -1,12 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { requireAdmin } from '../../shared/auth.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
+    const user = await requireAdmin(base44);
 
     // Fetch all newsletters in batches
     const all = await base44.asServiceRole.entities.NewsletterItem.list('-created_date', 10000);
@@ -35,6 +33,7 @@ Deno.serve(async (req) => {
       no_content: all.length - all.filter(n => n.is_analyzed || n.summary || n.tldr).length
     });
   } catch (error) {
+    if (error instanceof Response) return error;
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
