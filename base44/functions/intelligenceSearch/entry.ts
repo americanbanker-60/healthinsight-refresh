@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
         n.tldr || '',
         ...(n.key_takeaways || []),
         ...(n.themes?.map(t => `${t.theme} ${t.description}`) || []),
-        ...(n.key_players || []),
+        ...(n.key_players || []).map(p => typeof p === 'string' ? p : p?.name),
         ...(n.ma_activities?.map(a => `${a.acquirer} ${a.target} ${a.description}`) || []),
         ...(n.funding_rounds?.map(f => `${f.company} ${f.description}`) || []),
       ].join(' ').toLowerCase();
@@ -47,7 +47,7 @@ Summary: ${n.tldr || n.summary || 'N/A'}
 Key Takeaways: ${(n.key_takeaways || []).slice(0, 3).join(' | ')}
 M&A: ${(n.ma_activities || []).map(a => `${a.acquirer} → ${a.target} (${a.deal_value || 'undisclosed'})`).join(', ') || 'None'}
 Funding: ${(n.funding_rounds || []).map(f => `${f.company} ${f.amount} ${f.round_type || ''}`).join(', ') || 'None'}
-Key Players: ${(n.key_players || []).slice(0, 5).join(', ') || 'N/A'}`
+Key Players: ${(n.key_players || []).slice(0, 5).map(p => typeof p === 'string' ? p : p?.name).join(', ') || 'N/A'}`
     ).join('\n\n---\n\n');
 
     const aiResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({

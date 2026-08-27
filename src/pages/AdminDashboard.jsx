@@ -19,6 +19,7 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const [deduping, setDeduping] = React.useState(false);
   const [fixingFlag, setFixingFlag] = React.useState(false);
+  const [migratingKP, setMigratingKP] = React.useState(false);
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ["adminStats"],
@@ -81,6 +82,25 @@ export default function AdminDashboard() {
       toast.error("Error: " + err.message);
     } finally {
       setFixingFlag(false);
+    }
+  };
+
+  const handleMigrateKeyPlayers = async () => {
+    if (!confirm("Convert legacy key_players strings to typed objects? Run once after deploy.")) return;
+    setMigratingKP(true);
+    try {
+      const response = await base44.functions.invoke("migrateKeyPlayers", {});
+      const data = response?.data ?? response;
+      if (data?.success) {
+        toast.success(`Migrated key_players: ${data.converted ?? 0} converted, ${data.skipped ?? 0} already typed`);
+        queryClient.invalidateQueries({ queryKey: ["adminStats"] });
+      } else {
+        toast.error("Migration failed");
+      }
+    } catch (err) {
+      toast.error("Error: " + err.message);
+    } finally {
+      setMigratingKP(false);
     }
   };
 
@@ -196,6 +216,18 @@ export default function AdminDashboard() {
                 ? <Loader2 className="w-4 h-4 animate-spin" />
                 : <Database className="w-4 h-4 text-amber-500" />}
               {fixingFlag ? "Running..." : "Fix Analyzed Flags"}
+            </Button>
+
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={handleMigrateKeyPlayers}
+              disabled={migratingKP}
+            >
+              {migratingKP
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Users className="w-4 h-4 text-blue-500" />}
+              {migratingKP ? "Running..." : "Migrate Key Players"}
             </Button>
 
           </div>

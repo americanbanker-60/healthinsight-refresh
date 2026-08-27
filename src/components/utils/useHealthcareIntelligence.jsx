@@ -182,7 +182,7 @@ export function useHealthcareIntelligence(options = {}) {
     // Companies filter
     if (persistentFilters.companies && persistentFilters.companies.length > 0) {
       filtered = filtered.filter(n =>
-        n.key_players?.some(p => persistentFilters.companies.includes(p))
+        n.key_players?.some(p => persistentFilters.companies.includes(typeof p === 'string' ? p : p?.name))
       );
     }
     
@@ -206,7 +206,7 @@ export function useHealthcareIntelligence(options = {}) {
     const newslettersToUse = skip > 0 ? allLoadedNewsletters : newsletters;
     newslettersToUse.forEach(n => {
       if (n.key_players) {
-        n.key_players.forEach(p => companies.add(p));
+        n.key_players.forEach(p => companies.add(typeof p === 'string' ? p : p?.name));
       }
     });
     return Array.from(companies).sort();

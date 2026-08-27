@@ -375,7 +375,7 @@ export default function ExploreAllSources() {
                 value={searchText}
                 onChange={setSearchText}
                 availableTopics={allTopics}
-                availableCompanies={Array.from(new Set(newsletters.flatMap(n => n.key_players || [])))}
+                availableCompanies={Array.from(new Set(newsletters.flatMap(n => (n.key_players || []).map(p => typeof p === 'string' ? p : p?.name))))}
               />
 
               <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">

@@ -37,7 +37,8 @@ export default function KnowledgeHub() {
   const companiesWithCounts = React.useMemo(() => {
     const companyCounts = {};
     allNewsletters.forEach(newsletter => {
-      newsletter.key_players?.forEach(company => {
+      newsletter.key_players?.forEach(rawPlayer => {
+        const company = typeof rawPlayer === 'string' ? rawPlayer : rawPlayer?.name;
         if (company) {
           companyCounts[company] = (companyCounts[company] || 0) + 1;
         }

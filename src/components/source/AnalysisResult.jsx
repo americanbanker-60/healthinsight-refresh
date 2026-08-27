@@ -158,7 +158,7 @@ export default function AnalysisResult({ analysis, onReset }) {
         contextData={{
           title: analysis.title,
           summary: analysis.tldr || analysis.summary,
-          companies: analysis.key_players,
+          companies: (analysis.key_players || []).map(p => typeof p === 'string' ? p : p?.name).filter(Boolean),
           deals: analysis.ma_activities?.map(m => `${m.acquirer} acquiring ${m.target}`).join("; ") ||
                  analysis.funding_rounds?.map(f => `${f.company} raised ${f.amount}`).join("; "),
           themes: analysis.themes?.map(t => t.theme),

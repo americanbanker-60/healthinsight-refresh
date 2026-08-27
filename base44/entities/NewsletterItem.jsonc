@@ -167,9 +167,24 @@
     },
     "key_players": {
       "type": "array",
-      "description": "Important companies or organizations mentioned",
+      "description": "Important companies, PE firms, payors, health systems, and persons mentioned",
       "items": {
-        "type": "string"
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "company",
+              "pe_firm",
+              "payor",
+              "health_system",
+              "person"
+            ]
+          }
+        }
       }
     },
     "summary": {

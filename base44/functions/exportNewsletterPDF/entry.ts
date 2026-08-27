@@ -323,7 +323,9 @@ Deno.serve(async (req) => {
     if (a.key_players?.length > 0) {
       sectionHeader('Key Players');
       let px = ML, py = y;
-      a.key_players.forEach(player => {
+      a.key_players.forEach(rawPlayer => {
+        const player = typeof rawPlayer === 'string' ? rawPlayer : (rawPlayer?.name || '');
+        if (!player) return;
         const w = doc.getTextWidth(player) + 16;
         if (px + w > PW - MR) { px = ML; py += 22; checkPage(22); }
         doc.setFillColor(241, 245, 249);

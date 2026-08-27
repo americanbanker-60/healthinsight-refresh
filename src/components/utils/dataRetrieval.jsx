@@ -100,7 +100,7 @@ export async function retrieveNewslettersForCompany(companyName, maxItems = 50) 
       n.title || '',
       n.summary || '',
       n.tldr || '',
-      ...(n.key_players || []),
+      ...(n.key_players || []).map(p => typeof p === 'string' ? p : p?.name),
       ...(n.ma_activities?.map(ma => `${ma.acquirer} ${ma.target}`) || []),
       ...(n.funding_rounds?.map(f => f.company) || [])
     ].join(' ').toLowerCase();

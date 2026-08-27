@@ -120,7 +120,7 @@ Extract:
 - key_statistics: Array of notable figures with context (ALWAYS return as array, use [] if none found)
 - ma_activities: Array of M&A deals mentioned (ALWAYS return as array, use [] if none found)
 - themes: Major topics covered (always return as array, use [] if none)
-- key_players: Companies/organizations mentioned (always return as array, use [] if none)
+- key_players: All companies, PE firms, payors, health systems, and named executives. Each entry is an object { "name": string, "type": "company"|"pe_firm"|"payor"|"health_system"|"person" }. Use "person" for named individuals, "pe_firm" for PE/investment firms, "payor" for insurers, "health_system" for hospital systems, "company" otherwise. (always return as array, use [] if none)
 - sentiment: Overall tone (positive/neutral/negative/mixed)
 - market_sentiment: Investment market sentiment (bullish/bearish/neutral/mixed)
 - deal_value: If M&A transaction, extract total value (e.g. "$500M"), otherwise null
@@ -137,7 +137,7 @@ Extract:
                 key_statistics: { type: "array", items: { type: "object", properties: { figure: { type: "string" }, context: { type: "string" } } }, default: [] },
                 ma_activities: { type: "array", items: { type: "object", properties: { acquirer: { type: "string" }, target: { type: "string" }, deal_value: { type: "string" }, description: { type: "string" } } }, default: [] },
                 themes: { type: "array", items: { type: "object", properties: { theme: { type: "string" }, description: { type: "string" } } }, default: [] },
-                key_players: { type: "array", items: { type: "string" }, default: [] },
+                key_players: { type: "array", items: { type: "object", properties: { name: { type: "string" }, type: { type: "string", enum: ["company", "pe_firm", "payor", "health_system", "person"] } } }, default: [] },
                 sentiment: { type: "string" },
                 market_sentiment: { type: "string" },
                 deal_value: { type: ["string", "null"] },
@@ -162,6 +162,15 @@ Extract:
             typeof m === 'string' ? { acquirer: '', target: '', deal_value: '', description: m } : m
           );
 
+          const normalizedPlayers = (result.key_players || []).map(p => {
+            if (typeof p === 'string') return { name: p, type: 'company' };
+            if (p && typeof p === 'object') {
+              const t = ['company', 'pe_firm', 'payor', 'health_system', 'person'].includes(p.type) ? p.type : 'company';
+              return { name: p.name || '', type: t };
+            }
+            return null;
+          }).filter(Boolean);
+
           // IMPORTANT: Do NOT store raw_input (large HTML blob causes create to fail silently)
           const newsletterData = {
             title: result.title || 'Untitled',
@@ -176,7 +185,7 @@ Extract:
             key_statistics: normalizedStats,
             ma_activities: normalizedMA,
             themes: normalizedThemes,
-            key_players: result.key_players || [],
+            key_players: normalizedPlayers,
             sentiment: result.sentiment || null,
             market_sentiment: result.market_sentiment || null,
             deal_value: result.deal_value || null,

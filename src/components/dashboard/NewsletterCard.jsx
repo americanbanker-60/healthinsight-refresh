@@ -11,6 +11,7 @@ import { BDInsightBadge } from "../bd/BDActionPrompt";
 import NewsletterMetadata from "../newsletter/NewsletterMetadata";
 import AskAIButton from "@/components/common/AskAIButton";
 import SmartDigest from "@/components/newsletter/SmartDigest";
+import KeyPlayerBadge from "@/components/newsletter/KeyPlayerBadge";
 
 export default function NewsletterCard({ newsletter, index, variant = "full" }) {
   if (variant === "minimal") {
@@ -145,6 +146,14 @@ export default function NewsletterCard({ newsletter, index, variant = "full" }) 
                   +{newsletter.themes.length - 3} more
                 </Badge>
               )}
+            </div>
+          )}
+
+          {newsletter.key_players && newsletter.key_players.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {newsletter.key_players.slice(0, 8).map((player, idx) => (
+                <KeyPlayerBadge key={idx} player={player} />
+              ))}
             </div>
           )}
 

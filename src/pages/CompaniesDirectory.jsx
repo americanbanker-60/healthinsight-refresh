@@ -191,7 +191,7 @@ export default function CompaniesDirectory() {
             newsletter.summary || '',
             newsletter.tldr || '',
             ...(newsletter.key_takeaways || []),
-            ...(newsletter.key_players || []),
+            ...(newsletter.key_players || []).map(p => typeof p === 'string' ? p : p?.name),
             ...(newsletter.ma_activities?.map(a => `${a.acquirer || ''} ${a.target || ''}`) || []),
             ...(newsletter.funding_rounds?.map(f => f.company || '') || [])
           ].join(' ').toLowerCase();

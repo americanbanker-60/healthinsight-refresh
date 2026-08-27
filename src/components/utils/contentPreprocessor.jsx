@@ -34,7 +34,7 @@ export function preprocessNewsletter(newsletter) {
       round_type: sanitizeText(f.round_type) || "",
       description: sanitizeText(f.description) || ""
     })).filter(f => f.company),
-    key_players: (newsletter.key_players || []).map(sanitizeText).filter(Boolean),
+    key_players: (newsletter.key_players || []).map(p => sanitizeText(typeof p === 'string' ? p : p?.name)).filter(Boolean),
     recommended_actions: (newsletter.recommended_actions || []).map(sanitizeText).filter(Boolean),
     sentiment: newsletter.sentiment || "neutral"
   };

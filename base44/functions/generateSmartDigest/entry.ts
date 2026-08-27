@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     newsletter.ma_activities?.length && `M&A: ${newsletter.ma_activities.map(m => `${m.acquirer} acquired ${m.target}${m.deal_value ? ' for ' + m.deal_value : ''}`).join('; ')}`,
     newsletter.funding_rounds?.length && `Funding: ${newsletter.funding_rounds.map(f => `${f.company} raised ${f.amount} (${f.round_type})`).join('; ')}`,
     newsletter.themes?.length && `Themes: ${newsletter.themes.map(t => t.theme).join(', ')}`,
-    newsletter.key_players?.length && `Key Players: ${newsletter.key_players.slice(0, 8).join(', ')}`,
+    newsletter.key_players?.length && `Key Players: ${newsletter.key_players.slice(0, 8).map(p => typeof p === 'string' ? p : p?.name).join(', ')}`,
   ].filter(Boolean).join('\n');
 
   if (!context.trim()) {

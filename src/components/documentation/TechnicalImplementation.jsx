@@ -60,7 +60,7 @@ export default function TechnicalImplementation() {
     "round_type": "string",
     "description": "string"
   }],
-  "key_players": ["string"],           // Companies mentioned
+  "key_players": [{ "name": "string", "type": "company|pe_firm|payor|health_system|person" }],
   "summary": "string",                 // Executive summary
   "sentiment": "enum"                  // positive/neutral/negative/mixed
 }`}</pre>

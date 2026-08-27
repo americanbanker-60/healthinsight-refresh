@@ -1,9 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { deleteNewsletterCascade } from '../../shared/cascadeDelete.ts';
 
 const norm = (s) => (s || '').toString().toLowerCase().trim();
 const normUrl = (s) => norm(s).replace(/\/+$/, '');
 const maKey = (m) => [norm(m.acquirer), norm(m.target)].filter(Boolean).join('|');
 const fundKey = (f) => [norm(f.company), norm(f.round_type), norm(f.amount)].filter(Boolean).join('|');
+const playerName = (p) => norm(typeof p === 'string' ? p : p?.name);
+// Coerce a legacy string key_players entry to a typed object; pass objects through.
+const normalizeKeyPlayer = (p) => typeof p === 'string' ? { name: p, type: 'company' } : p;
 
 Deno.serve(async (req) => {
   try {
@@ -30,9 +34,10 @@ Deno.serve(async (req) => {
           urlMap.get(u).push(newsletter);
         }
       }
+      // Composite title key — NEVER merge on title alone.
       if (newsletter.title) {
-        const t = norm(newsletter.title);
-        if (t) {
+        const t = [norm(newsletter.title), norm(newsletter.source_name), (newsletter.publication_date || '')].join('|');
+        if (t && t !== '||') {
           if (!titleMap.has(t)) titleMap.set(t, []);
           titleMap.get(t).push(newsletter);
         }
@@ -43,20 +48,18 @@ Deno.serve(async (req) => {
     for (const [url, newsletters] of urlMap) {
       if (newsletters.length > 1) duplicateGroups.push({ type: 'url', key: url, newsletters });
     }
-    for (const [title, newsletters] of titleMap) {
+    for (const [titleKey, newsletters] of titleMap) {
       if (newsletters.length > 1) {
         const ids = newsletters.map(n => n.id);
         const alreadyGrouped = duplicateGroups.some(group =>
           group.newsletters.some(n => ids.includes(n.id))
         );
-        if (!alreadyGrouped) duplicateGroups.push({ type: 'title', key: title, newsletters });
+        if (!alreadyGrouped) duplicateGroups.push({ type: 'title', key: titleKey, newsletters });
       }
     }
 
     console.log(`Found ${duplicateGroups.length} duplicate groups — building batch updates`);
 
-    // Build all primary updates + collect all dup IDs up front so we can use
-    // bulkUpdate / deleteMany instead of one API call per record (which timed out).
     const updates = [];
     const dupIds = [];
 
@@ -88,13 +91,15 @@ Deno.serve(async (req) => {
           });
         });
 
-        const allPlayers = [...(primary.key_players || [])];
-        const playerSet = new Set(allPlayers.map(p => norm(p)));
+        // key_players are typed objects — dedup by normalized name, preserve type.
+        const allPlayers = [...(primary.key_players || [])].map(normalizeKeyPlayer);
+        const playerSet = new Set(allPlayers.map(playerName));
         duplicates.forEach(dup => {
           (dup.key_players || []).forEach(player => {
-            if (player && !playerSet.has(norm(player))) {
-              allPlayers.push(player);
-              playerSet.add(norm(player));
+            const np = normalizeKeyPlayer(player);
+            if (np && np.name && !playerSet.has(norm(np.name))) {
+              allPlayers.push(np);
+              playerSet.add(norm(np.name));
             }
           });
         });
@@ -152,15 +157,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Delete duplicates in batches via deleteMany with an id $in filter
+    // Cascade-delete duplicates (relations, user states, pack items, alerts, BD links)
     let deletedCount = 0;
-    for (let i = 0; i < dupIds.length; i += 500) {
-      const chunk = dupIds.slice(i, i + 500);
+    if (dupIds.length > 0) {
       try {
-        await base44.asServiceRole.entities.NewsletterItem.deleteMany({ id: { $in: chunk } });
-        deletedCount += chunk.length;
+        const res = await deleteNewsletterCascade(base44, dupIds);
+        deletedCount = res.deleted || dupIds.length;
       } catch (e) {
-        console.error('deleteMany chunk failed:', e.message);
+        console.error('cascade delete failed:', e.message);
       }
     }
 

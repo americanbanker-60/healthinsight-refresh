@@ -27,20 +27,23 @@ Deno.serve(async (req) => {
     for (const article of analyzedArticles) {
       if (!article.key_players || !Array.isArray(article.key_players)) continue;
 
-      // Create Company records for any new key_players
-      for (const playerName of (article.key_players || [])) {
-        if (playerName && !existingNames.has(playerName.toLowerCase())) {
-          try {
-            const created = await base44.asServiceRole.entities.Company.create({
-              company_name: playerName,
-              description: `Identified in: ${(article.title || '').slice(0, 150)}`
-            });
-            if (created?.id) {
-              existingNames.add(playerName.toLowerCase());
-              companiesCreated++;
-            }
-          } catch (_) {}
-        }
+      // Create Company records for any new key_players (non-person types only)
+      for (const raw of (article.key_players || [])) {
+        const kp = typeof raw === 'string' ? { name: raw, type: 'company' } : raw;
+        if (!kp || !kp.name || kp.type === 'person') continue;
+        if (kp.name.length < 4) continue;
+        const lower = kp.name.toLowerCase();
+        if (existingNames.has(lower)) continue;
+        try {
+          const created = await base44.asServiceRole.entities.Company.create({
+            company_name: kp.name,
+            description: `Identified in: ${(article.title || '').slice(0, 150)}`
+          });
+          if (created?.id) {
+            existingNames.add(lower);
+            companiesCreated++;
+          }
+        } catch (_) {}
       }
 
       // Re-run relations for this article (picks up newly created companies too)

@@ -70,7 +70,7 @@ EXTRACTION RULES — follow these strictly:
 
 ${themeRule}
 
-**key_players**: All companies, PE firms, payors, health systems, and named executives mentioned.
+**key_players**: All companies, PE firms, payors, health systems, and named executives mentioned. Each entry is an object: { "name": string, "type": "company" | "pe_firm" | "payor" | "health_system" | "person" }. Use "person" for named individuals; "pe_firm" for private equity/investment firms; "payor" for insurers/payers; "health_system" for hospital systems/IDNs; "company" for other healthcare companies.
 
 **ma_activities**: For EVERY M&A transaction mentioned, extract:
 - acquirer: buyer name
@@ -165,7 +165,8 @@ Deno.serve(async (req) => {
         const sectorCounts = {};
         recentNewsletters.forEach(n => {
           (n.key_players || []).forEach(p => {
-            companyMentions[p] = (companyMentions[p] || 0) + 1;
+            const pname = typeof p === 'string' ? p : p?.name;
+            if (pname) companyMentions[pname] = (companyMentions[pname] || 0) + 1;
           });
           if (n.primary_sector) sectorCounts[n.primary_sector] = (sectorCounts[n.primary_sector] || 0) + 1;
         });
@@ -230,7 +231,7 @@ Deno.serve(async (req) => {
             type: "array",
             items: { type: "object", properties: { theme: { type: "string" }, description: { type: "string" } } }
           },
-          key_players: { type: "array", items: { type: "string" } },
+          key_players: { type: "array", items: { type: "object", properties: { name: { type: "string" }, type: { type: "string", enum: ["company", "pe_firm", "payor", "health_system", "person"] } } } },
           ma_activities: {
             type: "array",
             items: {
@@ -303,6 +304,14 @@ Deno.serve(async (req) => {
     const normalizedFunding = (result.funding_rounds || []).map(f =>
       typeof f === 'string' ? { company: '', amount: f, round_type: '', description: f } : f
     );
+    const normalizedPlayers = (result.key_players || []).map(p => {
+      if (typeof p === 'string') return { name: p, type: 'company' };
+      if (p && typeof p === 'object') {
+        const t = ['company', 'pe_firm', 'payor', 'health_system', 'person'].includes(p.type) ? p.type : 'company';
+        return { name: p.name || '', type: t };
+      }
+      return null;
+    }).filter(Boolean);
 
     const newsletterData = {
       title: result.title,
@@ -318,7 +327,7 @@ Deno.serve(async (req) => {
       key_takeaways: result.key_takeaways || [],
       key_statistics: normalizedStats,
       themes: normalizedThemes,
-      key_players: result.key_players || [],
+      key_players: normalizedPlayers,
       ma_activities: normalizedMA,
       funding_rounds: normalizedFunding,
       recommended_actions: result.recommended_actions || [],

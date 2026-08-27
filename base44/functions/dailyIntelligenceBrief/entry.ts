@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
               n.summary || '',
               n.tldr || '',
               ...(n.key_takeaways || []),
-              ...(n.key_players || []),
+              ...(n.key_players || []).map(p => typeof p === 'string' ? p : p?.name),
               ...(n.themes?.map(t => `${t.theme} ${t.description}`) || [])
             ].join(' ').toLowerCase();
             

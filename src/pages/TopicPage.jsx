@@ -103,8 +103,9 @@ export default function TopicPage() {
     const companyCount = {};
     relevantNewsletters.forEach(n => {
       if (n.key_players) {
-        n.key_players.forEach(player => {
-          companyCount[player] = (companyCount[player] || 0) + 1;
+        n.key_players.forEach(rawPlayer => {
+          const player = typeof rawPlayer === 'string' ? rawPlayer : rawPlayer?.name;
+          if (player) companyCount[player] = (companyCount[player] || 0) + 1;
         });
       }
       if (n.ma_activities) {

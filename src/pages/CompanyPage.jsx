@@ -75,7 +75,7 @@ export default function CompanyPage() {
       const response = await base44.functions.invoke('listNewsletters', { query: { is_analyzed: true } });
       const data = response?.data ?? response;
       const all = data?.newsletters || [];
-      return all.filter(n => n.key_players?.includes(companyName));
+      return all.filter(n => n.key_players?.some(p => (typeof p === 'string' ? p : p?.name) === companyName));
     },
     enabled: !!companyName && !companyId,
     initialData: [],

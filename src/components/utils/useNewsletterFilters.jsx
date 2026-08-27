@@ -67,7 +67,7 @@ function buildSearchText(newsletter, fields) {
         }
         break;
       case 'key_players':
-        if (newsletter.key_players) parts.push(...newsletter.key_players);
+        if (newsletter.key_players) parts.push(...newsletter.key_players.map(p => typeof p === 'string' ? p : p?.name));
         break;
       case 'ma_activities':
         if (newsletter.ma_activities) {

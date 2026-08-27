@@ -273,7 +273,7 @@ export function applyFilters(newsletters, filters) {
         n.tldr || '',
         ...(n.key_takeaways || []),
         ...(n.themes?.map(t => `${t.theme} ${t.description}`) || []),
-        ...(n.key_players || [])
+        ...(n.key_players || []).map(p => typeof p === 'string' ? p : p?.name)
       ].join(' ').toLowerCase();
       return keywords.some(kw => searchableText.includes(kw));
     });
@@ -312,7 +312,7 @@ export function applyFilters(newsletters, filters) {
   if (filters.companies?.length > 0) {
     filtered = filtered.filter(n => {
       if (!n.key_players) return false;
-      return n.key_players.some(p => filters.companies.includes(p));
+      return n.key_players.some(p => filters.companies.includes(typeof p === 'string' ? p : p?.name));
     });
   }
 

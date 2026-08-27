@@ -250,7 +250,9 @@ export default function MyAnalyzedArticlesSection() {
     if (!ids.length) return;
     setBulkBusy(true);
     try {
-      await base44.entities.NewsletterItem.deleteMany({ id: { $in: ids } });
+      const response = await base44.functions.invoke("deleteNewsletters", { ids });
+      const data = response?.data ?? response;
+      if (!data?.success) throw new Error(data?.error || "Delete failed");
       toast.success(`Deleted ${ids.length} article${ids.length > 1 ? "s" : ""}`);
       refreshAfterBulk();
     } catch (e) {

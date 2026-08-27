@@ -34,6 +34,7 @@ import SummaryParagraphs from "../components/newsletter/SummaryParagraphs";
 import EditableNewsletterSection from "../components/newsletter/EditableNewsletterSection";
 import BDActionPrompt, { BDInsightBadge } from "../components/bd/BDActionPrompt";
 import { useUserArticleStates } from "@/hooks/useUserArticleStates";
+import KeyPlayerBadge from "../components/newsletter/KeyPlayerBadge";
 
 export default function NewsletterDetail() {
   const navigate = useNavigate();
@@ -385,7 +386,7 @@ export default function NewsletterDetail() {
             contextData={{
               title: newsletter.title,
               summary: newsletter.tldr || newsletter.summary,
-              companies: newsletter.key_players,
+              companies: (newsletter.key_players || []).map(p => typeof p === 'string' ? p : p?.name).filter(Boolean),
               deals: newsletter.ma_activities?.map(m => `${m.acquirer} acquiring ${m.target}`).join("; ") ||
                      newsletter.funding_rounds?.map(f => `${f.company} raised ${f.amount}`).join("; "),
               themes: newsletter.themes?.map(t => t.theme),
@@ -588,9 +589,7 @@ export default function NewsletterDetail() {
           <CardContent className="pt-6">
             <div className="flex flex-wrap gap-2">
               {newsletter.key_players.map((player, index) => (
-                <Badge key={index} variant="outline" className="text-sm py-2 px-4">
-                  {player}
-                </Badge>
+                <KeyPlayerBadge key={index} player={player} />
               ))}
             </div>
           </CardContent>
